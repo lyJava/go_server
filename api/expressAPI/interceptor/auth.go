@@ -67,6 +67,7 @@ func GetTokenFromRequest(request *http.Request) string {
 	return ""
 }
 
+// ValidateJWT 验证JWT凭证有效性
 func ValidateJWT(t string) (*jwt.Token, error) {
 	secret := config.EnvConfig.JWTSecret
 	token, err := jwt.Parse(t, func(token *jwt.Token) (interface{}, error) {
