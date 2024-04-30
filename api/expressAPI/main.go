@@ -7,7 +7,6 @@ import (
 	"apiProject/api/expressAPI/service/impl"
 	"github.com/go-sql-driver/mysql"
 	"log"
-	"time"
 )
 
 func main() {
@@ -49,11 +48,6 @@ func main() {
 	}
 	log.Printf("解密后的密码===%s", string(password))*/
 
-	// 设置时区为亚洲/上海
-	loc, err := time.LoadLocation("Asia/Shanghai")
-	if err != nil {
-		log.Fatalln(err)
-	}
 	cfg := mysql.Config{
 		User:                 config.EnvConfig.DbUser,
 		Passwd:               config.EnvConfig.DbPass,
@@ -63,25 +57,25 @@ func main() {
 		AllowNativePasswords: true,
 		ParseTime:            false,
 		Collation:            "utf8mb4_general_ci",
-		Loc:                  loc,
+		Loc:                  config.EnvConfig.Loc,
 	}
 	expressSQL := datasource.NewMysqlDB(cfg)
 
-	db, err := expressSQL.Init()
+	db, err := expressSQL.GetDb()
 	if err != nil {
-		log.Printf("初始化失败===%v", err)
+		log.Printf("获取数据库信息===%v", err)
 	}
-
-	/*dbWire, err := InitializeWire(expressSQL)
-	log.Printf("获取数据库信息===%v", dbWire)
-	if err != nil {
-		fmt.Printf("failed to create db: %s\n", err)
-		os.Exit(2)
-	}*/
 
 	express := impl.NewExpressDB(db)
 	user := impl.NewUserDB(db)
 	api := router.NewAPIServer(":3000", express, user)
 	api.Serve()
 
+	//dbWire, _ := InitializeWire(expressSQL)
+	//log.Printf("获取数据库信息===%v", dbWire)
+	//mysqlConfig, _ := InitializeEnglishGreeter()
+	//log.Println(mysqlConfig.DbName)
+
+	////go:build wireinject
+	//// +build wireinject
 }
