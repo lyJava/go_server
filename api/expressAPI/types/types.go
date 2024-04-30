@@ -1,15 +1,18 @@
 package types
 
+import "time"
+
 // MysqlConfig mysql的结构
 type MysqlConfig struct {
-	ServerPort string //服务端口号
-	DbUser     string //数据库用户名
-	DbPass     string //数据库密码
-	DbAddress  string // 数据库地址
-	DbName     string //数据库名称
-	JWTSecret  string //token密钥
-	PublicKey  string
-	PrivateKey string
+	ServerPort string         // 服务端口号
+	DbUser     string         // 数据库用户名
+	DbPass     string         // 数据库密码
+	DbAddress  string         // 数据库地址
+	DbName     string         // 数据库名称
+	JWTSecret  string         // jwt的token加密
+	Loc        *time.Location // 设置时区
+	PublicKey  string         // rsa公钥
+	PrivateKey string         // rsa私钥
 }
 
 // ExpressSearchParam 分页查询参数结构
