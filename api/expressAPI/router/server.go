@@ -9,9 +9,9 @@ import (
 )
 
 type APIServer struct {
-	addr    string                   // 地址
-	express service.ExpressInterface //快递接口
-	user    service.UserServiceInterface
+	addr    string                       // 服务启动端口
+	express service.ExpressInterface     // 快递接口
+	user    service.UserServiceInterface // 用户服务接口
 }
 
 func NewAPIServer(add string, express service.ExpressInterface, user service.UserServiceInterface) *APIServer {
