@@ -7,13 +7,14 @@ import (
 	"log"
 )
 
-var ProviderSet = wire.NewSet(NewMysqlDB)
+var ProviderSet = wire.NewSet(InitMysqlDB)
 
 type MysqlDB struct {
 	db *sql.DB
 }
 
-func NewMysqlDB(cfg mysql.Config) *MysqlDB {
+// InitMysqlDB 初始化数据库
+func InitMysqlDB(cfg mysql.Config) *MysqlDB {
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
 		log.Fatalln(err)
@@ -26,6 +27,7 @@ func NewMysqlDB(cfg mysql.Config) *MysqlDB {
 	return &MysqlDB{db: db}
 }
 
-func (s *MysqlDB) Init() (*sql.DB, error) {
+// GetDb 返回数据库
+func (s *MysqlDB) GetDb() (*sql.DB, error) {
 	return s.db, nil
 }

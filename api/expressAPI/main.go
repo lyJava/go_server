@@ -59,7 +59,7 @@ func main() {
 		Collation:            "utf8mb4_general_ci",
 		Loc:                  config.EnvConfig.Loc,
 	}
-	expressSQL := datasource.NewMysqlDB(cfg)
+	expressSQL := datasource.InitMysqlDB(cfg)
 
 	db, err := expressSQL.GetDb()
 	if err != nil {
