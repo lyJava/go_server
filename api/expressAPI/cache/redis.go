@@ -1,6 +1,7 @@
-package config
+package cache
 
 import (
+	"apiProject/api/expressAPI/config"
 	"apiProject/api/expressAPI/types"
 	"fmt"
 	"github.com/go-redis/redis"
@@ -14,7 +15,7 @@ var RedisCache = &redis.Client{}
 
 func init() {
 
-	viperConfig := ReadConfig("api/expressApi/config", "application", "yml")
+	viperConfig := config.ReadConfig("api/expressApi/config", "application", "yml")
 	redisMap := viperConfig.Get("redis").(map[string]interface{})
 	var redisConfig types.RedisConfig
 	err := mapstructure.Decode(redisMap, &redisConfig)
@@ -92,12 +93,20 @@ func Get(key string) (string, error) {
 	return result, err
 }
 
-// Set 设置数据
-func Set(key string, value interface{}, timeout int64) error {
+// Set 设置数据到缓存
+// 参数
+//
+//		key 存储的键
+//		value 存储的值
+//	 timeout 缓存时间(秒)
+func Set(key string, value interface{}, timeout int64) {
 	// 将 timeout 转换为持续时间
-	duration := time.Duration(timeout) * time.Hour
+	duration := time.Duration(timeout) * time.Second
 	err := RedisCache.Set(key, value, duration).Err()
-	return err
+	if err != nil {
+		log.Printf("缓存数据失败===%s", err.Error())
+		return
+	}
 }
 
 // LPush RPush 使用RPush命令往队列右边加入
