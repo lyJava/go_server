@@ -53,29 +53,22 @@ func (e *UserServiceInterfaceTest) handlerGetUser(w http.ResponseWriter, r *http
 func (e *UserServiceInterfaceTest) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	var user *types.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		log.Println(err)
+		log.Println(err.Error())
 		response.WriteJson(w, response.FailMessageResp("解析用户新增参数失败"))
 		return
 	}
 
 	defer r.Body.Close()
-
-	password := utils.HashPassword(user.Password)
-	//if err != nil {
-	//	response.WriteJson(w, response.FailMessageResp("创建用户失败"))
-	//	return
-	//}
-
-	user.Password = password
+	user.Password = utils.HashPassword(user.Password)
 	creatUser, err := e.userInter.CreatUser(user)
 	if err != nil {
-		response.WriteJson(w, response.FailMessageResp("创建用户数据失败"))
+		response.WriteJson(w, response.FailMessageResp("创建用户失败"))
 		return
 	}
 
 	token, err := utils.CreatAndSerAuthCookie(creatUser, 7, w)
 	if err != nil {
-		response.WriteJson(w, response.FailMessageResp("返回用户token失败"))
+		response.WriteJson(w, response.FailMessageResp("返回token失败"))
 		return
 	}
 
