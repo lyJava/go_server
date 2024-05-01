@@ -2,6 +2,7 @@ package utils
 
 import (
 	"apiProject/api/expressAPI/config"
+	"apiProject/api/expressAPI/types"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -102,6 +103,7 @@ func FormatTime(t time.Time) string {
 	return fmt.Sprintf("%s", t.Format("2006-01-02 15:04:05"))
 }
 
+// HashPassword 返回密码hash
 func HashPassword(pwd string) string {
 	password, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
 	if err != nil {
@@ -111,13 +113,22 @@ func HashPassword(pwd string) string {
 	return string(password)
 }
 
-func CreateJWT(userId, days int64, secret []byte) (string, error) {
+func CreateJWT(user *types.User, days int64, secret []byte) (string, error) {
 	// "userId":     strconv.Itoa(int(userId)),
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userId":     strconv.Itoa(int(userId)),
-		"expireTime": time.Now().Add(time.Hour * 24 * time.Duration(days)).Unix(), // 设置有效期为20天
-	})
-
+	//token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+	//	"userId":     strconv.Itoa(int(userId)),
+	//	"expireTime": time.Now().Add(time.Hour * 24 * time.Duration(days)).Unix(), // 设置有效期为20天
+	//})
+	//tokenStr, err := token.SignedString(secret)
+	c := types.MyClaims{
+		UserId:   strconv.FormatInt(user.UserId, 10),
+		Username: user.Username,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 24 * time.Duration(days)).Unix(), // 过期时间
+			Issuer:    "el-admin",                                                  // 签发人
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
 	tokenStr, err := token.SignedString(secret)
 	if err != nil {
 		return "", err
@@ -131,9 +142,9 @@ func CreateJWT(userId, days int64, secret []byte) (string, error) {
 //		userId: 用户ID
 //	 days: token有效天数
 //	 w:	http返回
-func CreatAndSerAuthCookie(userId, days int64, w http.ResponseWriter) (string, error) {
+func CreatAndSerAuthCookie(user *types.User, days int64, w http.ResponseWriter) (string, error) {
 	secret := []byte(config.EnvConfig.JWTSecret)
-	token, err := CreateJWT(userId, days, secret)
+	token, err := CreateJWT(user, days, secret)
 	if err != nil {
 		return "", err
 	}
