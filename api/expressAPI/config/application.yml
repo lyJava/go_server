@@ -7,9 +7,11 @@ mysql:
   password: root244112311
   database: eladmin
 
+# jwt的加密字符串配置
 jwt:
   secret: testjwtsecretadmin
 
+# rsa加密key配置
 rsa:
   key:
     public: -----BEGIN RSA PUBLIC KEY-----
@@ -49,3 +51,11 @@ rsa:
       5yeZ8oGYJBbjhTbrDF0YpMdcZOsvhjwp7D44TpcV9DDmsdkcLccY
       -----END RSA PRIVATE KEY-----
 
+redis:
+  # redis服务器地址（默认为localhost,端口默认为6379）
+  address: localhost:6379
+  port: "6379"
+  # redis数据库索引(默认为0)，我们使用索引为3的数据库，避免和其他数据库冲突
+  db: 0
+  # redis访问密码（默认为空）
+  password: "244112311"

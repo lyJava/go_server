@@ -98,3 +98,10 @@ type Key struct {
 	Public  string // 公钥
 	Private string //私钥
 }
+
+// RedisConfig redis连接结构
+type RedisConfig struct {
+	Address  string // 连接地址
+	Password string // 密码
+	Db       int    // 连接数据库索引，默认0
+}
