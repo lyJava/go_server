@@ -1,6 +1,9 @@
 package types
 
-import "time"
+import (
+	"github.com/golang-jwt/jwt"
+	"time"
+)
 
 // MysqlConfig mysql的结构
 type MysqlConfig struct {
@@ -58,4 +61,11 @@ type User struct {
 	CreateTime string `json:"createTime,omitempty"` // 创建时间
 	UpdateTime string `json:"updateTime,omitempty"` // 更新时间
 	Token      string `json:"token,omitempty"`      // 令牌
+}
+
+// MyClaims 自定义jwt的token返回字段
+type MyClaims struct {
+	Username           string `json:"username"` // 用户名
+	UserId             string `json:"userId"`   //用户ID
+	jwt.StandardClaims        //jwt的Claims
 }

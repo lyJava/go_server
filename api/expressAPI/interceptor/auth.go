@@ -5,10 +5,12 @@ import (
 	"apiProject/api/expressAPI/service"
 	"apiProject/api/response"
 	"apiProject/api/utils"
+	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type UserServiceInterfaceAuth struct {
@@ -32,10 +34,14 @@ func NewUserServiceInterfaceAuth(e service.UserServiceInterface) *UserServiceInt
 //	http.HandlerFunc
 func WithJWTAuthorization(handlerFunc http.HandlerFunc, u service.UserServiceInterface) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		tokenStr := GetTokenFromRequest(request)
+		tokenStr, err := GetTokenFromRequest(request)
+		if err != nil {
+			response.WriteJson(writer, response.FailMessageResp(err.Error()))
+			return
+		}
 		token, err := ValidateJWT(tokenStr)
 		if err != nil {
-			response.WriteJson(writer, response.FailMessageResp("token不正确"))
+			response.WriteJson(writer, response.FailMessageResp(err.Error()))
 			return
 		}
 
@@ -59,12 +65,20 @@ func WithJWTAuthorization(handlerFunc http.HandlerFunc, u service.UserServiceInt
 }
 
 // GetTokenFromRequest 从请求中获取凭证
-func GetTokenFromRequest(request *http.Request) string {
+func GetTokenFromRequest(request *http.Request) (string, error) {
 	token := request.Header.Get("Authorization")
-	if token != "" {
-		return token
+	if token == "" {
+		return "", errors.New("请求头中的凭证不能为空")
+	} else {
+		// 按空格分割
+		parts := strings.SplitN(token, " ", 2)
+		if !(len(parts) == 2 && parts[0] == "Bearer") {
+			return "", errors.New("请求头中的凭证格式不正确")
+		} else {
+			token = parts[1]
+		}
 	}
-	return ""
+	return token, nil
 }
 
 // ValidateJWT 验证JWT凭证有效性
@@ -77,7 +91,7 @@ func ValidateJWT(t string) (*jwt.Token, error) {
 		return []byte(secret), nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.New("请求头中的凭证格式有效性验证失败")
 	}
 	return token, nil
 }

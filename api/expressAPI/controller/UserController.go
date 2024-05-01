@@ -73,7 +73,7 @@ func (e *UserServiceInterfaceTest) handlerCreateUser(w http.ResponseWriter, r *h
 		return
 	}
 
-	token, err := utils.CreatAndSerAuthCookie(creatUser.UserId, 7, w)
+	token, err := utils.CreatAndSerAuthCookie(creatUser, 7, w)
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp("返回用户token失败"))
 		return
@@ -85,10 +85,14 @@ func (e *UserServiceInterfaceTest) handlerCreateUser(w http.ResponseWriter, r *h
 
 // handlerCheckPwd 验证密码
 func (e *UserServiceInterfaceTest) handlerCheckPwd(w http.ResponseWriter, r *http.Request) {
-	tokenStr := interceptor.GetTokenFromRequest(r)
+	tokenStr, err := interceptor.GetTokenFromRequest(r)
+	if err != nil {
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
+		return
+	}
 	token, err := interceptor.ValidateJWT(tokenStr)
 	if err != nil {
-		response.WriteJson(w, response.FailMessageResp("token不正确"))
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
 
@@ -106,18 +110,32 @@ func (e *UserServiceInterfaceTest) handlerCheckPwd(w http.ResponseWriter, r *htt
 		return
 	}
 
-	var mapPwd = make(map[string]string)
-	if err := json.NewDecoder(r.Body).Decode(&mapPwd); err != nil {
-		log.Println(err)
+	var pwdMap = make(map[string]string)
+	if err := json.NewDecoder(r.Body).Decode(&pwdMap); err != nil {
+		log.Println(err.Error())
 		response.WriteJson(w, response.FailMessageResp("获取密码失败"))
 		return
 	}
 	defer r.Body.Close()
 
-	password := mapPwd["password"]
-	encodePwd := mapPwd["encodePwd"]
+	if len(pwdMap) != 2 {
+		response.WriteJson(w, response.FailMessageResp("参数不正确"))
+		return
+	}
+	password := pwdMap["password"]
+	if password == "" {
+		// 实际使用情况原始密码一般不需要传递
+		response.WriteJson(w, response.FailMessageResp("原始密码不能为空"))
+		return
+	}
 
-	log.Printf("原始密码===%s", password)
+	encodePwd := pwdMap["encodePwd"]
+	if encodePwd == "" {
+		response.WriteJson(w, response.FailMessageResp("加密密码不能为空"))
+		return
+	}
+
+	log.Printf("前端原始密码===%s", password)
 	log.Printf("加密密码(base64)===%s", encodePwd)
 
 	encodePwdByte, _ := base64.StdEncoding.DecodeString(encodePwd)
@@ -148,7 +166,7 @@ func (e *UserServiceInterfaceTest) handlerCheckPwd(w http.ResponseWriter, r *htt
 		response.WriteJson(w, response.FailMessageResp("密码验证失败"))
 		return
 	}
-	response.WriteJson(w, response.FailMessageResp("密码验证成功"))
+	response.WriteJson(w, response.OkMessageResp("密码验证成功"))
 	return
 }
 
@@ -188,7 +206,7 @@ func (e *UserServiceInterfaceTest) handlerUserLogin(w http.ResponseWriter, r *ht
 		return
 	}
 
-	token, err := utils.CreatAndSerAuthCookie(loginUser.UserId, 10, w)
+	token, err := utils.CreatAndSerAuthCookie(loginUser, 10, w)
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp("返回用户token失败"))
 		return
