@@ -45,6 +45,7 @@ func InitConfig() *types.MysqlConfig {
 	}*/
 }
 
+// buildConfig 构建并返回配置对象
 func buildConfig() (types.ServerConfig, types.SqlConfig, types.RsaConfig, types.JwtConfig) {
 	viperConfig := ReadConfig("api/expressApi/config", "application", "yml")
 
@@ -56,8 +57,7 @@ func buildConfig() (types.ServerConfig, types.SqlConfig, types.RsaConfig, types.
 	mysqlMap := viperConfig.Get("mysql").(map[string]interface{})
 	mapstructure.Decode(mysqlMap, &sqlConfig)
 
-	fmt.Println(mysqlMap)
-	log.Printf("数据库url：%v", viperConfig.Get("mysql.url"))
+	fmt.Println("数据库url：", viperConfig.Get("mysql.url"))
 	fmt.Println("数据库用户：", mysqlMap["username"])
 
 	var rsaConfig types.RsaConfig
@@ -74,9 +74,13 @@ func buildConfig() (types.ServerConfig, types.SqlConfig, types.RsaConfig, types.
 //
 // 参数
 //
-//		path	配置路径
-//		name	配置文件名(不包括后缀)
-//	 configType	配置文件路径
+//		path：配置路径
+//		name：配置文件名(不包括后缀)
+//	 configType：配置文件路径
+//
+// 返回
+//
+//	viper：*viper.Viper
 func ReadConfig(path, name, configType string) *viper.Viper {
 	viper.AddConfigPath(path)
 	viper.SetConfigName(name)
