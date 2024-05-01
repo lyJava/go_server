@@ -69,3 +69,32 @@ type MyClaims struct {
 	UserId             string `json:"userId"`   //用户ID
 	jwt.StandardClaims        //jwt的Claims
 }
+
+// SqlConfig 数据库配置
+type SqlConfig struct {
+	Url      string // 连接URL
+	Username string // 用户名
+	Password string // 密码
+	Database string // 数据库名称
+}
+
+// ServerConfig 服务器配置
+type ServerConfig struct {
+	Port string
+}
+
+// JwtConfig JWT的配置
+type JwtConfig struct {
+	Secret string
+}
+
+// RsaConfig rsa的配置
+type RsaConfig struct {
+	Key //密钥
+}
+
+// Key 密钥结构
+type Key struct {
+	Public  string // 公钥
+	Private string //私钥
+}
