@@ -29,14 +29,23 @@ func NewExpressService(e service.ExpressInterface, u service.UserServiceInterfac
 
 // RegisterRoutes 注册快递服务请求路由
 func (e *ExpressInterfaceTest) RegisterRoutes(r *mux.Router) {
+	// 新增
 	r.HandleFunc("/express", e.handlerCrete).Methods("POST")
+	// 查询详情
 	r.HandleFunc("/express/detail", e.handlerDetail).Methods("GET")
+	// 分页查询
 	r.HandleFunc("/expressPage/list", e.handlerSelectPage).Methods("GET")
+	// 查询
 	r.HandleFunc("/express/{dataId}", e.handlerGet).Methods("GET")
+	// 删除
 	r.HandleFunc("/express/{dataId}", e.handlerDelete).Methods("DELETE")
+	// 多条件查询分页
 	r.HandleFunc("/expressPage/list", e.handlerSelectPageParam).Methods("POST")
+	// 修改
 	r.HandleFunc("/express/update", e.handlerUpdate).Methods("PUT")
+	// 批量新增
 	r.HandleFunc("/express/batchDelete", e.handlerBatchDelete).Methods("POST")
+	// 批量新增
 	r.HandleFunc("/express/batchAdd", interceptor.WithJWTAuthorization(e.handlerBatchInsert, e.userInter)).Methods("POST")
 }
 
