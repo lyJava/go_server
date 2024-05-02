@@ -14,9 +14,9 @@ type PageData struct {
 
 // Response 返回结果
 type Response struct {
-	Code    int    `json:"code"`           // 响应码
-	Message string `json:"message"`        // 相应信息
-	Data    any    `json:"data,omitempty"` // 响应数据（json:"data,omitempty" 表示为空忽略）
+	Code    int    `json:"code"`              // 响应码
+	Message string `json:"message,omitempty"` // 相应信息
+	Data    any    `json:"data,omitempty"`    // 响应数据（json:"data,omitempty" 表示为空忽略）
 }
 
 // OkCodeResp 返回响应码的成功信息
