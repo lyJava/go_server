@@ -4,6 +4,7 @@ go 1.22.1
 
 require (
 	github.com/bytedance/sonic v1.11.6
+	github.com/dchest/captcha v1.0.0
 	github.com/gabriel-vasile/mimetype v1.4.3
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-sql-driver/mysql v1.8.1
