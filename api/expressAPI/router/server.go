@@ -33,6 +33,10 @@ func (s *APIServer) Serve() {
 	userTest := controller.NewUserServiceInterfaceTest(s.user)
 	userTest.RegisterRoutes(router)
 
+	// 添加验证码控制器
+	captchaController := controller.CaptchaControllerTest()
+	captchaController.RegisterRoutes(router)
+
 	log.Println("api server starting at====", s.addr)
 	log.Fatalln(http.ListenAndServe(s.addr, router))
 }
