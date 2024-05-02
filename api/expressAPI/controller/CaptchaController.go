@@ -11,6 +11,7 @@ import (
 	"image/png"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type CaptchaController struct {
@@ -41,7 +42,25 @@ func CaptchaCustomerHandler(w http.ResponseWriter, _ *http.Request) {
 	code := utils.RandomCode(4, "")
 	// cache.Set("captcha_"+code, code, 30)
 	img := utils.CreateImage(code)
-	err := png.Encode(w, img)
+	// 将图像编码为字节切片
+	var imgBuffer bytes.Buffer
+	err := png.Encode(&imgBuffer, img)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	// 将字节切片转换为 base64 编码的字符串
+	imgBase64Str := "data:image/png;base64," + base64.StdEncoding.EncodeToString(imgBuffer.Bytes())
+	log.Println(imgBase64Str)
+	// 这里设置Content-Length长度，前端下载才能获取进度
+	w.Header().Set("Content-Length", strconv.Itoa(imgBuffer.Len()))
+
+	// 设置响应头
+	//w.Header().Set("Content-Type", "image/png")
+	// 将 base64 编码的字符串写入响应体
+	//http.ServeContent(w, r, code+".png", time.Time{}, bytes.NewReader(imgBuffer.Bytes()))
+
+	err = png.Encode(w, img)
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp("验证码生成失败"))
 		return
