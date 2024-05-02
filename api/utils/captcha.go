@@ -19,13 +19,12 @@ import (
 	"time"
 )
 
+// 验证码字符集
+var charset = "0123456789ABCDEFGHJKPLMNPQRSTUVWXYZ"
+
 // GenerateCode 生成指定长度的随机验证码字符串
 func GenerateCode(length int) string {
 	rand.NewSource(time.Now().UnixNano())
-
-	// 验证码字符集
-	charset := "0123456789ABCDEFGHJKPLMNPQRSTUVWXYZ"
-
 	// 生成随机验证码字符串
 	code := make([]byte, length)
 	for i := range code {
@@ -52,6 +51,16 @@ func RandomCode(size int, typeStr string) string {
 		code = GenerateCode(size)
 	}
 	return code
+}
+
+func RandomCodeStr(length int, codeStr string) string {
+	rand.NewSource(time.Now().UnixNano())
+	// 生成随机验证码字符串
+	code := make([]byte, length)
+	for i := range code {
+		code[i] = codeStr[rand.Intn(len(codeStr))]
+	}
+	return string(code)
 }
 
 // GenerateImage 生成验证码图片
