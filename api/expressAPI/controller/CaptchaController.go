@@ -17,8 +17,8 @@ type CaptchaController struct {
 }
 
 type CaptchaData struct {
-	Id   string
-	Data string
+	Id   string `json:"id"`
+	Data string `json:"data"`
 }
 
 type CaptchaValidate struct {
@@ -122,7 +122,7 @@ func CaptchaHandlerValidate(w http.ResponseWriter, r *http.Request) {
 	// 三元表达式写法???
 	/*response.WriteJson(w, func() response.Response {
 		if result {
-			return response.OkDataResp("验证成功")
+			return response.OkMessageResp("验证成功")
 		}
 		return response.FailMessageResp("验证失败")
 	}())*/
@@ -132,5 +132,5 @@ func CaptchaHandlerValidate(w http.ResponseWriter, r *http.Request) {
 		response.WriteJson(w, response.FailMessageResp("验证失败"))
 		return
 	}
-	response.WriteJson(w, response.OkDataResp("验证成功"))
+	response.WriteJson(w, response.OkMessageResp("验证成功"))
 }
