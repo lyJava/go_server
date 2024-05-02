@@ -34,6 +34,26 @@ func GenerateCode(length int) string {
 	return string(code)
 }
 
+// RandomCode 随机数字或者字符串验证码
+//
+// 参数
+//
+//		size 验证码个数
+//	 typeStr 验证码类型(空字符串或者math默认为随机数字，其他为随机字符串)
+func RandomCode(size int, typeStr string) string {
+	code := ""
+	rand.NewSource(time.Now().UnixNano())
+	if typeStr == "" || typeStr == "math" {
+		for i := 0; i < size; i++ {
+			code += fmt.Sprintf("%d", rand.Intn(10))
+		}
+	}
+	if typeStr != "" && typeStr != "math" {
+		code = GenerateCode(size)
+	}
+	return code
+}
+
 // GenerateImage 生成验证码图片
 func GenerateImage(code string) image.Image {
 	// 图片尺寸
@@ -114,15 +134,6 @@ func drawRect(img draw.Image, point image.Point, color color.Color) {
 	draw.Draw(img, rect, &image.Uniform{color}, image.ZP, draw.Src)
 }
 
-func RandomCode(size int) string {
-	rand.NewSource(time.Now().UnixNano())
-	code := ""
-	for i := 0; i < size; i++ {
-		code += fmt.Sprintf("%d", rand.Intn(10))
-	}
-	return code
-}
-
 //https://blog.csdn.net/m0_46198325/article/details/134913801
 
 func CreateImage(code string) image.Image {
@@ -155,7 +166,7 @@ func CreateImage(code string) image.Image {
 	dc.SetSrc(&image.Uniform{C: color.RGBA{A: 255}})
 
 	textWidthOld := getTextWidth(code, parse, fontSize)
-	startX := (w-textWidthOld)/2 - fontSize - textWidthOld*4
+	startX := (w-textWidthOld)/2 - fontSize - textWidthOld*6
 	pt := freetype.Pt(startX, 35)
 
 	for _, ch := range code {

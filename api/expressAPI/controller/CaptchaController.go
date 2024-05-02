@@ -20,7 +20,9 @@ func (*CaptchaController) RegisterRoutes(r *mux.Router) {
 }
 
 func CaptchaHandler(w http.ResponseWriter, _ *http.Request) {
-	img := utils.CreateImage(utils.RandomCode(4))
+	code := utils.RandomCode(4, "")
+	// cache.Set("captcha_"+code, code, 30)
+	img := utils.CreateImage(code)
 	err := png.Encode(w, img)
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp("验证码生成失败"))
