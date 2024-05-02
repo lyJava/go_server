@@ -50,6 +50,11 @@ func CaptchaCustomerHandler(w http.ResponseWriter, _ *http.Request) {
 
 // CaptchaHandlerCreate 使用github.com/dchest/captcha生成验证码
 func CaptchaHandlerCreate(w http.ResponseWriter, r *http.Request) {
+	//current, _ := user.Current()
+	//log.Println("当前用户id：", current.Uid)
+	//log.Println("当前用户的username：", current.Username)
+	//log.Println("当前用户的homedir：", current.HomeDir)
+	//log.Println("当前用户的gid：", current.Gid)
 	imageId := captcha.NewLen(4)
 	log.Println("验证码ID:", imageId)
 	var content bytes.Buffer
