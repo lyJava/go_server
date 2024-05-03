@@ -14,20 +14,23 @@ import (
 	"strconv"
 )
 
-type CaptchaController struct {
-}
+// CaptchaController 验证码控制器
+type CaptchaController struct{}
 
+// CaptchaData 验证码数据结构
 type CaptchaData struct {
-	Id   string `json:"id"`
-	Data string `json:"data"`
+	Id   string `json:"id"`   // 验证码ID
+	Data string `json:"data"` //验证码base64数据
 }
 
+// CaptchaValidate 验证码验证结构
 type CaptchaValidate struct {
-	Id   string
-	Code string
+	Id   string // 验证码ID
+	Code string //验证码
 }
 
-func CaptchaControllerTest() *CaptchaController {
+// CaptchaControllerInit 验证码控制器初始化
+func CaptchaControllerInit() *CaptchaController {
 	return &CaptchaController{}
 }
 
@@ -38,7 +41,7 @@ func (*CaptchaController) RegisterRoutes(r *mux.Router) {
 }
 
 // CaptchaCustomerHandler 自定义验证码
-func CaptchaCustomerHandler(w http.ResponseWriter, _ *http.Request) {
+func CaptchaCustomerHandler(w http.ResponseWriter, r *http.Request) {
 	code := utils.RandomCode(4, "")
 	// cache.Set("captcha_"+code, code, 30)
 	img := utils.CreateImage(code)
@@ -50,16 +53,17 @@ func CaptchaCustomerHandler(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 	// 将字节切片转换为 base64 编码的字符串
-	imgBase64Str := "data:image/png;base64," + base64.StdEncoding.EncodeToString(imgBuffer.Bytes())
-	log.Println(imgBase64Str)
-	// 这里设置Content-Length长度，前端下载才能获取进度
-	w.Header().Set("Content-Length", strconv.Itoa(imgBuffer.Len()))
+	// imgBase64Str := "data:image/png;base64," + base64.StdEncoding.EncodeToString(imgBuffer.Bytes())
 
 	// 设置响应头
 	//w.Header().Set("Content-Type", "image/png")
 	// 将 base64 编码的字符串写入响应体
 	//http.ServeContent(w, r, code+".png", time.Time{}, bytes.NewReader(imgBuffer.Bytes()))
 
+	contentLength := strconv.Itoa(imgBuffer.Len())
+	// 这里设置Content-Length长度，前端下载才能获取下载进度，不设置的话响应标头有Transfer-Encoding: chunked表示正文采用分块编码传输
+	w.Header().Set("Content-Length", contentLength)
+	log.Println("响应头内容长度", contentLength)
 	err = png.Encode(w, img)
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp("验证码生成失败"))
@@ -67,7 +71,7 @@ func CaptchaCustomerHandler(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-// CaptchaHandlerCreate 使用github.com/dchest/captcha生成验证码
+// CaptchaHandlerCreate 使用github.com/dchest/captcha生成验证码，返回该验证码对象
 func CaptchaHandlerCreate(w http.ResponseWriter, r *http.Request) {
 	//current, _ := user.Current()
 	//log.Println("当前用户id：", current.Uid)
@@ -82,18 +86,28 @@ func CaptchaHandlerCreate(w http.ResponseWriter, r *http.Request) {
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
-	// 这里是直接返回图片
-	//http.ServeContent(w, r, codeId+".png", time.Time{}, bytes.NewReader(content.Bytes()))
-	// 这里使用map方式
-	//imageData := make(map[string]string)
-	//imageData["id"] = imageId
-	//imageData["data"] = "data:image/png;base64," + base64.StdEncoding.EncodeToString(content.Bytes())
+
+	// w.Write(content.Bytes())这里不需要指定内Content-Type与Content-Length
+	/*w.Header().Set("Content-Length", strconv.Itoa(content.Len()))
+	w.Header().Set("Content-Type", "image/png")
+	_, err = w.Write(content.Bytes())
+	if err != nil {
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
+		return
+	}*/
+
+	// 这里是直接返回图片不需要指定内Content-Type与Content-Length
+	// http.ServeContent(w, r, imageId+".png", time.Time{}, bytes.NewReader(content.Bytes()))
+
+	// 这里使用map方式返回id与data
+	/*imageData := make(map[string]string)
+	imageData["id"] = imageId
+	imageData["data"] = "data:image/png;base64," + base64.StdEncoding.EncodeToString(content.Bytes())*/
 	imageData := &CaptchaData{
 		Id:   imageId,
 		Data: "data:image/png;base64," + base64.StdEncoding.EncodeToString(content.Bytes()),
 	}
 	response.WriteJson(w, response.OkDataResp(imageData))
-	return
 }
 
 // CaptchaHandlerValidate 校验验证码
@@ -105,7 +119,7 @@ func CaptchaHandlerValidate(w http.ResponseWriter, r *http.Request) {
 	var imageData CaptchaValidate
 	if err := json.NewDecoder(r.Body).Decode(&imageData); err != nil {
 		log.Println(err.Error())
-		response.WriteJson(w, response.FailMessageResp("解析用户新增参数失败"))
+		response.WriteJson(w, response.FailMessageResp("校验验证码参数解析失败"))
 		return
 	}
 
