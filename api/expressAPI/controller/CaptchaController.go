@@ -20,13 +20,13 @@ type CaptchaController struct{}
 // CaptchaData 验证码数据结构
 type CaptchaData struct {
 	Id   string `json:"id"`   // 验证码ID
-	Data string `json:"data"` //验证码base64数据
+	Data string `json:"data"` // 验证码base64数据
 }
 
 // CaptchaValidate 验证码验证结构
 type CaptchaValidate struct {
 	Id   string // 验证码ID
-	Code string //验证码
+	Code string // 验证码
 }
 
 // CaptchaControllerInit 验证码控制器初始化

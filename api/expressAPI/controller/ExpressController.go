@@ -16,7 +16,7 @@ import (
 
 // ExpressController 快递控制器
 type ExpressController struct {
-	expressService service.ExpressServiceInterface //快递服务接口
+	expressService service.ExpressServiceInterface // 快递服务接口
 	userService    service.UserServiceInterface    // 用户服务接口
 }
 

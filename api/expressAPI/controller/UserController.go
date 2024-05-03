@@ -18,7 +18,7 @@ import (
 
 // UserController 用户控制器
 type UserController struct {
-	userService service.UserServiceInterface //用户服务接口
+	userService service.UserServiceInterface // 用户服务接口
 }
 
 // UserControllerInit 用户控制器初始化
