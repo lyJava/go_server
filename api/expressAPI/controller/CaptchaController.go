@@ -38,6 +38,7 @@ func (*CaptchaController) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/captcha", CaptchaCustomerHandler).Methods("GET")
 	r.HandleFunc("/captcha/create", CaptchaHandlerCreate).Methods("GET")
 	r.HandleFunc("/captcha/validate", CaptchaHandlerValidate).Methods("POST")
+	r.HandleFunc("/captcha/dchest", CaptchaByDchestHandler).Methods("GET")
 }
 
 // CaptchaCustomerHandler 自定义验证码
@@ -171,4 +172,15 @@ func CaptchaHandlerValidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response.WriteJson(w, response.OkMessageResp("验证成功"))
+}
+
+// CaptchaByDchestHandler 返回dchest验证码，验证码ID放入请求头
+func CaptchaByDchestHandler(w http.ResponseWriter, r *http.Request) {
+	captchaID := captcha.NewLen(4)
+	w.Header().Set("Captcha-Id", captchaID)
+	err := captcha.WriteImage(w, captchaID, 150, 70)
+	if err != nil {
+		response.WriteJson(w, response.FailMessageResp("获取验证码失败"))
+		return
+	}
 }
