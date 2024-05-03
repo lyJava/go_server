@@ -16,31 +16,32 @@ import (
 	"os"
 )
 
-type UserServiceInterfaceTest struct {
-	userInter service.UserServiceInterface
+// UserController 用户控制器
+type UserController struct {
+	userService service.UserServiceInterface //用户服务接口
 }
 
-// NewUserServiceInterfaceTest 创建用户服务器请求
-func NewUserServiceInterfaceTest(e service.UserServiceInterface) *UserServiceInterfaceTest {
-	return &UserServiceInterfaceTest{userInter: e}
+// UserControllerInit 用户控制器初始化
+func UserControllerInit(u service.UserServiceInterface) *UserController {
+	return &UserController{userService: u}
 }
 
 // RegisterRoutes 注册快递服务请求路由
-func (e *UserServiceInterfaceTest) RegisterRoutes(r *mux.Router) {
-	r.HandleFunc("/user/{dataId}", e.handlerGetUser).Methods("GET")
-	r.HandleFunc("/user/create", e.handlerCreateUser).Methods("POST")
-	r.HandleFunc("/user/checkPwd", e.handlerCheckPwd).Methods("POST")
-	r.HandleFunc("/user/login", e.handlerUserLogin).Methods("POST")
+func (u *UserController) RegisterRoutes(r *mux.Router) {
+	r.HandleFunc("/user/{dataId}", u.handlerGetUser).Methods("GET")
+	r.HandleFunc("/user/create", u.handlerCreateUser).Methods("POST")
+	r.HandleFunc("/user/checkPwd", u.handlerCheckPwd).Methods("POST")
+	r.HandleFunc("/user/login", u.handlerUserLogin).Methods("POST")
 }
 
-func (e *UserServiceInterfaceTest) handlerGetUser(w http.ResponseWriter, r *http.Request) {
+func (u *UserController) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var queryId = vars["dataId"]
 	if queryId == "" {
 		response.WriteJson(w, response.FailMessageResp("用户ID不能为空"))
 		return
 	}
-	t, err := e.userInter.GetUserById(utils.ConvertToInt64(queryId))
+	t, err := u.userService.GetUserById(utils.ConvertToInt64(queryId))
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp("获取用户数据失败"))
 		return
@@ -50,7 +51,7 @@ func (e *UserServiceInterfaceTest) handlerGetUser(w http.ResponseWriter, r *http
 }
 
 // handlerCreateUser 处理创建用户
-func (e *UserServiceInterfaceTest) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
+func (u *UserController) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	var user *types.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		log.Println(err.Error())
@@ -60,7 +61,7 @@ func (e *UserServiceInterfaceTest) handlerCreateUser(w http.ResponseWriter, r *h
 
 	defer r.Body.Close()
 	user.Password = utils.HashPassword(user.Password)
-	creatUser, err := e.userInter.CreatUser(user)
+	creatUser, err := u.userService.CreatUser(user)
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp("创建用户失败"))
 		return
@@ -77,7 +78,7 @@ func (e *UserServiceInterfaceTest) handlerCreateUser(w http.ResponseWriter, r *h
 }
 
 // handlerCheckPwd 验证密码
-func (e *UserServiceInterfaceTest) handlerCheckPwd(w http.ResponseWriter, r *http.Request) {
+func (u *UserController) handlerCheckPwd(w http.ResponseWriter, r *http.Request) {
 	tokenStr, err := interceptor.GetTokenFromRequest(r)
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
@@ -97,7 +98,7 @@ func (e *UserServiceInterfaceTest) handlerCheckPwd(w http.ResponseWriter, r *htt
 	claims := token.Claims.(jwt.MapClaims)
 	userId := claims["userId"].(string)
 
-	user, err := e.userInter.GetUserById(utils.ConvertToInt64(userId))
+	user, err := u.userService.GetUserById(utils.ConvertToInt64(userId))
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp("未查询到用户信息"))
 		return
@@ -164,7 +165,7 @@ func (e *UserServiceInterfaceTest) handlerCheckPwd(w http.ResponseWriter, r *htt
 }
 
 // handlerUserLogin 用户登录
-func (e *UserServiceInterfaceTest) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
+func (u *UserController) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 	var user *types.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		log.Println(err)
@@ -174,7 +175,7 @@ func (e *UserServiceInterfaceTest) handlerUserLogin(w http.ResponseWriter, r *ht
 
 	defer r.Body.Close()
 
-	loginUser, err := e.userInter.UserLogin(user)
+	loginUser, err := u.userService.UserLogin(user)
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp("查询用户信息失败"))
 		return

@@ -9,12 +9,12 @@ import (
 )
 
 type APIServer struct {
-	addr    string                       // 服务启动端口
-	express service.ExpressInterface     // 快递接口
-	user    service.UserServiceInterface // 用户服务接口
+	addr    string                          // 服务启动端口
+	express service.ExpressServiceInterface // 快递接口
+	user    service.UserServiceInterface    // 用户服务接口
 }
 
-func NewAPIServer(add string, express service.ExpressInterface, user service.UserServiceInterface) *APIServer {
+func NewAPIServer(add string, express service.ExpressServiceInterface, user service.UserServiceInterface) *APIServer {
 	return &APIServer{
 		addr:    add,
 		express: express,
@@ -27,14 +27,16 @@ func (s *APIServer) Serve() {
 	//childRouter := router.PathPrefix("/dev-api").Subrouter()
 	//childRouter.Handle("/api/v1/", http.StripPrefix("/api/v1", router))
 
-	expressTest := controller.NewExpressService(s.express, s.user)
-	expressTest.RegisterRoutes(router)
+	// 快递管理控制器
+	expressController := controller.ExpressControllerInit(s.express, s.user)
+	expressController.RegisterRoutes(router)
 
-	userTest := controller.NewUserServiceInterfaceTest(s.user)
-	userTest.RegisterRoutes(router)
+	// 用户管理控制器
+	userController := controller.UserControllerInit(s.user)
+	userController.RegisterRoutes(router)
 
-	// 添加验证码控制器
-	captchaController := controller.CaptchaControllerTest()
+	// 验证码控制器
+	captchaController := controller.CaptchaControllerInit()
 	captchaController.RegisterRoutes(router)
 
 	log.Println("api server starting at====", s.addr)

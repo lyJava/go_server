@@ -4,8 +4,8 @@ import (
 	"apiProject/api/expressAPI/types"
 )
 
-// ExpressInterface 快递服务接口
-type ExpressInterface interface {
+// ExpressServiceInterface 快递服务接口
+type ExpressServiceInterface interface {
 	// CreateExpress 新增快递信息
 	//
 	// 参数

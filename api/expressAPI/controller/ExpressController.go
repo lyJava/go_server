@@ -14,21 +14,22 @@ import (
 	"net/http"
 )
 
-type ExpressInterfaceTest struct {
-	expressInter service.ExpressInterface     //快递服务接口
-	userInter    service.UserServiceInterface // 用户服务接口
+// ExpressController 快递控制器
+type ExpressController struct {
+	expressService service.ExpressServiceInterface //快递服务接口
+	userService    service.UserServiceInterface    // 用户服务接口
 }
 
-// NewExpressService 创建新的请求快递服务
-func NewExpressService(e service.ExpressInterface, u service.UserServiceInterface) *ExpressInterfaceTest {
-	return &ExpressInterfaceTest{
-		expressInter: e,
-		userInter:    u,
+// ExpressControllerInit 快递控制器初始化
+func ExpressControllerInit(e service.ExpressServiceInterface, u service.UserServiceInterface) *ExpressController {
+	return &ExpressController{
+		expressService: e,
+		userService:    u,
 	}
 }
 
 // RegisterRoutes 注册快递服务请求路由
-func (e *ExpressInterfaceTest) RegisterRoutes(r *mux.Router) {
+func (e *ExpressController) RegisterRoutes(r *mux.Router) {
 	// 新增
 	r.HandleFunc("/express", e.handlerCrete).Methods("POST")
 	// 查询详情
@@ -46,10 +47,10 @@ func (e *ExpressInterfaceTest) RegisterRoutes(r *mux.Router) {
 	// 批量新增
 	r.HandleFunc("/express/batchDelete", e.handlerBatchDelete).Methods("POST")
 	// 批量新增
-	r.HandleFunc("/express/batchAdd", interceptor.WithJWTAuthorization(e.handlerBatchInsert, e.userInter)).Methods("POST")
+	r.HandleFunc("/express/batchAdd", interceptor.WithJWTAuthorization(e.handlerBatchInsert, e.userService)).Methods("POST")
 }
 
-func (e *ExpressInterfaceTest) handlerCrete(w http.ResponseWriter, r *http.Request) {
+func (e *ExpressController) handlerCrete(w http.ResponseWriter, r *http.Request) {
 	var express *types.Express
 
 	/*if err := json.NewDecoder(r.Body).Decode(&express); err != nil {
@@ -72,7 +73,7 @@ func (e *ExpressInterfaceTest) handlerCrete(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	t, err := e.expressInter.CreateExpress(express)
+	t, err := e.expressService.CreateExpress(express)
 	if err != nil {
 		return
 	}
@@ -80,14 +81,14 @@ func (e *ExpressInterfaceTest) handlerCrete(w http.ResponseWriter, r *http.Reque
 	return
 }
 
-func (e *ExpressInterfaceTest) handlerGet(w http.ResponseWriter, r *http.Request) {
+func (e *ExpressController) handlerGet(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var queryId = vars["dataId"]
 	if queryId == "" {
 		response.WriteJson(w, response.FailMessageResp("ID参数不能为空"))
 		return
 	}
-	t, err := e.expressInter.GetExpress(utils.ConvertToInt64(queryId))
+	t, err := e.expressService.GetExpress(utils.ConvertToInt64(queryId))
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp("获取数据失败"))
 		return
@@ -96,7 +97,7 @@ func (e *ExpressInterfaceTest) handlerGet(w http.ResponseWriter, r *http.Request
 	return
 }
 
-func (e *ExpressInterfaceTest) handlerDetail(w http.ResponseWriter, r *http.Request) {
+func (e *ExpressController) handlerDetail(w http.ResponseWriter, r *http.Request) {
 	var dataId = r.URL.Query().Get("dataId")
 	log.Printf("获取的参数：%s", dataId)
 	if dataId == "" {
@@ -104,7 +105,7 @@ func (e *ExpressInterfaceTest) handlerDetail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	id := utils.ConvertToInt64(dataId)
-	t, err := e.expressInter.GetExpress(id)
+	t, err := e.expressService.GetExpress(id)
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp("获取详情数据失败"))
 		return
@@ -114,13 +115,13 @@ func (e *ExpressInterfaceTest) handlerDetail(w http.ResponseWriter, r *http.Requ
 	return
 }
 
-func (e *ExpressInterfaceTest) handlerSelectPage(w http.ResponseWriter, r *http.Request) {
+func (e *ExpressController) handlerSelectPage(w http.ResponseWriter, r *http.Request) {
 	url := r.URL
 	expressName := url.Query().Get("expressName")
 	page := url.Query().Get("page")
 	size := url.Query().Get("size")
 
-	expressPage, totalRecords, totalPages, err := e.expressInter.SelectExpressPage(expressName, page, size)
+	expressPage, totalRecords, totalPages, err := e.expressService.SelectExpressPage(expressName, page, size)
 	if err != nil {
 		return
 	}
@@ -139,7 +140,7 @@ func (e *ExpressInterfaceTest) handlerSelectPage(w http.ResponseWriter, r *http.
 	return
 }
 
-func (e *ExpressInterfaceTest) handlerSelectPageParam(w http.ResponseWriter, r *http.Request) {
+func (e *ExpressController) handlerSelectPageParam(w http.ResponseWriter, r *http.Request) {
 	var param types.ExpressSearchParam
 	/*if err := json.NewDecoder(r.Body).Decode(&searchParam); err != nil {
 		log.Println(err)
@@ -162,7 +163,7 @@ func (e *ExpressInterfaceTest) handlerSelectPageParam(w http.ResponseWriter, r *
 		return
 	}
 
-	expressPage, totalRecords, totalPages, err := e.expressInter.SelectExpressPageByParam(&param)
+	expressPage, totalRecords, totalPages, err := e.expressService.SelectExpressPageByParam(&param)
 	if err != nil {
 		response.WriteJson(w, response.FailCodeMessageResp(http.StatusInternalServerError, "查询分页数据失败"))
 		return
@@ -177,14 +178,14 @@ func (e *ExpressInterfaceTest) handlerSelectPageParam(w http.ResponseWriter, r *
 	return
 }
 
-func (e *ExpressInterfaceTest) handlerDelete(w http.ResponseWriter, r *http.Request) {
+func (e *ExpressController) handlerDelete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var queryId = vars["dataId"]
 	if queryId == "" {
 		response.WriteJson(w, response.FailMessageResp("ID参数不能为空"))
 		return
 	}
-	t, err := e.expressInter.DeleteById(utils.ConvertToInt64(queryId))
+	t, err := e.expressService.DeleteById(utils.ConvertToInt64(queryId))
 	if err != nil {
 		response.WriteJson(w, response.FailCodeMessageResp(http.StatusInternalServerError, "删除失败"))
 		return
@@ -193,7 +194,7 @@ func (e *ExpressInterfaceTest) handlerDelete(w http.ResponseWriter, r *http.Requ
 	return
 }
 
-func (e *ExpressInterfaceTest) handlerUpdate(w http.ResponseWriter, r *http.Request) {
+func (e *ExpressController) handlerUpdate(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		response.WriteJson(w, response.FailCodeMessageResp(http.StatusInternalServerError, "获取参数失败"))
@@ -208,7 +209,7 @@ func (e *ExpressInterfaceTest) handlerUpdate(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	t, err := e.expressInter.UpdateExpress(express)
+	t, err := e.expressService.UpdateExpress(express)
 	if err != nil {
 		response.WriteJson(w, response.FailCodeMessageResp(http.StatusInternalServerError, "更新失败"))
 		return
@@ -217,7 +218,7 @@ func (e *ExpressInterfaceTest) handlerUpdate(w http.ResponseWriter, r *http.Requ
 	return
 }
 
-func (e *ExpressInterfaceTest) handlerBatchDelete(w http.ResponseWriter, r *http.Request) {
+func (e *ExpressController) handlerBatchDelete(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp("批量删除参数获取失败"))
@@ -241,7 +242,7 @@ func (e *ExpressInterfaceTest) handlerBatchDelete(w http.ResponseWriter, r *http
 		response.WriteJson(w, response.FailMessageResp("批量删除单次操作不能超过20条"))
 		return
 	}
-	t, err := e.expressInter.BatchDeleteByIds(ids)
+	t, err := e.expressService.BatchDeleteByIds(ids)
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp("批量删除失败"))
 		return
@@ -251,7 +252,7 @@ func (e *ExpressInterfaceTest) handlerBatchDelete(w http.ResponseWriter, r *http
 }
 
 // handlerBatchInsert 批量新增
-func (e *ExpressInterfaceTest) handlerBatchInsert(w http.ResponseWriter, r *http.Request) {
+func (e *ExpressController) handlerBatchInsert(w http.ResponseWriter, r *http.Request) {
 	var list []*types.Express
 	// 大批量情况下使用json.NewDecoder与Decode
 	if err := json.NewDecoder(r.Body).Decode(&list); err != nil {
@@ -272,7 +273,7 @@ func (e *ExpressInterfaceTest) handlerBatchInsert(w http.ResponseWriter, r *http
 		return
 	}
 
-	t, err := e.expressInter.BatchCreateExpress(list)
+	t, err := e.expressService.BatchCreateExpress(list)
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp("批量新增失败"))
 		return
