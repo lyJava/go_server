@@ -39,6 +39,14 @@ func (s *APIServer) Serve() {
 	captchaController := controller.CaptchaControllerInit()
 	captchaController.RegisterRoutes(router)
 
+	// 文件上传控制器
+	uploadController := controller.UploadControllerInit()
+	uploadController.RegisterRoutes(router)
+
+	// 文件下载控制器
+	downloadController := controller.DownloadControllerInit()
+	downloadController.RegisterRoutes(router)
+
 	log.Println("api server starting at====", s.addr)
 	log.Fatalln(http.ListenAndServe(s.addr, router))
 }
