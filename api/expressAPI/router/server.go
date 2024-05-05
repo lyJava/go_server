@@ -14,6 +14,7 @@ type APIServer struct {
 	user    service.UserServiceInterface    // 用户服务接口
 }
 
+// NewAPIServer 创建API服务
 func NewAPIServer(add string, express service.ExpressServiceInterface, user service.UserServiceInterface) *APIServer {
 	return &APIServer{
 		addr:    add,
@@ -22,6 +23,7 @@ func NewAPIServer(add string, express service.ExpressServiceInterface, user serv
 	}
 }
 
+// Serve 启动API服务
 func (s *APIServer) Serve() {
 	router := mux.NewRouter()
 	//childRouter := router.PathPrefix("/dev-api").Subrouter()
@@ -47,6 +49,6 @@ func (s *APIServer) Serve() {
 	downloadController := controller.DownloadControllerInit()
 	downloadController.RegisterRoutes(router)
 
-	log.Println("api server starting at====", s.addr)
+	log.Println("api server starting at port====", s.addr)
 	log.Fatalln(http.ListenAndServe(s.addr, router))
 }
