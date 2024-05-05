@@ -14,7 +14,9 @@ import (
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 	"log"
+	_ "math/rand"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -243,4 +245,15 @@ func RsaDecrypt(privateKey []byte, ciphertext []byte) ([]byte, error) {
 		return nil, err
 	}
 	return rsa.DecryptPKCS1v15(rand.Reader, priv, ciphertext)
+}
+
+// GetKeyByteByPemPath 从文件中读取密钥/公钥
+func GetKeyByteByPemPath(pemPath string) ([]byte, error) {
+	fileByte, err := os.ReadFile(pemPath)
+	if err != nil {
+		log.Printf("read key byte from %s failed %s", pemPath, err.Error())
+		return nil, errors.New("读取密钥文件错误")
+	}
+	log.Printf("read key byte from %s success", pemPath)
+	return fileByte, nil
 }
