@@ -7,7 +7,7 @@ import (
 
 // MysqlConfig mysql的结构
 type MysqlConfig struct {
-	ServerPort string         // 服务端口号
+	ServerPort int            // 服务端口号
 	DbUser     string         // 数据库用户名
 	DbPass     string         // 数据库密码
 	DbAddress  string         // 数据库地址
@@ -70,38 +70,64 @@ type MyClaims struct {
 	jwt.StandardClaims        //jwt的Claims
 }
 
-// SqlConfig 数据库配置
+// SqlConfig mysql配置
 type SqlConfig struct {
-	Url      string // 连接URL
-	Username string // 用户名
-	Password string // 密码
-	Database string // 数据库名称
+	Mysql SqlConfigItem `mapstruct:"mysql"` // mysql
+}
+
+// SqlConfigItem mysql配置项
+type SqlConfigItem struct {
+	Url      string `mapstruct:"url"`      // 连接URL
+	Username string `mapstruct:"username"` // 用户名
+	Password string `mapstruct:"password"` // 密码
+	Database string `mapstruct:"database"` // 数据库名称
 }
 
 // ServerConfig 服务器配置
 type ServerConfig struct {
-	Port string
+	Server ServerConfigItem `mapstruct:"server"`
+}
+
+// ServerConfigItem 服务项配置
+type ServerConfigItem struct {
+	Port    int    `mapstruct:"port"`
+	Version string `mapstruct:"version"`
 }
 
 // JwtConfig JWT的配置
 type JwtConfig struct {
-	Secret string
+	Jwt JwtSecret `mapstruct:"jwt"`
+}
+
+// JwtSecret JWT的配置
+type JwtSecret struct {
+	Secret string `mapstruct:"secret"`
 }
 
 // RsaConfig rsa的配置
 type RsaConfig struct {
-	Key //密钥
+	Rsa RsaKeyConfig `mapstruct:"rsa"` //密钥
 }
 
-// Key 密钥结构
-type Key struct {
-	Public  string // 公钥
-	Private string //私钥
+// RsaKeyConfig rsa密钥的配置
+type RsaKeyConfig struct {
+	Key RsaKey `mapstruct:"key"` //密钥
+}
+
+// RsaKey rsa密钥结构
+type RsaKey struct {
+	Public  string `mapstruct:"public"`  // 公钥
+	Private string `mapstruct:"private"` //私钥
 }
 
 // RedisConfig redis连接结构
 type RedisConfig struct {
-	Address  string // 连接地址
-	Password string // 密码
-	Db       int    // 连接数据库索引，默认0
+	Redis RedisConfigItem `mapstruct:"redis"`
+}
+
+// RedisConfigItem redis连接结构
+type RedisConfigItem struct {
+	Address  string `mapstruct:"address"`  // 连接地址
+	Password string `mapstruct:"password"` // 密码
+	Db       int    `mapstruct:"db"`       // 连接数据库索引，默认0
 }

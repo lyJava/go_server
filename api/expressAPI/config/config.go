@@ -3,7 +3,6 @@ package config
 import (
 	"apiProject/api/expressAPI/types"
 	"fmt"
-	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 	"log"
 	"os"
@@ -13,8 +12,11 @@ import (
 var EnvConfig = InitConfig()
 
 func InitConfig() *types.MysqlConfig {
-	serverConfig, sqlConfig, rsaConfig, jwtConfig := buildConfig()
-
+	serverConfig, sqlConfigItem, RsaKeyInfo, jwtSecret := buildConfig()
+	log.Println(serverConfig)
+	log.Println(sqlConfigItem)
+	log.Println(RsaKeyInfo)
+	log.Println(jwtSecret)
 	// 设置时区为亚洲/上海
 	loc, err := time.LoadLocation("Asia/Shanghai")
 	if err != nil {
@@ -23,14 +25,14 @@ func InitConfig() *types.MysqlConfig {
 
 	return &types.MysqlConfig{
 		ServerPort: serverConfig.Port,
-		DbUser:     sqlConfig.Username,
-		DbPass:     sqlConfig.Password,
-		DbAddress:  sqlConfig.Url,
-		DbName:     sqlConfig.Database,
+		DbUser:     sqlConfigItem.Username,
+		DbPass:     sqlConfigItem.Password,
+		DbAddress:  sqlConfigItem.Url,
+		DbName:     sqlConfigItem.Database,
 		Loc:        loc,
-		JWTSecret:  jwtConfig.Secret,
-		PublicKey:  rsaConfig.Public,
-		PrivateKey: rsaConfig.Private,
+		PublicKey:  RsaKeyInfo.Public,
+		PrivateKey: RsaKeyInfo.Private,
+		JWTSecret:  jwtSecret.Secret,
 	}
 	/*return &types.MysqlConfig{
 		ServerPort: GetEnv("SERVER_PORT", "8086"),
@@ -46,28 +48,36 @@ func InitConfig() *types.MysqlConfig {
 }
 
 // buildConfig 构建并返回配置对象
-func buildConfig() (types.ServerConfig, types.SqlConfig, types.RsaConfig, types.JwtConfig) {
+func buildConfig() (types.ServerConfigItem, types.SqlConfigItem, types.RsaKey, types.JwtSecret) {
 	viperConfig := ReadConfig("api/expressApi/config", "application", "yml")
 
 	var serverConfig types.ServerConfig
-	serverMap := viperConfig.Get("server").(map[string]interface{})
-	mapstructure.Decode(serverMap, &serverConfig)
+	//serverMap := viperConfig.Get("server").(map[string]interface{})
+	//mapstructure.Decode(serverMap, &serverConfig)
+	viperConfig.Unmarshal(&serverConfig)
+
+	log.Println("获取的端口:", serverConfig.Server.Port)
+	log.Println("获取的版本:", serverConfig.Server.Version)
 
 	var sqlConfig types.SqlConfig
-	mysqlMap := viperConfig.Get("mysql").(map[string]interface{})
-	mapstructure.Decode(mysqlMap, &sqlConfig)
-
+	//mysqlMap := viperConfig.Get("mysql").(map[string]interface{})
+	//fmt.Println("数据库用户：", mysqlMap["username"])
+	//mapstructure.Decode(mysqlMap, &sqlConfig)
+	viperConfig.Unmarshal(&sqlConfig)
+	fmt.Println("数据库sqlConfig：", sqlConfig)
 	fmt.Println("数据库url：", viperConfig.Get("mysql.url"))
-	fmt.Println("数据库用户：", mysqlMap["username"])
 
 	var rsaConfig types.RsaConfig
-	rsaMap := viperConfig.Get("rsa").(map[string]interface{})
-	mapstructure.Decode(rsaMap, &rsaConfig)
+	//rsaMap := viperConfig.Get("rsa").(map[string]interface{})
+	//mapstructure.Decode(rsaMap, &rsaConfig)
+	viperConfig.Unmarshal(&rsaConfig)
 
 	var jwtConfig types.JwtConfig
-	jwtMap := viperConfig.Get("jwt").(map[string]interface{})
-	mapstructure.Decode(jwtMap, &jwtConfig)
-	return serverConfig, sqlConfig, rsaConfig, jwtConfig
+	//jwtMap := viperConfig.Get("jwt").(map[string]interface{})
+	//mapstructure.Decode(jwtMap, &jwtConfig)
+	viperConfig.Unmarshal(&jwtConfig)
+
+	return serverConfig.Server, sqlConfig.Mysql, rsaConfig.Rsa.Key, jwtConfig.Jwt
 }
 
 // ReadConfig 读取配置

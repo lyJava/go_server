@@ -1,5 +1,6 @@
 server:
   port: 8086
+  version: 0.0.1
 
 mysql:
   url: localhost:3306
@@ -14,7 +15,8 @@ jwt:
 # rsa加密key配置
 rsa:
   key:
-    public: -----BEGIN RSA PUBLIC KEY-----
+    public: |
+      -----BEGIN RSA PUBLIC KEY-----
       MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3JnmWnHSYY+D703RzGS6
       PK/YvslCz/I8K+vr7PZq5ND0OhoLP+pexhBnDtHhDw4vFhFsosNl70YZkOImQiX+
       glF0PJqZld1TAtzSl4UtTGo/TI5fHuxy4q31Q+b/kun8lvfvU7ZJe/uWUbKx6dC7
@@ -23,7 +25,8 @@ rsa:
       ikjoEThi+uXIQHptQseIxosVhs2z04SCEobRv1H86vs/ciJKE7Y8nUIcwC0H8a/h
       TQIDAQAB
       -----END RSA PUBLIC KEY-----
-    private: -----BEGIN RSA PRIVATE KEY-----
+    private: |
+      -----BEGIN RSA PRIVATE KEY-----
       MIIEowIBAAKCAQEA3JnmWnHSYY+D703RzGS6PK/YvslCz/I8K+vr7PZq5ND0OhoL
       P+pexhBnDtHhDw4vFhFsosNl70YZkOImQiX+glF0PJqZld1TAtzSl4UtTGo/TI5f
       Huxy4q31Q+b/kun8lvfvU7ZJe/uWUbKx6dC7w6Pum7k5C9oqaOKXHllp78e1Wu3+
@@ -53,9 +56,8 @@ rsa:
 
 redis:
   # redis服务器地址（默认为localhost,端口默认为6379）
-  address: localhost:6379
-  port: "6379"
+  address: 
   # redis数据库索引(默认为0)，我们使用索引为3的数据库，避免和其他数据库冲突
   db: 0
   # redis访问密码（默认为空）
-  password: "244112311"
+  password: 244112311
