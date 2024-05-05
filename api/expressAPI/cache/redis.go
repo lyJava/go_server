@@ -16,25 +16,36 @@ var RedisCache = &redis.Client{}
 func init() {
 
 	viperConfig := config.ReadConfig("api/expressApi/config", "application", "yml")
-	redisMap := viperConfig.Get("redis").(map[string]interface{})
+	//redisMap := viperConfig.Get("redis").(map[string]string)
 	var redisConfig types.RedisConfig
-	err := mapstructure.Decode(redisMap, &redisConfig)
+	/*err := mapstructure.Decode(redisMap, &redisConfig)
 	if err != nil {
 		fmt.Println("failed to decode Redis config:", err)
+		return
+	}*/
+	viperConfig.Unmarshal(&redisConfig)
+
+	if (redisConfig == types.RedisConfig{}) {
+		fmt.Println("no Redis configuration found, skipping initialization")
 		return
 	}
 
 	/*if err := DecodeConfig(redisMap, &redisConfig); err != nil {
 		fmt.Println("failed to decode Redis config:", err)
 		return
-	}*/
+	}
 
 	if len(redisMap) == 0 || redisConfig.Address == "" {
 		fmt.Println("no Redis configuration found, skipping initialization")
 		return
+	}*/
+	redisConfigItem := redisConfig.Redis
+	if redisConfigItem.Address == "" {
+		fmt.Println("no Redis configuration found, skipping initialization")
+		return
 	}
 
-	client, err := initRedisClient(redisConfig)
+	client, err := initRedisClient(redisConfigItem)
 	if err != nil {
 		fmt.Println("failed to initialize Redis client:", err)
 		return
@@ -43,7 +54,7 @@ func init() {
 	log.Println("Redis initialized successfully")
 }
 
-func initRedisClient(config types.RedisConfig) (*redis.Client, error) {
+func initRedisClient(config types.RedisConfigItem) (*redis.Client, error) {
 	// net.JoinHostPort(config.Host, config.Port),
 	client := redis.NewClient(&redis.Options{
 		Addr:     config.Address,
@@ -93,6 +104,28 @@ func Get(key string) (string, error) {
 	return result, err
 }
 
+// withRedisCache 使用闭包方式
+func withRedisCache(fn func() error) {
+	if RedisCache == nil || reflect.DeepEqual(RedisCache, &redis.Client{}) {
+		log.Println("RedisCache 未初始化，请检查 Redis 初始化过程")
+		return
+	}
+	err := fn()
+	if err != nil {
+		log.Printf("操作失败: %s", err.Error())
+	}
+}
+
+func checkRedisCache() bool {
+	if RedisCache == nil || reflect.DeepEqual(RedisCache, &redis.Client{}) {
+		// RedisCache 未初始化，可能发生了错误
+		// 进行适当的错误处理
+		log.Println("RedisCache 未初始化，请检查 Redis 初始化过程")
+		return false
+	}
+	return true
+}
+
 // Set 设置数据到缓存
 // 参数
 //
@@ -100,31 +133,40 @@ func Get(key string) (string, error) {
 //		value 存储的值
 //	 timeout 缓存时间(秒)
 func Set(key string, value interface{}, timeout int64) {
-	// 将 timeout 转换为持续时间
-	duration := time.Duration(timeout) * time.Second
-	err := RedisCache.Set(key, value, duration).Err()
-	if err != nil {
-		log.Printf("缓存数据失败===%s", err.Error())
-		return
-	}
+	withRedisCache(func() error {
+		// 将 timeout 转换为持续时间
+		duration := time.Duration(timeout) * time.Second
+		return RedisCache.Set(key, value, duration).Err()
+	})
 }
 
 // LPush RPush 使用RPush命令往队列右边加入
 func LPush(key string, value ...interface{}) error {
-	err := RedisCache.LPush(key, value).Err()
-	return err
+	if checkRedisCache() {
+		err := RedisCache.LPush(key, value).Err()
+		return err
+	}
+	return nil
 }
 
 // RPop LPop 取出并移除左边第一个元素
 func RPop(key string) (interface{}, error) {
-	result, err := RedisCache.RPop(key).Result()
+	var result interface{}
+	var err error
+	withRedisCache(func() error {
+		result, err = RedisCache.RPop(key).Result()
+		return err
+	})
 	return result, err
 }
 
 // BRPop BLPop 取出并移除左边第一个元素， 如果列表没有元素会阻塞列表直到等待超时或发现可弹出元素为止。
 func BRPop(timeout time.Duration, key string) (interface{}, error) {
-	result, err := RedisCache.BRPop(timeout, key).Result()
-	return result, err
+	if checkRedisCache() {
+		result, err := RedisCache.BRPop(timeout, key).Result()
+		return result, err
+	}
+	return nil, nil
 }
 
 // LLen 获取数据长度
