@@ -13,10 +13,7 @@ var EnvConfig = InitConfig()
 
 func InitConfig() *types.MysqlConfig {
 	serverConfig, sqlConfigItem, RsaKeyInfo, jwtSecret := buildConfig()
-	log.Println(serverConfig)
-	log.Println(sqlConfigItem)
-	log.Println(RsaKeyInfo)
-	log.Println(jwtSecret)
+
 	// 设置时区为亚洲/上海
 	loc, err := time.LoadLocation("Asia/Shanghai")
 	if err != nil {
@@ -64,8 +61,7 @@ func buildConfig() (types.ServerConfigItem, types.SqlConfigItem, types.RsaKey, t
 	//fmt.Println("数据库用户：", mysqlMap["username"])
 	//mapstructure.Decode(mysqlMap, &sqlConfig)
 	viperConfig.Unmarshal(&sqlConfig)
-	fmt.Println("数据库sqlConfig：", sqlConfig)
-	fmt.Println("数据库url：", viperConfig.Get("mysql.url"))
+	log.Println("数据库url：", viperConfig.Get("mysql.url"))
 
 	var rsaConfig types.RsaConfig
 	//rsaMap := viperConfig.Get("rsa").(map[string]interface{})
