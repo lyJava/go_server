@@ -13,7 +13,6 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
-	"os"
 )
 
 // UserController 用户控制器
@@ -134,10 +133,16 @@ func (u *UserController) handlerCheckPwd(w http.ResponseWriter, r *http.Request)
 
 	encodePwdByte, _ := base64.StdEncoding.DecodeString(encodePwd)
 
-	publicKeyName := "public.pem"
-	privateKeyName := "private.pem"
-	publicKey, _ := os.ReadFile(publicKeyName)
-	privateKey, _ := os.ReadFile(privateKeyName)
+	publicKey, err := utils.GetKeyByteByPemPath("public.pem")
+	if err != nil {
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
+		return
+	}
+	privateKey, err := utils.GetKeyByteByPemPath("private.pem")
+	if err != nil {
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
+		return
+	}
 
 	encrypt, _ := utils.RsaEncrypt(publicKey, []byte(password))
 	encryptStr := base64.StdEncoding.EncodeToString(encrypt)
