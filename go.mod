@@ -13,6 +13,7 @@ require (
 	github.com/google/wire v0.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/mitchellh/mapstructure v1.5.0
+	github.com/rabbitmq/amqp091-go v1.9.0
 	github.com/spf13/viper v1.18.2
 	golang.org/x/crypto v0.22.0
 	golang.org/x/image v0.15.0
