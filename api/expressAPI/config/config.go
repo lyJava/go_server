@@ -12,7 +12,7 @@ import (
 var EnvConfig = InitConfig()
 
 func InitConfig() *types.MysqlConfig {
-	serverConfig, sqlConfigItem, RsaKeyInfo, jwtSecret := buildConfig()
+	serverConfig, sqlConfigItem, RsaKeyInfo, jwtSecret, rabbitmqConfig := buildConfig()
 
 	// 设置时区为亚洲/上海
 	loc, err := time.LoadLocation("Asia/Shanghai")
@@ -30,6 +30,7 @@ func InitConfig() *types.MysqlConfig {
 		PublicKey:  RsaKeyInfo.Public,
 		PrivateKey: RsaKeyInfo.Private,
 		JWTSecret:  jwtSecret.Secret,
+		Rabbitmq:   rabbitmqConfig,
 	}
 	/*return &types.MysqlConfig{
 		ServerPort: GetEnv("SERVER_PORT", "8086"),
@@ -45,7 +46,7 @@ func InitConfig() *types.MysqlConfig {
 }
 
 // buildConfig 构建并返回配置对象
-func buildConfig() (types.ServerConfigItem, types.SqlConfigItem, types.RsaKey, types.JwtSecret) {
+func buildConfig() (types.ServerConfigItem, types.SqlConfigItem, types.RsaKey, types.JwtSecret, types.RabbitmqConfigItem) {
 	viperConfig := ReadConfig("api/expressApi/config", "application", "yml")
 
 	var serverConfig types.ServerConfig
@@ -73,7 +74,11 @@ func buildConfig() (types.ServerConfigItem, types.SqlConfigItem, types.RsaKey, t
 	//mapstructure.Decode(jwtMap, &jwtConfig)
 	viperConfig.Unmarshal(&jwtConfig)
 
-	return serverConfig.Server, sqlConfig.Mysql, rsaConfig.Rsa.Key, jwtConfig.Jwt
+	var rabbitmqConfig types.RabbitmqConfig
+	viperConfig.Unmarshal(&rabbitmqConfig)
+	fmt.Println(rabbitmqConfig)
+
+	return serverConfig.Server, sqlConfig.Mysql, rsaConfig.Rsa.Key, jwtConfig.Jwt, rabbitmqConfig.Rabbitmq
 }
 
 // ReadConfig 读取配置

@@ -61,3 +61,14 @@ redis:
   db: 0
   # redis访问密码（默认为空）
   password: 244112311
+
+rabbitmq:
+  host: localhost
+  port: 5672
+  # 集群配置
+  # address: 127.0.0.1:5673,127.0.0.1:5674
+  username: admin
+  password: root244112311
+  virtual-host: /
+  connection-timeout: 20000
+  publisher-returns: true
