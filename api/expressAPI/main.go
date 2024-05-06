@@ -2,12 +2,44 @@ package main
 
 import (
 	"apiProject/api/expressAPI/config"
+	"apiProject/api/expressAPI/controller"
 	"apiProject/api/expressAPI/datasource"
+	"apiProject/api/expressAPI/rabbitmq"
 	"apiProject/api/expressAPI/router"
+	"apiProject/api/expressAPI/service"
 	"apiProject/api/expressAPI/service/impl"
+	"apiProject/api/expressAPI/types"
+	"fmt"
 	"github.com/go-sql-driver/mysql"
 	"log"
+	"strconv"
 )
+
+type Application struct {
+	port              string                        //端口号
+	cfg               *types.MysqlConfig            //配置
+	expressService    *service.UserServiceInterface //快递接口
+	userService       *service.UserServiceInterface //用户接口
+	expressController *controller.ExpressController //快递控制器
+	UserController    *controller.UserController    // 用户控制器
+}
+
+func NewApplication(
+	port string,
+	cfg *types.MysqlConfig,
+	expressService *service.UserServiceInterface,
+	userService *service.UserServiceInterface,
+	expressController *controller.ExpressController,
+	serController *controller.UserController) *Application {
+	return &Application{
+		port:              port,
+		cfg:               cfg,
+		expressService:    expressService,
+		userService:       userService,
+		expressController: expressController,
+		UserController:    serController,
+	}
+}
 
 func main() {
 
@@ -59,7 +91,19 @@ func main() {
 		Collation:            "utf8mb4_general_ci",
 		Loc:                  config.EnvConfig.Loc,
 	}
-	expressSQL := datasource.InitMysqlDB(cfg)
+
+	rabbitmqCfg := config.EnvConfig.Rabbitmq
+	connString := fmt.Sprintf("amqp://%s:%s@%s:%d%s",
+		rabbitmqCfg.Username,
+		rabbitmqCfg.Password,
+		rabbitmqCfg.Host,
+		rabbitmqCfg.Port,
+		rabbitmqCfg.VirtualHost,
+	)
+	log.Println(connString)
+
+	//rabbitmq.Consume(ch, queue.Name, false)
+	/*expressSQL := datasource.InitMysqlDB(cfg)
 
 	db, err := expressSQL.GetDb()
 	if err != nil {
@@ -69,12 +113,65 @@ func main() {
 	express := impl.NewExpressDB(db)
 	user := impl.NewUserDB(db)
 	api := router.NewAPIServer(":3000", express, user)
+	api.Serve()*/
+
+	//initializeConfig, _ := InitializeConfig()
+	//
+	//cfg := mysql.Config{
+	//	User:                 initializeConfig.DbUser,
+	//	Passwd:               initializeConfig.DbPass,
+	//	Addr:                 initializeConfig.DbAddress,
+	//	DBName:               initializeConfig.DbName,
+	//	Net:                  "tcp",
+	//	AllowNativePasswords: true,
+	//	ParseTime:            false,
+	//	Collation:            "utf8mb4_general_ci",
+	//	Loc:                  initializeConfig.Loc,
+	//}
+
+	//application, _ := InitializeApplication()
+	//log.Printf("1===%v", application.expressController)
+
+	//cache.Set("test123", "我只是测试数据", 30)
+
+	// 生成验证码图片
+	//img := utils.GenerateImage(code)
+
+	/*fileName := "captcha" + code + ".png"
+	// 创建文件
+	file, err := os.Create(fileName)
+	if err != nil {
+		fmt.Println("Failed to create file:", err)
+		return
+	}
+	defer file.Close()
+
+	//将图片保存为 PNG 格式
+	err = png.Encode(file, img)
+	if err != nil {
+		fmt.Println("Failed to save image:", err)
+		return
+	}
+
+	fmt.Println("验证码图片已保存为 ", fileName)*/
+
+	expressSQL := datasource.InitMysqlDB(cfg)
+	//expressSQL := mysqlDB.InitMysqlDB(cfg)
+
+	db, err := expressSQL.GetDb()
+	if err != nil {
+		log.Printf("获取数据库信息失败===%v", err)
+	}
+
+	express := impl.NewExpressDB(db)
+	user := impl.NewUserDB(db)
+
+	serverPort := ":" + strconv.Itoa(config.EnvConfig.ServerPort)
+	api := router.NewAPIServer(serverPort, express, user, rabbitmq.ConnectRabbitmq(connString))
 	api.Serve()
 
-	//dbWire, _ := InitializeWire(expressSQL)
 	//log.Printf("获取数据库信息===%v", dbWire)
 	//mysqlConfig, _ := InitializeEnglishGreeter()
-	//log.Println(mysqlConfig.DbName)
 
 	////go:build wireinject
 	//// +build wireinject
