@@ -57,6 +57,14 @@ func OkMessageResp(message string) Response {
 	}
 }
 
+func OkCodeMessageData(message string, data any) Response {
+	return Response{
+		Code:    200,
+		Message: message,
+		Data:    data,
+	}
+}
+
 // OkFullResp 返回完整的成功响应
 //
 // 参数:
