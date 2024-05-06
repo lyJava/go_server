@@ -53,8 +53,8 @@ func buildConfig() (types.ServerConfigItem, types.SqlConfigItem, types.RsaKey, t
 	//mapstructure.Decode(serverMap, &serverConfig)
 	viperConfig.Unmarshal(&serverConfig)
 
-	log.Println("获取的端口:", serverConfig.Server.Port)
-	log.Println("获取的版本:", serverConfig.Server.Version)
+	log.Println("服务的端口号:", serverConfig.Server.Port)
+	log.Println("服务版本信息:", serverConfig.Server.Version)
 
 	var sqlConfig types.SqlConfig
 	//mysqlMap := viperConfig.Get("mysql").(map[string]interface{})
