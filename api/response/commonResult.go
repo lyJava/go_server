@@ -35,6 +35,15 @@ func OkCodeResp(code int) Response {
 	}
 }
 
+// OkDataResp 返回响应数据的成功信息
+//
+// 参数
+//
+//	data (any): 响应数据
+//
+// 返回
+//
+//	Response: 包含指定响应码、消与响应数据的的结构
 func OkDataResp(data any) Response {
 	return Response{
 		Code:    200,
@@ -108,6 +117,15 @@ func FailCodeMessageResp(code int, message string) Response {
 	}
 }
 
+// FailMessageResp 返回响应码和消息
+//
+// 参数:
+//
+//	message (string): 描述响应的消息。
+//
+// 返回:
+//
+//	Response: 包含指定响应码和消息的 Response 结构
 func FailMessageResp(message string) Response {
 	return Response{
 		Code:    500,
