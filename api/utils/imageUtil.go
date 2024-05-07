@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"log"
+	"math"
 	"math/rand"
 	"strconv"
 	"time"
@@ -53,35 +54,44 @@ func MergeImage() {
 	log.Println("Images combined successfully")
 }
 
-func MergeImages2(imgPath1, imgPath2 string) {
+func MergeImages2(img1Path, img2Path string, padding int) {
 	// 打开第一张图片
-	img1, err := imaging.Open(imgPath1)
+	img1, err := imaging.Open(img1Path)
 	if err != nil {
 		log.Fatalf("failed to open image1.jpg: %v", err)
 	}
 
 	// 打开第二张图片
-	img2, err := imaging.Open(imgPath2)
+	img2, err := imaging.Open(img2Path)
 	if err != nil {
 		log.Fatalf("failed to open image2.jpg: %v", err)
 	}
 
-	// 计算合并后图片的大小
-	canvasWidth := img1.Bounds().Dx()
-	canvasHeight := img1.Bounds().Dy() + img2.Bounds().Dy() + 1 // 加上间隔的高度
+	// 计算合成后图片的高度
+	canvasHeight := img1.Bounds().Dy() + img2.Bounds().Dy() + padding
+
+	// 画布的宽度
+	canvasWidth := 0
+
+	img1Width := img1.Bounds().Dx()
+	img2Width := img2.Bounds().Dx()
+	/*if img1Width >= img2Width {
+		canvasWidth = img1Width
+	} else {
+		canvasWidth = img2Width
+	}*/
+	// 以最宽的图片宽度为准
+	canvasWidth = int(math.Max(float64(img1Width), float64(img2Width)))
+
+	//width, height := checkWidthAndHeight(canvasWidth, canvasHeight)
+
 	dst := imaging.New(canvasWidth, canvasHeight, color.Transparent)
 
 	// 将第一张图片绘制到新画布的顶部
 	dst = imaging.Paste(dst, img1, image.Pt(0, 0))
 
 	// 将第二张图片绘制到新画布的底部，并留下一段间隔
-	dst = imaging.Paste(dst, img2, image.Pt(0, img1.Bounds().Dy()+1))
-
-	// 将第一张图片绘制到新画布的顶部
-	dst = imaging.Paste(dst, img1, image.Pt(0, 0))
-
-	// 将第二张图片绘制到新画布的底部，并留下一段间隔
-	dst = imaging.Paste(dst, img2, image.Pt(0, img1.Bounds().Dy()+1))
+	dst = imaging.Paste(dst, img2, image.Pt(0, img1.Bounds().Dy()+padding))
 
 	rand.NewSource(time.Now().UnixNano())
 	round := rand.Intn(100)
@@ -95,4 +105,19 @@ func MergeImages2(imgPath1, imgPath2 string) {
 
 	log.Println("Images combined successfully")
 
+}
+
+// checkWidthAndHeight 验证图片宽度与高度
+func checkWidthAndHeight(width, height int) (newWidth, newHeight int) {
+	// 如果宽度超过A4纸张的宽度（2480像素），则进行裁剪
+	a4Width := 2480
+	if width > a4Width {
+		width = a4Width
+	}
+	// 如果高度超过A4纸张的高度（3508像素），则进行裁剪
+	a4Height := 3508
+	if height > a4Height {
+		height = a4Height
+	}
+	return width, height
 }
