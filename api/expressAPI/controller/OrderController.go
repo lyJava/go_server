@@ -53,7 +53,7 @@ func (mq *OrderController) CreateHandler(w http.ResponseWriter, r *http.Request)
 	// 声明交换器
 	rabbitmq.DeclareExchange(channel, exchangeName, "direct")
 	// 声明队列
-	queue := rabbitmq.DeclareQueue(channel, queueName)
+	queue := rabbitmq.DeclareQueue(channel, queueName, true)
 	// 绑定交换器与队列
 	rabbitmq.BindQueue(channel, queue.Name, routingKey, exchangeName)
 	// 发布订单消息到交换器
@@ -71,11 +71,11 @@ func (mq *OrderController) CreateHandler(w http.ResponseWriter, r *http.Request)
 		}()
 
 		// 用于接收消息的通道
-		delivery := make(chan amqp.Delivery)
+		messageDelivery := make(chan amqp.Delivery)
 
 		// 使用协程接收消息
 
-		msgs, err := channel.Consume(
+		messageList, err := channel.Consume(
 			queueName, // queue
 			"",        // consumer
 			false,     // auto ack
@@ -91,13 +91,13 @@ func (mq *OrderController) CreateHandler(w http.ResponseWriter, r *http.Request)
 
 		// 将消息发送到 delivery 通道中
 		go func() {
-			for msg := range msgs {
-				delivery <- msg
+			for msg := range messageList {
+				messageDelivery <- msg
 			}
 		}()
 
 		// 开始消费消息
-		for msg := range delivery {
+		for msg := range messageDelivery {
 			log.Printf(" 接收到到消息=== %s", msg.Body)
 			// 手动确认消息
 			err := msg.Ack(false)

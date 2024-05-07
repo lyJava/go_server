@@ -30,13 +30,19 @@ func OpenChannel(conn *amqp.Connection) *amqp.Channel {
 }
 
 // DeclareQueue 申明队列
-func DeclareQueue(ch *amqp.Channel, queueName string) *amqp.Queue {
+//
+// 参数
+//
+//		ch (*amqp.Channel) 通道
+//		queueName (string) 队列名称
+//	 durable	(bool) 是否持久化
+func DeclareQueue(ch *amqp.Channel, queueName string, durable bool) *amqp.Queue {
 	queue, err := ch.QueueDeclare(queueName, // 队列名称
-		false, // 是否持久化
-		false, // 是否自动删除
-		false, // 是否排他
-		false, // 是否阻塞
-		nil,   // 额外参数
+		true,    // 是否持久化
+		durable, // 是否自动删除
+		false,   // 是否排他
+		false,   // 是否阻塞
+		nil,     // 额外参数
 	)
 	failOnError(err, "Failed to declare a queue")
 	return &queue
@@ -88,7 +94,7 @@ func PublishMessage(ch *amqp.Channel, exchange, queueName string, message interf
 }
 
 // Consume 消费
-func Consume(ch *amqp.Channel, queueName string, autoAsk bool, done chan struct{}) []string {
+func Consume(ch *amqp.Channel, queueName string, autoAsk bool) []string {
 	delivery, err := ch.Consume(
 		queueName, // queue
 		"",        // consumer
@@ -101,8 +107,8 @@ func Consume(ch *amqp.Channel, queueName string, autoAsk bool, done chan struct{
 	failOnError(err, "Failed to register a consumer")
 
 	var messages []string
+	var forever chan struct{}
 
-	//var forever chan struct{}
 	go func() {
 		/*for d := range msg {
 			log.Printf(" [x] %s", d.Body)
@@ -126,6 +132,6 @@ func Consume(ch *amqp.Channel, queueName string, autoAsk bool, done chan struct{
 
 	log.Printf(" [*] Waiting for logs. To exit press CTRL+C")
 	// 等待通道关闭，以确保消费者协程完成
-	<-done
+	<-forever
 	return messages
 }
