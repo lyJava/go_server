@@ -59,16 +59,21 @@ func (u *UserController) handlerCreateUser(w http.ResponseWriter, r *http.Reques
 	}
 
 	defer r.Body.Close()
+
 	user.Password = utils.HashPassword(user.Password)
 	creatUser, err := u.userService.CreatUser(user)
 	if err != nil {
-		response.WriteJson(w, response.FailMessageResp("创建用户失败"))
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
 
-	token, err := utils.CreatAndSerAuthCookie(creatUser, 7, w)
+	// 将json格式化输出
+	marshal, _ := json.MarshalIndent(creatUser, "", "    ")
+	log.Printf("用户新增===\n%s", marshal)
+
+	token, err := utils.CreatToken(creatUser, 7)
 	if err != nil {
-		response.WriteJson(w, response.FailMessageResp("返回token失败"))
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
 
@@ -172,13 +177,23 @@ func (u *UserController) handlerCheckPwd(w http.ResponseWriter, r *http.Request)
 // handlerUserLogin 用户登录
 func (u *UserController) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 	var user *types.User
+
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		log.Println(err)
 		response.WriteJson(w, response.FailMessageResp("解析用户登录参数失败"))
 		return
 	}
-
 	defer r.Body.Close()
+
+	if user.Username == "" {
+		response.WriteJson(w, response.FailMessageResp("用户名不能为空"))
+		return
+	}
+
+	if user.Password == "" {
+		response.WriteJson(w, response.FailMessageResp("密码不能为空"))
+		return
+	}
 
 	loginUser, err := u.userService.UserLogin(user)
 	if err != nil {
@@ -205,9 +220,9 @@ func (u *UserController) handlerUserLogin(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	token, err := utils.CreatAndSerAuthCookie(loginUser, 10, w)
+	token, err := utils.CreatAndSetAuthCookie(w, loginUser, 10)
 	if err != nil {
-		response.WriteJson(w, response.FailMessageResp("返回用户token失败"))
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
 

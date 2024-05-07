@@ -3,6 +3,8 @@ package impl
 import (
 	"apiProject/api/expressAPI/types"
 	"database/sql"
+	"errors"
+	"log"
 )
 
 type UserDB struct {
@@ -33,7 +35,8 @@ func (u *UserDB) GetUserById(id int64) (*types.User, error) {
 		&user.UpdateTime,
 	)
 	if err != nil {
-		return nil, err
+		log.Printf("get user by id error ==%v", err)
+		return nil, errors.New("获取用户失败")
 	}
 	return user, nil
 }
@@ -44,18 +47,23 @@ func (u *UserDB) CreatUser(user *types.User) (*types.User, error) {
 		user.Username, user.Nickname, user.Phone, user.Email, user.Password, user.CreateBy, user.Token)
 
 	if err != nil {
-		return nil, err
+		log.Printf("exec error ==%v", err)
+		return nil, errors.New("创建用户失败")
 	}
 	id, err := row.LastInsertId()
 	if err != nil {
-		return nil, err
+		log.Printf("row get lastInsertId error ==%v", err)
+		return nil, errors.New("创建用户失败")
 	}
 	userById, err := u.GetUserById(id)
+	if err != nil {
+		return nil, errors.New("创建用户失败")
+	}
 	return userById, nil
 }
 
 func (u *UserDB) UserLogin(us *types.User) (*types.User, error) {
-	row := u.Db.QueryRow("SELECT user_id, IFNULL(username, ''), IFNULL(nick_name, ''),  IFNULL(password, ''), IFNULL(DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s' ), ''), IFNULL(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s' ), ''), token FROM sys_user WHERE username = ?", us.Username)
+	row := u.Db.QueryRow("SELECT user_id, IFNULL(username, ''), IFNULL(nick_name, ''),  IFNULL(password, '') FROM sys_user WHERE username = ?", us.Username)
 	// 创建 Express 对象
 	user := &types.User{}
 
@@ -64,9 +72,6 @@ func (u *UserDB) UserLogin(us *types.User) (*types.User, error) {
 		&user.Username,
 		&user.Nickname,
 		&user.Password,
-		&user.CreateTime,
-		&user.UpdateTime,
-		&user.Token,
 	)
 	if err != nil {
 		return nil, err

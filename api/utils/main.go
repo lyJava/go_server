@@ -138,17 +138,32 @@ func CreateJWT(user *types.User, days int64, secret []byte) (string, error) {
 	return tokenStr, nil
 }
 
-// CreatAndSerAuthCookie 创建并设置token到cookie
+// CreatToken 创建token
+// 参数
+//
+//	userId: 用户信息
+//	days: 有效天数
+func CreatToken(user *types.User, days int64) (string, error) {
+	secret := []byte(config.EnvConfig.JWTSecret)
+	token, err := CreateJWT(user, days, secret)
+	if err != nil {
+		return "", errors.New("创建token失败")
+	}
+	return token, nil
+}
+
+// CreatAndSetAuthCookie 创建并设置token到cookie
 // 参数
 //
 //		userId: 用户ID
 //	 days: token有效天数
 //	 w:	http返回
-func CreatAndSerAuthCookie(user *types.User, days int64, w http.ResponseWriter) (string, error) {
+func CreatAndSetAuthCookie(w http.ResponseWriter, user *types.User, days int64) (string, error) {
 	secret := []byte(config.EnvConfig.JWTSecret)
 	token, err := CreateJWT(user, days, secret)
 	if err != nil {
-		return "", err
+		log.Printf("create and set token error === %s", err)
+		return "", errors.New("创建并设置token失败")
 	}
 
 	http.SetCookie(w, &http.Cookie{
