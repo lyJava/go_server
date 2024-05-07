@@ -134,30 +134,35 @@ func (u *UserController) handlerCheckPwd(w http.ResponseWriter, r *http.Request)
 	}
 
 	log.Printf("前端原始密码===%s", password)
-	log.Printf("加密密码(base64)===%s", encodePwd)
+	log.Printf("前端加密密码(base64)===%s", encodePwd)
 
 	encodePwdByte, _ := base64.StdEncoding.DecodeString(encodePwd)
 
-	publicKey, err := utils.GetKeyByteByPemPath("public.pem")
+	/*publicKey, err := utils.GetKeyByteByPath("public.pem")
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
-	}
-	privateKey, err := utils.GetKeyByteByPemPath("private.pem")
+	}*/
+	privateKey, err := utils.GetKeyByteByPath("private.pem")
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
 
-	encrypt, _ := utils.RsaEncrypt(publicKey, []byte(password))
+	/*encrypt, _ := utils.RsaEncrypt(publicKey, []byte(password))
 	encryptStr := base64.StdEncoding.EncodeToString(encrypt)
-	log.Printf("RsaEncrypt===加密后的===%s", encryptStr) // 将这个传给前端进行解密
+	log.Printf("RsaEncrypt===加密后的===%s", encryptStr) */ // 将这个传给前端进行解密
+
 	//encryptByte, _ := base64.StdEncoding.DecodeString(encryptStr)
 	//decrypt2, _ := utils.RsaDecrypt(privateKey, encryptByte)
 	//log.Printf("RsaDecrypt解密后的1===%s", string(decrypt2))
 
-	decrypt, _ := utils.RsaDecrypt(privateKey, encodePwdByte)
+	decrypt, err := utils.RsaDecrypt(privateKey, encodePwdByte)
 	log.Printf("RsaDecrypt解密后的2===%s", string(decrypt))
+	if err != nil {
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
+		return
+	}
 
 	//decodeStr := utils.RSADecode(encodePwd)
 	//log.Printf("解密后的===%s", decodeStr)

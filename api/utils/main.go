@@ -236,34 +236,75 @@ func RSADecode(val string) string {
 }
 
 // RsaEncrypt 加密
-func RsaEncrypt(publicKey []byte, origData []byte) ([]byte, error) {
-	block, _ := pem.Decode(publicKey)
+func RsaEncrypt(publicKeyByte []byte, origData []byte) ([]byte, error) {
+	block, _ := pem.Decode(publicKeyByte)
 	if block == nil {
 		return nil, errors.New("public key error")
 	}
-	pubInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		return nil, err
+
+	var pubInterface any
+	var err error
+
+	switch block.Type {
+	case "RSA PUBLIC KEY":
+		pubInterface, err = x509.ParsePKIXPublicKey(block.Bytes)
+	case "PUBLIC KEY":
+		pubInterface, err = x509.ParsePKCS1PublicKey(block.Bytes)
+	default:
+		log.Printf("未知的公钥类型===%s", block.Type)
+		err = fmt.Errorf("未知的公钥类型: %s", block.Type)
 	}
-	pub := pubInterface.(*rsa.PublicKey)
-	return rsa.EncryptPKCS1v15(rand.Reader, pub, origData)
+
+	if err != nil {
+		log.Printf("RSA公钥解析错误===%v", err)
+		return nil, fmt.Errorf("解析公钥失败: %v", err)
+	}
+
+	publicKey := pubInterface.(*rsa.PublicKey)
+	// 加密数据
+	encryptDataByte, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, origData)
+	if err != nil {
+		log.Printf("RSA公钥加密错误===%v", err)
+		return nil, errors.New("加密失败")
+	}
+	return encryptDataByte, nil
 }
 
 // RsaDecrypt 解密
-func RsaDecrypt(privateKey []byte, ciphertext []byte) ([]byte, error) {
-	block, _ := pem.Decode(privateKey)
+func RsaDecrypt(privateKeyByte []byte, ciphertext []byte) ([]byte, error) {
+	block, _ := pem.Decode(privateKeyByte)
 	if block == nil {
-		return nil, errors.New("private key error!")
+		return nil, errors.New("private key error")
 	}
-	priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+
+	var privateInterface interface{}
+	var err error
+
+	if block.Type == "RSA PRIVATE KEY" {
+		privateInterface, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+	} else if block.Type == "PRIVATE KEY" {
+		privateInterface, err = x509.ParsePKCS8PrivateKey(block.Bytes)
+	} else {
+		log.Printf("未知的私钥类型===%v", err)
+		err = errors.New("解密失败")
+	}
+
 	if err != nil {
+		log.Printf("RSA私钥解析错误===%v", err)
 		return nil, err
 	}
-	return rsa.DecryptPKCS1v15(rand.Reader, priv, ciphertext)
+
+	privateKey := privateInterface.(*rsa.PrivateKey)
+	decryptDataByte, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, ciphertext)
+	if err != nil {
+		log.Printf("RSA私钥解密错误===%v", err)
+		return nil, errors.New("解密失败")
+	}
+	return decryptDataByte, nil
 }
 
-// GetKeyByteByPemPath 从文件中读取密钥/公钥
-func GetKeyByteByPemPath(pemPath string) ([]byte, error) {
+// GetKeyByteByPath 从文件中读取密钥
+func GetKeyByteByPath(pemPath string) ([]byte, error) {
 	fileByte, err := os.ReadFile(pemPath)
 	if err != nil {
 		log.Printf("read key byte from %s failed %s", pemPath, err.Error())
