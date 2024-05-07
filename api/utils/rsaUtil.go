@@ -13,6 +13,9 @@ import (
 	"os"
 )
 
+//https://piaohua.github.io/post/golang/20210306-golang-rsa-oaep/
+
+// GenerateRSAKey2File 生成密钥
 func GenerateRSAKey2File(bits int, publicKeyName, privateKeyName string) (err error) {
 	publicKeyWriter := bytes.NewBuffer([]byte{})
 	privateKeyWriter := bytes.NewBuffer([]byte{})
