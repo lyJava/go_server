@@ -131,13 +131,8 @@ func (e *ExpressController) handlerSelectPage(w http.ResponseWriter, r *http.Req
 	pageDataMap["totalRecords"] = totalRecords
 	pageDataMap["totalPages"] = totalPages
 	response.WriteJson(w, response.OkDataResp(pageDataMap))*/
-	pageData := response.PageData{
-		Content:      expressPage,
-		TotalRecords: totalRecords,
-		TotalPages:   totalPages,
-	}
 
-	response.WriteJson(w, response.OkDataResp(pageData))
+	response.WriteJson(w, response.OkDataResp(response.NewPageData(totalRecords, totalPages, expressPage)))
 	return
 }
 
@@ -170,12 +165,7 @@ func (e *ExpressController) handlerSelectPageParam(w http.ResponseWriter, r *htt
 		return
 	}
 
-	pageData := response.PageData{
-		Content:      expressPage,
-		TotalRecords: totalRecords,
-		TotalPages:   totalPages,
-	}
-	response.WriteJson(w, response.OkDataResp(pageData))
+	response.WriteJson(w, response.OkDataResp(response.NewPageData(totalRecords, totalPages, expressPage)))
 	return
 }
 
