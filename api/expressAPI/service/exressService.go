@@ -23,7 +23,7 @@ type ExpressServiceInterface interface {
 	//	expressName (string): 快递名称
 	//	page (string): 当前页码
 	//	size (string): 每页条数
-	SelectExpressPage(expressName string, page, size string) ([]*domain.Express, int64, int, error)
+	SelectExpressPage(expressName string, page, size string) ([]*domain.Express, int64, int64, error)
 	// DeleteById 删除
 	//
 	// 参数
@@ -33,7 +33,7 @@ type ExpressServiceInterface interface {
 	//
 	// 参数
 	//	searchParam (ExpressSearchParam): 快递查询参数对象
-	SelectExpressPageByParam(searchParam *param.ExpressSearchParam) ([]*domain.Express, int64, int, error)
+	SelectExpressPageByParam(searchParam *param.ExpressSearchParam) ([]*domain.Express, int64, int64, error)
 	// UpdateExpress 修改快递信息
 	//
 	// 参数
