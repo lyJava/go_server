@@ -7,9 +7,18 @@ import (
 
 // PageData 分页数据结构体
 type PageData struct {
-	Content      interface{} `json:"content"`      // 数据集合
 	TotalRecords int64       `json:"totalRecords"` // 总条数
-	TotalPages   int         `json:"totalPages"`   // 总页数
+	TotalPages   int64       `json:"totalPages"`   // 总页数
+	Content      interface{} `json:"content"`      // 数据集合
+}
+
+// NewPageData 创建分页数据结构体
+func NewPageData(totalRecords, totalPages int64, data any) PageData {
+	return PageData{
+		TotalRecords: totalRecords,
+		TotalPages:   totalPages,
+		Content:      data,
+	}
 }
 
 // Response 返回结果
