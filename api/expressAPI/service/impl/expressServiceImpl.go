@@ -1,7 +1,8 @@
 package impl
 
 import (
-	"apiProject/api/expressAPI/types"
+	"apiProject/api/expressAPI/types/domain"
+	"apiProject/api/expressAPI/types/param"
 	"apiProject/api/utils"
 	"database/sql"
 	"errors"
@@ -21,7 +22,7 @@ func NewExpressDB(db *sql.DB) *ExpressDB {
 	}
 }
 
-func (e *ExpressDB) CreateExpress(express *types.Express) (*types.Express, error) {
+func (e *ExpressDB) CreateExpress(express *domain.Express) (*domain.Express, error) {
 	rows, err := e.Db.Exec("INSERT INTO tool_express_manage(user_id, express_name, express_number, from_name, from_phone, from_address, pickup_code, create_by, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
 		express.UserId, express.ExpressName, express.ExpressNumber, express.FromName, express.FromPhone, express.FromAddress, express.PickupCode, express.CreateBy, time.Now())
 	if err != nil {
@@ -37,11 +38,11 @@ func (e *ExpressDB) CreateExpress(express *types.Express) (*types.Express, error
 	return express, nil
 }
 
-func (e *ExpressDB) GetExpress(id int64) (*types.Express, error) {
+func (e *ExpressDB) GetExpress(id int64) (*domain.Express, error) {
 	// 执行查询操作
 	row := e.Db.QueryRow("SELECT id, IFNULL(user_id, ''), IFNULL(express_name, ''), IFNULL(express_number, ''), IFNULL(from_name, ''), IFNULL(from_phone, ''), IFNULL(from_address, ''), IFNULL(pickup_code, ''), IFNULL(create_by, ''), IFNULL(DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s' ), ''), IFNULL(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s' ), '') FROM tool_express_manage WHERE id = ?", id)
 	// 创建 Express 对象
-	express := &types.Express{}
+	express := &domain.Express{}
 
 	// 从查询结果中扫描数据到 Express 对象
 	err := row.Scan(
@@ -65,7 +66,7 @@ func (e *ExpressDB) GetExpress(id int64) (*types.Express, error) {
 	return express, nil
 }
 
-func (e *ExpressDB) SelectExpressPage(expressName string, pageStr, sizeStr string) ([]*types.Express, int64, int, error) {
+func (e *ExpressDB) SelectExpressPage(expressName string, pageStr, sizeStr string) ([]*domain.Express, int64, int, error) {
 	// 查询总记录数
 	var totalRecords int64
 	countSql := "SELECT COUNT(*) FROM tool_express_manage" + buildWhereClause(expressName)
@@ -137,7 +138,7 @@ func (e *ExpressDB) SelectExpressPage(expressName string, pageStr, sizeStr strin
 	return expressesList, totalRecords, int(totalPages), nil
 }
 
-func (e *ExpressDB) SelectExpressPageByParam(param *types.ExpressSearchParam) ([]*types.Express, int64, int, error) {
+func (e *ExpressDB) SelectExpressPageByParam(param *param.ExpressSearchParam) ([]*domain.Express, int64, int, error) {
 	// 查询总记录数
 	var totalRecords int64
 	countSql := "SELECT COUNT(*) FROM tool_express_manage" + buildWhereClauseByParam(param)
@@ -197,15 +198,15 @@ func (e *ExpressDB) buildPageOffset(pageStr, sizeStr interface{}, totalRecords i
 	return size, offset, totalPages
 }
 
-func (e *ExpressDB) buildPageData(rows *sql.Rows) ([]*types.Express, error) {
+func (e *ExpressDB) buildPageData(rows *sql.Rows) ([]*domain.Express, error) {
 
 	// 创建 Express 对象数组
-	var expressesList []*types.Express
+	var expressesList []*domain.Express
 
 	// 遍历查询结果
 	for rows.Next() {
 		// 创建 Express 对象
-		express := &types.Express{}
+		express := &domain.Express{}
 
 		// 从查询结果中扫描数据到 Express 对象
 		err := rows.Scan(
@@ -255,7 +256,7 @@ func (e *ExpressDB) DeleteById(id int64) (int64, error) {
 	return rowsAffected, nil
 }
 
-func (e *ExpressDB) UpdateExpress(express *types.Express) (int64, error) {
+func (e *ExpressDB) UpdateExpress(express *domain.Express) (int64, error) {
 	rows, err := e.Db.Exec("UPDATE tool_express_manage SET user_id = ?, express_name = ?, express_number = ?, from_name = ?, from_phone = ?, from_address= ?, pickup_code = ?, create_by = ?, update_time = ? WHERE id = ?",
 		express.UserId, express.ExpressName, express.ExpressNumber, express.FromName, express.FromPhone, express.FromAddress, express.PickupCode, express.CreateBy, time.Now(), express.ID)
 	if err != nil {
@@ -289,7 +290,7 @@ func (e *ExpressDB) BatchDeleteByIds(ids []string) (int64, error) {
 	return rowsAffected, nil
 }
 
-func (e *ExpressDB) BatchCreateExpress(list []*types.Express) (int64, error) {
+func (e *ExpressDB) BatchCreateExpress(list []*domain.Express) (int64, error) {
 	var valueList []string
 	var valueArgs []interface{}
 
@@ -324,7 +325,7 @@ func buildWhereClause(expressName string) string {
 }
 
 // buildWhereClauseByParam 构建多条件动态查询
-func buildWhereClauseByParam(param *types.ExpressSearchParam) string {
+func buildWhereClauseByParam(param *param.ExpressSearchParam) string {
 	if param != nil {
 		var clauses []string
 		if param.ExpressName != "" {

@@ -4,7 +4,7 @@ import (
 	"apiProject/api/expressAPI/config"
 	"apiProject/api/expressAPI/interceptor"
 	"apiProject/api/expressAPI/service"
-	"apiProject/api/expressAPI/types"
+	"apiProject/api/expressAPI/types/domain"
 	"apiProject/api/response"
 	"apiProject/api/utils"
 	"encoding/base64"
@@ -51,7 +51,7 @@ func (u *UserController) handlerGetUser(w http.ResponseWriter, r *http.Request) 
 
 // handlerCreateUser 处理创建用户
 func (u *UserController) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
-	var user *types.User
+	var user *domain.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		log.Println(err.Error())
 		response.WriteJson(w, response.FailMessageResp("解析用户新增参数失败"))
@@ -181,7 +181,7 @@ func (u *UserController) handlerCheckPwd(w http.ResponseWriter, r *http.Request)
 
 // handlerUserLogin 用户登录
 func (u *UserController) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
-	var user *types.User
+	var user *domain.User
 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		log.Println(err)

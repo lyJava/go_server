@@ -1,14 +1,14 @@
 package service
 
 import (
-	"apiProject/api/expressAPI/types"
+	"apiProject/api/expressAPI/types/domain"
 )
 
 // UserServiceInterface 用户服务接口
 type UserServiceInterface interface {
-	GetUserById(id int64) (*types.User, error)
+	GetUserById(id int64) (*domain.User, error)
 	// CreatUser 创建用户
-	CreatUser(user *types.User) (*types.User, error)
+	CreatUser(user *domain.User) (*domain.User, error)
 	// UserLogin 用户登录
-	UserLogin(user *types.User) (*types.User, error)
+	UserLogin(user *domain.User) (*domain.User, error)
 }

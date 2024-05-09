@@ -3,7 +3,8 @@ package controller
 import (
 	"apiProject/api/expressAPI/interceptor"
 	"apiProject/api/expressAPI/service"
-	"apiProject/api/expressAPI/types"
+	"apiProject/api/expressAPI/types/domain"
+	"apiProject/api/expressAPI/types/param"
 	"apiProject/api/response"
 	"apiProject/api/utils"
 	"encoding/json"
@@ -51,7 +52,7 @@ func (e *ExpressController) RegisterRoutes(r *mux.Router) {
 }
 
 func (e *ExpressController) handlerCrete(w http.ResponseWriter, r *http.Request) {
-	var express *types.Express
+	var express *domain.Express
 
 	/*if err := json.NewDecoder(r.Body).Decode(&express); err != nil {
 		log.Println(err)
@@ -141,7 +142,7 @@ func (e *ExpressController) handlerSelectPage(w http.ResponseWriter, r *http.Req
 }
 
 func (e *ExpressController) handlerSelectPageParam(w http.ResponseWriter, r *http.Request) {
-	var param types.ExpressSearchParam
+	var searchParam param.ExpressSearchParam
 	/*if err := json.NewDecoder(r.Body).Decode(&searchParam); err != nil {
 		log.Println(err)
 		response.WriteJson(w, response.FailMessageResp("查询失败"))
@@ -157,13 +158,13 @@ func (e *ExpressController) handlerSelectPageParam(w http.ResponseWriter, r *htt
 
 	defer r.Body.Close()
 
-	if err := sonic.Unmarshal(body, &param); err != nil {
+	if err := sonic.Unmarshal(body, &searchParam); err != nil {
 		log.Println(err)
 		response.WriteJson(w, response.FailMessageResp("查询分页数据失败"))
 		return
 	}
 
-	expressPage, totalRecords, totalPages, err := e.expressService.SelectExpressPageByParam(&param)
+	expressPage, totalRecords, totalPages, err := e.expressService.SelectExpressPageByParam(&searchParam)
 	if err != nil {
 		response.WriteJson(w, response.FailCodeMessageResp(http.StatusInternalServerError, "查询分页数据失败"))
 		return
@@ -202,7 +203,7 @@ func (e *ExpressController) handlerUpdate(w http.ResponseWriter, r *http.Request
 	}
 	defer r.Body.Close()
 
-	var express *types.Express
+	var express *domain.Express
 	err = json.Unmarshal(body, &express)
 	if err != nil {
 		response.WriteJson(w, response.FailCodeMessageResp(http.StatusInternalServerError, "解析参数失败"))
@@ -253,7 +254,7 @@ func (e *ExpressController) handlerBatchDelete(w http.ResponseWriter, r *http.Re
 
 // handlerBatchInsert 批量新增
 func (e *ExpressController) handlerBatchInsert(w http.ResponseWriter, r *http.Request) {
-	var list []*types.Express
+	var list []*domain.Express
 	// 大批量情况下使用json.NewDecoder与Decode
 	if err := json.NewDecoder(r.Body).Decode(&list); err != nil {
 		log.Println(err)

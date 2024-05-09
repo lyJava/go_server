@@ -2,7 +2,7 @@ package controller
 
 import (
 	"apiProject/api/expressAPI/rabbitmq"
-	"apiProject/api/expressAPI/types"
+	"apiProject/api/expressAPI/types/param"
 	"apiProject/api/response"
 	"encoding/json"
 	"github.com/gorilla/mux"
@@ -34,7 +34,7 @@ var routingKey = "create_order_routing_key"
 
 // CreateHandler 创建订单
 func (mq *OrderController) CreateHandler(w http.ResponseWriter, r *http.Request) {
-	var order types.Order
+	var order param.Order
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
