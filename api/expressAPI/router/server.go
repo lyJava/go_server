@@ -14,15 +14,17 @@ type APIServer struct {
 	express      service.ExpressServiceInterface // 快递接口
 	user         service.UserServiceInterface    // 用户服务接口
 	rabbitmqConn *amqp.Connection                //rabbitmq连接
+	dict         service.DictTypeService
 }
 
 // NewAPIServer 创建API服务
-func NewAPIServer(add string, express service.ExpressServiceInterface, user service.UserServiceInterface, conn *amqp.Connection) *APIServer {
+func NewAPIServer(add string, express service.ExpressServiceInterface, user service.UserServiceInterface, conn *amqp.Connection, d service.DictTypeService) *APIServer {
 	return &APIServer{
 		addr:         add,
 		express:      express,
 		user:         user,
 		rabbitmqConn: conn,
+		dict:         d,
 	}
 }
 
@@ -59,6 +61,9 @@ func (s *APIServer) Serve() {
 	rabbitmqConn := s.rabbitmqConn
 	orderController := controller.OrderControllerInit(rabbitmqConn)
 	orderController.RegisterRoutes(router)
+
+	dictController := controller.DictControllerInit(s.dict)
+	dictController.RegisterRoutes(router)
 
 	log.Println("api server starting at port====", s.addr)
 	log.Fatalln(http.ListenAndServe(s.addr, router))

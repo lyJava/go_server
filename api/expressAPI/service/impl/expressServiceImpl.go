@@ -3,7 +3,6 @@ package impl
 import (
 	"apiProject/api/expressAPI/types/domain"
 	"apiProject/api/expressAPI/types/param"
-	"apiProject/api/utils"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -66,7 +65,7 @@ func (e *ExpressDB) GetExpress(id int64) (*domain.Express, error) {
 	return express, nil
 }
 
-func (e *ExpressDB) SelectExpressPage(expressName string, pageStr, sizeStr string) ([]*domain.Express, int64, int, error) {
+func (e *ExpressDB) SelectExpressPage(expressName string, pageStr, sizeStr string) ([]*domain.Express, int64, int64, error) {
 	// 查询总记录数
 	var totalRecords int64
 	countSql := "SELECT COUNT(*) FROM tool_express_manage" + buildWhereClause(expressName)
@@ -82,7 +81,7 @@ func (e *ExpressDB) SelectExpressPage(expressName string, pageStr, sizeStr strin
 	// 计算总页数
 	//totalPages := (totalRecords + size - 1) / size
 	//转换string strconv.FormatInt(page, 10)
-	size, offset, totalPages := e.buildPageOffset(pageStr, sizeStr, totalRecords)
+	size, offset, totalPages := BuildPageOffset(pageStr, sizeStr, totalRecords)
 
 	// 执行查询操作
 	// 构建 SQL 查询语句
@@ -135,10 +134,10 @@ func (e *ExpressDB) SelectExpressPage(expressName string, pageStr, sizeStr strin
 		return expressesList, 0, 0, err
 	}
 	// 返回查询结果数组
-	return expressesList, totalRecords, int(totalPages), nil
+	return expressesList, totalRecords, totalPages, nil
 }
 
-func (e *ExpressDB) SelectExpressPageByParam(param *param.ExpressSearchParam) ([]*domain.Express, int64, int, error) {
+func (e *ExpressDB) SelectExpressPageByParam(param *param.ExpressSearchParam) ([]*domain.Express, int64, int64, error) {
 	// 查询总记录数
 	var totalRecords int64
 	countSql := "SELECT COUNT(*) FROM tool_express_manage" + buildWhereClauseByParam(param)
@@ -149,7 +148,7 @@ func (e *ExpressDB) SelectExpressPageByParam(param *param.ExpressSearchParam) ([
 		return nil, 0, 0, err
 	}
 
-	size, offset, totalPages := e.buildPageOffset(param.Page, param.Size, totalRecords)
+	size, offset, totalPages := BuildPageOffset(param.Page, param.Size, totalRecords)
 
 	// 构建 SQL 查询语句
 	limitQuerySql := "SELECT id, IFNULL(user_id, ''), IFNULL(express_name, ''), IFNULL(express_number,''), IFNULL(from_name, ''), IFNULL(from_phone, ''), IFNULL(from_address, ''), IFNULL(pickup_code, ''), IFNULL(create_by, ''), IFNULL(DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s' ), ''), IFNULL(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s' ), '') FROM tool_express_manage" + buildWhereClauseByParam(param) + " LIMIT ?, ?"
@@ -166,36 +165,7 @@ func (e *ExpressDB) SelectExpressPageByParam(param *param.ExpressSearchParam) ([
 		return expressesArray, 0, 0, err
 	}
 	// 返回查询结果数组
-	return expressesArray, totalRecords, int(totalPages), nil
-}
-
-func (e *ExpressDB) buildPageOffset(pageStr, sizeStr interface{}, totalRecords int64) (int64, int64, int64) {
-	var page, size int64
-
-	switch v := pageStr.(type) {
-	case int64:
-		page = v
-	case string:
-		page = utils.ConvertToInt64(v)
-	default:
-		return 0, 0, 0
-	}
-
-	switch v := sizeStr.(type) {
-	case int64:
-		size = v
-	case string:
-		size = utils.ConvertToInt64(v)
-
-	default:
-		return 0, 0, 0
-	}
-
-	// 计算LIMIT的偏移量
-	offset := (page - 1) * size
-	// 计算总页数
-	totalPages := (totalRecords + size - 1) / size
-	return size, offset, totalPages
+	return expressesArray, totalRecords, totalPages, nil
 }
 
 func (e *ExpressDB) buildPageData(rows *sql.Rows) ([]*domain.Express, error) {
