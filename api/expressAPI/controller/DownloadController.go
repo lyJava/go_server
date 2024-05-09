@@ -25,7 +25,7 @@ func DownloadControllerInit() *DownloadController {
 }
 
 func (*DownloadController) RegisterRoutes(r *mux.Router) {
-	r.HandleFunc("/download/file", DownloadHandler2).Methods("GET")
+	r.HandleFunc("/download/file", DownloadHandler3).Methods("GET")
 	r.HandleFunc("/create/zip", handler4).Methods("GET")
 }
 
@@ -46,24 +46,6 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// 文件路径拼接
 	filePath := filepath.Join("./upload", fileName)
-
-	file, err := os.Open(filePath)
-	if err != nil {
-		log.Println("打开文件异常", err.Error())
-		response.WriteJson(w, response.FailMessageResp("文件不存在"))
-		return
-	}
-
-	defer file.Close()
-
-	fileInfo, err := file.Stat()
-	if err != nil {
-		log.Println("获取文件信息异常", err.Error())
-		response.WriteJson(w, response.FailMessageResp("获取文件信息失败"))
-		return
-	}
-
-	fileSize := fileInfo.Size()
 
 	if useZip {
 		zipName := utils.GetPrefix(fileName) + ".zip"
@@ -91,13 +73,13 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 			response.WriteJson(w, response.FailMessageResp("创建zip文件失败"))
 			return
 		}
-		defer zipOutPath.Close()*/
+		defer zipOutPath.Close()
+		//zw := zip.NewWriter(zipOutPath)*/
 
-		// 创建内存缓冲区
+		/*// 创建内存缓冲区
 		buf := new(bytes.Buffer)
 		// 创建 ZIP 编写器
 		zw := zip.NewWriter(buf)
-		//zw := zip.NewWriter(zipOutPath)
 
 		// 将文件内容添加到ZIP文件中
 		fileInZip, err := zw.Create(fileName)
@@ -122,7 +104,7 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println("关闭ZIP编写器异常", err.Error())
 			response.WriteJson(w, response.FailMessageResp("关闭ZIP编写器失败"))
 			return
-		}
+		}*/
 
 		// 将文件内容逐块复制到 ZIP 文件中
 		/*buf := make([]byte, 1024)
@@ -144,6 +126,13 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}*/
+		var files []string
+		files = append(files, filePath)
+		buf, err := utils.CreatZipBuffer(files)
+		if err != nil {
+			response.WriteJson(w, response.FailMessageResp(err.Error()))
+			return
+		}
 
 		w.Header().Set("Content-Type", "application/zip")
 		w.Header().Set("Content-Length", strconv.Itoa(buf.Len()))
@@ -157,6 +146,24 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 		//http.ServeContent(w, r, zipFileInfo.Name(), zipFileInfo.ModTime(), zipFile)
 		buf.WriteTo(w)
 	} else {
+
+		file, err := utils.OpenFile(filePath)
+		if err != nil {
+			response.WriteJson(w, response.FailMessageResp(err.Error()))
+			return
+		}
+
+		defer file.Close()
+
+		fileInfo, err := utils.GetFileInfo(file)
+		if err != nil {
+			log.Println("获取文件信息异常", err.Error())
+			response.WriteJson(w, response.FailMessageResp("获取文件信息失败"))
+			return
+		}
+
+		fileSize := fileInfo.Size()
+
 		// 读取文件的前512字节
 		buffer := make([]byte, 512)
 		_, err = file.Read(buffer)
@@ -208,8 +215,10 @@ func createAndWriteZipFileToResponse(zipName string, files []string, w http.Resp
 			return err
 		}
 
+		// 设置zip文件名
 		header.Name = filepath.Base(filePath)
 
+		// 创建zip文件头
 		writer, err := zw.CreateHeader(header)
 		if err != nil {
 			return err
@@ -330,105 +339,48 @@ func DownloadHandler3(w http.ResponseWriter, r *http.Request) {
 	// 文件路径拼接
 	filePath := filepath.Join("./upload", fileName)
 
-	// 打开文件
-	file, err := os.Open(filePath)
-	if err != nil {
-		log.Println("打开文件异常", err.Error())
-		response.WriteJson(w, response.FailMessageResp("文件不存在"))
-		return
-	}
-	defer file.Close()
-
-	fileInfo, err := file.Stat()
-	if err != nil {
-		log.Println("获取文件信息异常", err.Error())
-		response.WriteJson(w, response.FailMessageResp("获取文件信息失败"))
-		return
-	}
-
-	//fileSize := fileInfo.Size()
-
 	if useZip {
-		// 创建临时文件
-		tmpFile, err := os.CreateTemp("", "temp-zip-*.zip")
+		var files []string
+		files = append(files, filePath)
+		tempFile, err := utils.CreateZipTemp(files, "temp-zip-*.zip")
 		if err != nil {
-			log.Println("创建临时文件异常", err.Error())
-			response.WriteJson(w, response.FailMessageResp("创建临时文件失败"))
+			response.WriteJson(w, response.FailMessageResp(err.Error()))
 			return
 		}
-		defer os.Remove(tmpFile.Name()) // 在函数退出时删除临时文件
-		defer tmpFile.Close()
 
-		log.Println("临时文件夹路径", tmpFile.Name())
-		// 创建 ZIP 编写器
-		zw := zip.NewWriter(tmpFile)
-
-		// 将文件内容添加到 ZIP 文件中
-		fileInZip, err := zw.Create(fileName)
+		tempInfo, err := utils.GetFileInfo(tempFile)
 		if err != nil {
-			log.Println("创建ZIP文件内部异常", err.Error())
-			response.WriteJson(w, response.FailMessageResp("创建ZIP文件内部失败"))
+			response.WriteJson(w, response.FailMessageResp(err.Error()))
 			return
 		}
-
-		// 将文件内容逐块复制到 ZIP 文件中
-		buf := make([]byte, 1024)
-		for {
-			n, err := file.Read(buf)
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				log.Println("读取文件异常", err.Error())
-				response.WriteJson(w, response.FailMessageResp("读取文件失败"))
-				return
-			}
-
-			_, err = fileInZip.Write(buf[:n])
-			if err != nil {
-				log.Println("写入ZIP文件内部异常", err.Error())
-				http.Error(w, "写入ZIP文件内部失败", http.StatusInternalServerError)
-				return
-			}
-		}
-
-		// 将文件内容复制到 ZIP 文件中
-		/*_, err = io.Copy(fileInZip, file)
-		if err != nil {
-			log.Println("复制文件内容到ZIP文件内部异常", err.Error())
-			response.WriteJson(w, response.FailMessageResp("复制文件内容到ZIP文件内部失败"))
-			return
-		}*/
-
-		// 关闭 ZIP 编写器
-		if err := zw.Close(); err != nil {
-			log.Println("关闭ZIP编写器异常", err.Error())
-			response.WriteJson(w, response.FailMessageResp("关闭ZIP编写器失败"))
-			return
-		}
-
-		// 将文件指针重置到文件开头
-		if _, err := tmpFile.Seek(0, 0); err != nil {
-			log.Println("重置临时文件指针失败：", err.Error())
-			response.WriteJson(w, response.FailMessageResp("无法完成下载"))
-			return
-		}
-
-		temInfo, _ := tmpFile.Stat()
-		contentLength := strconv.FormatInt(temInfo.Size(), 10)
-		log.Println("临时文件长度", contentLength)
-		zipDownloadName := filepath.Base(tmpFile.Name())
-		log.Println("下载zip文件名", zipDownloadName)
+		contentLength := strconv.FormatInt(tempInfo.Size(), 10)
+		zipDownloadName := filepath.Base(tempInfo.Name())
 
 		w.Header().Set("Content-Type", "application/zip")
 		w.Header().Set("Content-Length", contentLength)
 		w.Header().Set("Content-Disposition", "attachment; filename*=utf-8''"+zipDownloadName)
 		//http.ServeFile(w, r, filePath)
 		// 将临时文件的内容写入 HTTP 响应体
-		http.ServeContent(w, r, zipDownloadName, fileInfo.ModTime(), tmpFile)
+		http.ServeContent(w, r, zipDownloadName, tempInfo.ModTime(), tempFile)
 	} else {
+		// 打开文件，使用http.ServeContent方式下载
+		/*file, err := os.Open(filePath)
+		if err != nil {
+			log.Println("打开文件异常", err.Error())
+			response.WriteJson(w, response.FailMessageResp("文件不存在"))
+			return
+		}
+		defer file.Close()
+
+		fileInfo, err := utils.GetFileInfo(file)
+		if err != nil {
+			response.WriteJson(w, response.FailMessageResp(err.Error()))
+			return
+		}
+		http.ServeContent(w, r, fileInfo.Name(), fileInfo.ModTime(), file)*/
 		// 如果不需要压缩，则直接提供文件下载
 		http.ServeFile(w, r, filePath)
+		return
 	}
 }
 

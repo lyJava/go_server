@@ -3,6 +3,8 @@ package utils
 import (
 	"apiProject/api/expressAPI/config"
 	"apiProject/api/expressAPI/types"
+	"archive/zip"
+	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -13,11 +15,13 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
+	"io"
 	"log"
 	_ "math/rand"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -374,4 +378,163 @@ func GetSuffix(str string) string {
 		return str
 	}
 	return suffix
+}
+
+// CreatZipBuffer 创建ZIP文件到缓冲区
+func CreatZipBuffer(files []string) (*bytes.Buffer, error) {
+	// 创建 ZIP 文件
+	zipBuffer := new(bytes.Buffer)
+	zw := zip.NewWriter(zipBuffer)
+
+	// 逐个文件添加到 ZIP 文件中
+	for _, filePath := range files {
+		// 打开要添加到 ZIP 文件的文件
+		file, err := os.Open(filePath)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+
+		// 将文件添加到 ZIP 文件中
+		fileInfo, err := file.Stat()
+		if err != nil {
+			return nil, err
+		}
+
+		header, err := zip.FileInfoHeader(fileInfo)
+		if err != nil {
+			return nil, err
+		}
+
+		// 设置zip文件名
+		header.Name = filepath.Base(filePath)
+
+		// 创建zip文件头
+		writer, err := zw.CreateHeader(header)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = io.Copy(writer, file)
+		if err != nil {
+			return nil, err
+		}
+	}
+	// 关闭 ZIP Writer
+	err := zw.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return zipBuffer, nil
+}
+
+// CreateZipTemp 创建zip到临时文件夹
+//
+// 参数
+//
+//	fileNames 文件路径加名称
+//	 tempPathPattern 临时文件路径形式
+func CreateZipTemp(fileNames []string, tempPathPattern string) (*os.File, error) {
+	// 创建临时文件, tempPathPattern为"temp-zip-*.zip"表示临时文件为temp-zip-xxxxx.zip格式
+	tmpFile, err := os.CreateTemp("", tempPathPattern)
+	if err != nil {
+		log.Println("创建临时文件异常", err.Error())
+		return &os.File{}, err
+	}
+
+	log.Printf("临时文件:%s 创建成功", tmpFile.Name())
+	defer func(name string) {
+		err := os.Remove(name)
+		if err != nil {
+			log.Println("临时文件删除失败", err.Error())
+		}
+		log.Printf("临时文件:%s 删除成功", tmpFile.Name())
+	}(tmpFile.Name()) // 在函数退出时删除临时文件
+
+	// 创建 ZIP 编写器
+	zw := zip.NewWriter(tmpFile)
+
+	// 遍历文件列表
+	for _, fileName := range fileNames {
+		// 打开文件
+		file, err := OpenFile(fileName)
+		if err != nil {
+			return &os.File{}, err
+		}
+		defer file.Close()
+
+		fileInfo, err := GetFileInfo(file)
+		if err != nil {
+			return &os.File{}, err
+		}
+
+		log.Printf("文件路径:%s", fileName)
+
+		// 将文件添加到 ZIP 文件中
+		fileInZip, err := zw.Create(fileInfo.Name())
+		if err != nil {
+			log.Println("创建ZIP文件内部异常", err.Error())
+			return &os.File{}, err
+		}
+
+		// 将文件内容复制到 ZIP 文件中，该方式适合小文件与非高并发情况
+		/*_, err = io.Copy(fileInZip, file)
+		if err != nil {
+			log.Println("复制文件内容到ZIP文件内部异常", err.Error())
+			response.WriteJson(w, response.FailMessageResp("复制文件内容到ZIP文件内部失败"))
+			return
+		}*/
+
+		// 将文件内容逐块复制到 ZIP 文件中
+		buf := make([]byte, 1024)
+		for {
+			n, err := file.Read(buf)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Println("读取文件异常", err.Error())
+				return &os.File{}, err
+			}
+
+			_, err = fileInZip.Write(buf[:n])
+			if err != nil {
+				log.Println("写入ZIP文件内部异常", err.Error())
+				return &os.File{}, err
+			}
+		}
+	}
+
+	// 关闭 ZIP 编写器
+	if err := zw.Close(); err != nil {
+		log.Println("关闭ZIP编写器异常", err.Error())
+		return &os.File{}, err
+	}
+	return tmpFile, nil
+}
+
+func OpenFile(fileName string) (*os.File, error) {
+	file, err := os.Open(fileName)
+	if err != nil {
+		log.Println("打开文件异常", err.Error())
+		return &os.File{}, err
+	}
+	return file, nil
+}
+
+// GetFileInfo 获取文件信息
+func GetFileInfo(file *os.File) (os.FileInfo, error) {
+	// 获取临时文件信息
+	fileInfo, err := file.Stat()
+	if err != nil {
+		log.Println("获取文件信息异常", err.Error())
+		return nil, err
+	}
+
+	contentLength := strconv.FormatInt(fileInfo.Size(), 10)
+	log.Println("文件长度", contentLength)
+	zipDownloadName := filepath.Base(fileInfo.Name())
+	log.Println("文件名称", zipDownloadName)
+	return fileInfo, nil
 }
