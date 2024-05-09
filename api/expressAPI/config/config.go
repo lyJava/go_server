@@ -2,6 +2,7 @@ package config
 
 import (
 	"apiProject/api/expressAPI/types"
+	"encoding/json"
 	"fmt"
 	"github.com/spf13/viper"
 	"log"
@@ -76,7 +77,9 @@ func buildConfig() (types.ServerConfigItem, types.SqlConfigItem, types.RsaKey, t
 
 	var rabbitmqConfig types.RabbitmqConfig
 	viperConfig.Unmarshal(&rabbitmqConfig)
-	fmt.Println(rabbitmqConfig)
+	// 将json格式化输出
+	rabbitmqItem, _ := json.MarshalIndent(rabbitmqConfig.Rabbitmq, "", "    ")
+	log.Printf("rabbitmq配置信息==\r\n%s", rabbitmqItem)
 
 	return serverConfig.Server, sqlConfig.Mysql, rsaConfig.Rsa.Key, jwtConfig.Jwt, rabbitmqConfig.Rabbitmq
 }

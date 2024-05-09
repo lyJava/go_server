@@ -9,10 +9,10 @@ import (
 	"apiProject/api/expressAPI/service"
 	"apiProject/api/expressAPI/service/impl"
 	"apiProject/api/expressAPI/types"
+	"apiProject/api/utils"
 	"fmt"
 	"github.com/go-sql-driver/mysql"
 	"log"
-	"strconv"
 )
 
 type Application struct {
@@ -155,19 +155,29 @@ func main() {
 
 	fmt.Println("验证码图片已保存为 ", fileName)*/
 
+	//utils.MergeImage()
+	//utils.MergeImages2("./image/图片.png", "./image/图片1.png")
+	//utils.MergeImages2("./image/test15.png", "./image/1714422153891.jpg", 1)
 	expressSQL := datasource.InitMysqlDB(cfg)
 	//expressSQL := mysqlDB.InitMysqlDB(cfg)
 
+	postgresql := datasource.InitPostgresql()
+	pdb, err := postgresql.GetPostgresqlDB()
+	if err != nil {
+		log.Printf("获取Postgresql数据库信息失败===%v", err)
+	}
+
 	db, err := expressSQL.GetDb()
 	if err != nil {
-		log.Printf("获取数据库信息失败===%v", err)
+		log.Printf("获取Mysql数据库信息失败===%v", err)
 	}
 
 	express := impl.NewExpressDB(db)
 	user := impl.NewUserDB(db)
+	dict := impl.NewDictTypeDb(pdb)
 
-	serverPort := ":" + strconv.Itoa(config.EnvConfig.ServerPort)
-	api := router.NewAPIServer(serverPort, express, user, rabbitmq.ConnectRabbitmq(connString))
+	serverPort := ":" + utils.ConvertIntToStr(config.EnvConfig.ServerPort)
+	api := router.NewAPIServer(serverPort, express, user, rabbitmq.ConnectRabbitmq(connString), dict)
 	api.Serve()
 
 	//log.Printf("获取数据库信息===%v", dbWire)
