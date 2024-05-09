@@ -16,6 +16,7 @@ import (
 	"log"
 	_ "math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -312,4 +313,30 @@ func GetKeyByteByPath(pemPath string) ([]byte, error) {
 	}
 	log.Printf("read key byte from %s success", pemPath)
 	return fileByte, nil
+}
+
+// GetPrefix 获取前缀
+func GetPrefix(str string) string {
+	var prefix = ""
+	lastDotIndex := strings.LastIndex(str, ".")
+	if lastDotIndex != -1 {
+		fileName := str[:lastDotIndex]
+		prefix = url.QueryEscape(fileName)
+	} else {
+		return str
+	}
+	return prefix
+}
+
+// GetSuffix 获取后缀
+func GetSuffix(str string) string {
+	var suffix = ""
+	lastDotIndex := strings.LastIndex(str, ".")
+	if lastDotIndex != -1 {
+		fileName := str[lastDotIndex+1:]
+		suffix = url.QueryEscape(fileName)
+	} else {
+		return str
+	}
+	return suffix
 }
