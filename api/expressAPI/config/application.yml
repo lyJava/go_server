@@ -8,6 +8,13 @@ mysql:
   password: root244112311
   database: eladmin
 
+postgresql:
+  host: localhost
+  port: 5432
+  user: yangge
+  password: root244112311
+  db-name: baize
+
 # jwt的加密字符串配置
 jwt:
   secret: testjwtsecretadmin
