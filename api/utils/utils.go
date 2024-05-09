@@ -3,6 +3,7 @@ package utils
 import (
 	"apiProject/api/expressAPI/config"
 	"apiProject/api/expressAPI/types"
+	"apiProject/api/expressAPI/types/domain"
 	"archive/zip"
 	"bytes"
 	"crypto/rand"
@@ -155,7 +156,7 @@ func HashPassword(pwd string) string {
 	return string(password)
 }
 
-func CreateJWT(user *types.User, days int64, secret []byte) (string, error) {
+func CreateJWT(user *domain.User, days int64, secret []byte) (string, error) {
 	// "userId":     strconv.Itoa(int(userId)),
 	//token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 	//	"userId":     strconv.Itoa(int(userId)),
@@ -183,7 +184,7 @@ func CreateJWT(user *types.User, days int64, secret []byte) (string, error) {
 //
 //	userId: 用户信息
 //	days: 有效天数
-func CreatToken(user *types.User, days int64) (string, error) {
+func CreatToken(user *domain.User, days int64) (string, error) {
 	secret := []byte(config.EnvConfig.JWTSecret)
 	token, err := CreateJWT(user, days, secret)
 	if err != nil {
@@ -198,7 +199,7 @@ func CreatToken(user *types.User, days int64) (string, error) {
 //		userId: 用户ID
 //	 days: token有效天数
 //	 w:	http返回
-func CreatAndSetAuthCookie(w http.ResponseWriter, user *types.User, days int64) (string, error) {
+func CreatAndSetAuthCookie(w http.ResponseWriter, user *domain.User, days int64) (string, error) {
 	secret := []byte(config.EnvConfig.JWTSecret)
 	token, err := CreateJWT(user, days, secret)
 	if err != nil {
