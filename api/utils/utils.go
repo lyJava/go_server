@@ -23,8 +23,9 @@ import (
 	"time"
 )
 
+// ConvertToInt64 字符串转换为int64
 func ConvertToInt64(str string) int64 {
-	// 将字符串转换为 int64 类型
+
 	intVal, err := strconv.ParseInt(str, 10, 64)
 	if err != nil {
 		fmt.Println("字符串转换int64失败:", err)
@@ -32,8 +33,42 @@ func ConvertToInt64(str string) int64 {
 	return intVal
 }
 
-func ConvertToStr(val int64) string {
+// ConvertToInt 字符串转换为int
+func ConvertToInt(str string) int {
+	// 将字符串转换为 int64 类型
+	intVal, err := strconv.ParseInt(str, 10, 64)
+	if err != nil {
+		fmt.Println("字符串转换int64失败:", err)
+	}
+	return int(intVal)
+}
+
+// ConvertInt64ToStr int64转换为字符串
+func ConvertInt64ToStr(val int64) string {
 	return strconv.Itoa(int(val))
+}
+
+// ConvertIntToStr int转换为字符串
+func ConvertIntToStr(val int) string {
+	return strconv.Itoa(val)
+}
+
+// ConvertStrToBool 字符串转换bool
+func ConvertStrToBool(val string) (bool, error) {
+	parseBool, err := strconv.ParseBool(val)
+	if err != nil {
+		log.Println("string convert to bool error", err.Error())
+		return false, err
+	}
+	return parseBool, nil
+}
+
+// ConvertBoolToStr bool转换字符串
+func ConvertBoolToStr(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
 }
 
 type LocalTime time.Time
