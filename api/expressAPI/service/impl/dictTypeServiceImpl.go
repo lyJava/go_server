@@ -149,9 +149,9 @@ func (pg *DictTypeDb) SelectDictTypeById(id int64) (*domain.DictType, error) {
 func (pg *DictTypeDb) SaveDictType(dt *domain.DictType) (*domain.DictType, error) {
 	result, err := pg.Db.Exec(
 		`INSERT INTO
-			tb_sys_dict_type (dict_name, dict_type, type_status, create_by, create_time, update_by, update_time, remark)
-		 VALUES
-			($1, $2, $3, $4, CURRENT_TIMESTAMP, $5, CURRENT_TIMESTAMP, $6)`,
+			  		tb_sys_dict_type (dict_name, dict_type, type_status, create_by, create_time, update_by, update_time, remark)
+		 	   VALUES
+			   		($1, $2, $3, $4, CURRENT_TIMESTAMP, $5, CURRENT_TIMESTAMP, $6)`,
 		dt.DictName, dt.DictType, dt.TypeStatus, dt.CreateBy, dt.UpdateBy, dt.Remark)
 
 	if err != nil {
