@@ -19,7 +19,7 @@ func NewDictTypeDb(pg *sql.DB) *DictTypeDb {
 	}
 }
 
-//goland:noinspection SqlResolve
+//goland:noinspection SqlResolve,SqlCaseVsIf
 func (pg *DictTypeDb) GetDictList(d *domain.DictType, page, sizeStr string) ([]*domain.DictType, int64, int64, error) {
 	var dictTypeList []*domain.DictType
 	var totalRecords int64
@@ -95,7 +95,7 @@ func (pg *DictTypeDb) GetDictList(d *domain.DictType, page, sizeStr string) ([]*
 	return dictTypeList, totalPages, totalRecords, nil
 }
 
-//goland:noinspection SqlResolve
+//goland:noinspection SqlResolve,SqlCaseVsIf
 func (pg *DictTypeDb) SelectDictTypeById(id int64) (*domain.DictType, error) {
 	var dictType = &domain.DictType{}
 	queryRow := pg.Db.QueryRow(`
@@ -229,7 +229,7 @@ func (pg *DictTypeDb) DeleteDictType(id int64) bool {
 	return true
 }
 
-//goland:noinspection SqlResolve
+//goland:noinspection SqlResolve,SqlCaseVsIf
 func (pg *DictTypeDb) SelectDetailByObj(dt domain.DictType) (*domain.DictType, error) {
 	var dictType = &domain.DictType{}
 	queryRow := pg.Db.QueryRow(`
