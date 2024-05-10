@@ -149,9 +149,9 @@ func (pg *DictTypeDb) SelectDictTypeById(id int64) (*domain.DictType, error) {
 func (pg *DictTypeDb) SaveDictType(dt *domain.DictType) (*domain.DictType, error) {
 	result, err := pg.Db.Exec(
 		`INSERT INTO
-				 tb_sys_dict_type (dict_name, dict_type, type_status, create_by, create_time, update_by, update_time, remark)
-			   VALUES
-				 ($1, $2, $3, $4, CURRENT_TIMESTAMP, $5, CURRENT_TIMESTAMP, $6)`,
+			tb_sys_dict_type (dict_name, dict_type, type_status, create_by, create_time, update_by, update_time, remark)
+		 VALUES
+			($1, $2, $3, $4, CURRENT_TIMESTAMP, $5, CURRENT_TIMESTAMP, $6)`,
 		dt.DictName, dt.DictType, dt.TypeStatus, dt.CreateBy, dt.UpdateBy, dt.Remark)
 
 	if err != nil {
@@ -183,7 +183,17 @@ func (pg *DictTypeDb) SaveDictType(dt *domain.DictType) (*domain.DictType, error
 
 //goland:noinspection SqlResolve
 func (pg *DictTypeDb) UpdateDictType(d *domain.DictType) (int64, error) {
-	result, err := pg.Db.Exec(`UPDATE tb_sys_dict_type SET dict_name=$1, dict_type=$2, type_status=$3, update_by=$4, update_time=CURRENT_TIMESTAMP, remark=$5 WHERE id = $6`,
+	result, err := pg.Db.Exec(
+		`UPDATE tb_sys_dict_type
+		  SET
+			dict_name = $1,
+			dict_type = $2,
+			type_status = $3,
+			update_by = $4,
+			update_time = CURRENT_TIMESTAMP,
+			remark = $5
+		WHERE
+			id = $6`,
 		d.DictName, d.DictType, d.TypeStatus, d.UpdateBy, d.Remark, d.Id)
 
 	if err != nil {
