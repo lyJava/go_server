@@ -67,6 +67,7 @@ func (pg *TestDictTypeDb) Save(te *domain.TestExpress) (*domain.TestExpress, err
 
 //goland:noinspection SqlResolve,SqlCaseVsIf
 func (pg *TestDictTypeDb) SelectByNumAndPickupCode(expressNumber, pickupCode string) (*domain.TestExpress, error) {
+	// 返回值这里不需要加上*号
 	var result domain.TestExpress
 	err := pg.Db.QueryRow(
 		`SELECT
@@ -120,6 +121,7 @@ func (pg *TestDictTypeDb) SelectByNumAndPickupCode(expressNumber, pickupCode str
 		return nil, err
 	}
 
+	// 这里需要加上&
 	return &result, nil
 }
 
