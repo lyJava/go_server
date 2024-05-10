@@ -185,15 +185,15 @@ func (pg *DictTypeDb) SaveDictType(dt *domain.DictType) (*domain.DictType, error
 func (pg *DictTypeDb) UpdateDictType(d *domain.DictType) (int64, error) {
 	result, err := pg.Db.Exec(
 		`UPDATE tb_sys_dict_type
-		  SET
-			dict_name = $1,
-			dict_type = $2,
-			type_status = $3,
-			update_by = $4,
-			update_time = CURRENT_TIMESTAMP,
-			remark = $5
-		WHERE
-			id = $6`,
+			   SET
+				  dict_name = $1,
+				  dict_type = $2,
+				  type_status = $3,
+				  update_by = $4,
+				  update_time = CURRENT_TIMESTAMP,
+				  remark = $5
+			  WHERE
+				  id = $6`,
 		d.DictName, d.DictType, d.TypeStatus, d.UpdateBy, d.Remark, d.Id)
 
 	if err != nil {
