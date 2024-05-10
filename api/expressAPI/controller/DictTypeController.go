@@ -38,7 +38,7 @@ func (d *DictController) handlePageList(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	r.Body.Close()
+	utils.CloseBodyError("字典类型查询失败", w, r)
 
 	list, totalPages, totalRecords, err := d.service.GetDictList(nil, searchParam["page"], searchParam["size"])
 	if err != nil {
@@ -59,7 +59,7 @@ func (d *DictController) handleSave(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Body.Close()
+	utils.CloseBodyError("字典类型新增失败", w, r)
 
 	saveDictType, err := d.service.SaveDictType(dictType)
 	if err != nil {
@@ -98,7 +98,7 @@ func (d *DictController) handleUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Body.Close()
+	utils.CloseBodyError("字典类修改失败", w, r)
 
 	// 如果ID类型设置为*Int64这种就可以使用nil判断是否为空
 	if dictType.Id == nil {

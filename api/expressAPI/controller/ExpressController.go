@@ -215,7 +215,7 @@ func (e *ExpressController) handlerBatchDelete(w http.ResponseWriter, r *http.Re
 		response.WriteJson(w, response.FailMessageResp("批量删除参数获取失败"))
 		return
 	}
-	defer r.Body.Close()
+	utils.CloseBodyError("快递批量新增失败", w, r)
 
 	var ids []string
 	err = json.Unmarshal(body, &ids)

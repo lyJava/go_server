@@ -58,7 +58,7 @@ func (u *UserController) handlerCreateUser(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	defer r.Body.Close()
+	utils.CloseBodyError("用户新增失败", w, r)
 
 	user.Password = utils.HashPassword(user.Password)
 	creatUser, err := u.userService.CreatUser(user)
@@ -114,7 +114,8 @@ func (u *UserController) handlerCheckPwd(w http.ResponseWriter, r *http.Request)
 		response.WriteJson(w, response.FailMessageResp("获取密码失败"))
 		return
 	}
-	defer r.Body.Close()
+
+	utils.CloseBodyError("验证密码失败", w, r)
 
 	if len(pwdMap) != 2 {
 		response.WriteJson(w, response.FailMessageResp("参数不正确"))
@@ -188,7 +189,7 @@ func (u *UserController) handlerUserLogin(w http.ResponseWriter, r *http.Request
 		response.WriteJson(w, response.FailMessageResp("解析用户登录参数失败"))
 		return
 	}
-	defer r.Body.Close()
+	utils.CloseBodyError("用户登录失败", w, r)
 
 	if user.Username == "" {
 		response.WriteJson(w, response.FailMessageResp("用户名不能为空"))

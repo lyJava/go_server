@@ -545,6 +545,7 @@ func GetFileInfo(file *os.File) (os.FileInfo, error) {
 func CloseBodyError(message string, w http.ResponseWriter, r *http.Request) {
 	err := r.Body.Close()
 	if err != nil {
+		log.Printf("关闭请求体出现错误===%v", err)
 		response.WriteJson(w, response.FailMessageResp(message))
 		return
 	}

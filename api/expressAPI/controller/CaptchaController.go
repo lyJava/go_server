@@ -149,7 +149,7 @@ func CaptchaHandlerValidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}*/
 
-	defer r.Body.Close()
+	utils.CloseBodyError("验证码校验失败", w, r)
 
 	if imageData.Id == "" || imageData.Code == "" {
 		response.WriteJson(w, response.FailMessageResp("参数不能为空"))
