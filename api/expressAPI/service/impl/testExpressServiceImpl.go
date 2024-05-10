@@ -92,7 +92,10 @@ func (pg *TestDictTypeDb) SelectByNumAndPickupCode(expressNumber, pickupCode str
 					ELSE ''
 				END AS update_time,
 				remarks,
-				del_flag
+				CASE
+					WHEN del_flag = 0 THEN '正常'
+					ELSE '删除'
+				END AS del_flag
 			FROM
 				tb_test_express
 			WHERE

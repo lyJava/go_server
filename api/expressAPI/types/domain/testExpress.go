@@ -17,5 +17,5 @@ type TestExpress struct {
 	UpdateBy         string `json:"updateBy,omitempty"`         // 修改人
 	UpdateTime       string `json:"updateTime,omitempty"`       // 更新时间
 	Remarks          string `json:"remarks,omitempty"`          // 备注
-	DelFlag          int    `json:"delFlag,omitempty"`          // 是否删除(0:正常；1:删除)
+	DelFlag          string `json:"delFlag,omitempty"`          // 是否删除(0:正常；1:删除)
 }
