@@ -4,6 +4,7 @@ import (
 	"apiProject/api/expressAPI/config"
 	"apiProject/api/expressAPI/types"
 	"apiProject/api/expressAPI/types/domain"
+	"apiProject/api/response"
 	"archive/zip"
 	"bytes"
 	"crypto/rand"
@@ -538,4 +539,13 @@ func GetFileInfo(file *os.File) (os.FileInfo, error) {
 	zipDownloadName := filepath.Base(fileInfo.Name())
 	log.Println("文件名称", zipDownloadName)
 	return fileInfo, nil
+}
+
+// CloseBodyError 处理请求体关闭可能存在的异常
+func CloseBodyError(message string, w http.ResponseWriter, r *http.Request) {
+	err := r.Body.Close()
+	if err != nil {
+		response.WriteJson(w, response.FailMessageResp(message))
+		return
+	}
 }
