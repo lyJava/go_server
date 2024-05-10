@@ -37,6 +37,9 @@ func (d *DictController) handlePageList(w http.ResponseWriter, r *http.Request) 
 		response.WriteJson(w, response.FailMessageResp("查询失败"))
 		return
 	}
+
+	r.Body.Close()
+
 	list, totalPages, totalRecords, err := d.service.GetDictList(nil, searchParam["page"], searchParam["size"])
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp("分页查询失败"))
@@ -55,6 +58,8 @@ func (d *DictController) handleSave(w http.ResponseWriter, r *http.Request) {
 		response.WriteJson(w, response.FailMessageResp("新增参数解析失败"))
 		return
 	}
+
+	r.Body.Close()
 
 	saveDictType, err := d.service.SaveDictType(dictType)
 	if err != nil {
@@ -92,6 +97,8 @@ func (d *DictController) handleUpdate(w http.ResponseWriter, r *http.Request) {
 		response.WriteJson(w, response.FailMessageResp("修改参数解析失败"))
 		return
 	}
+
+	r.Body.Close()
 
 	// 如果ID类型设置为*Int64这种就可以使用nil判断是否为空
 	if dictType.Id == nil {
