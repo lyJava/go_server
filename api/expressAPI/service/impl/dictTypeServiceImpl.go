@@ -232,7 +232,7 @@ func (pg *DictTypeDb) DeleteDictType(id int64) bool {
 //goland:noinspection SqlResolve,SqlCaseVsIf
 func (pg *DictTypeDb) SelectDetailByObj(dt domain.DictType) (*domain.DictType, error) {
 	var dictType = &domain.DictType{}
-	queryRow := pg.Db.QueryRow(`
+	err := pg.Db.QueryRow(`
 				SELECT
 					id,
 					dict_name,
@@ -257,9 +257,7 @@ func (pg *DictTypeDb) SelectDetailByObj(dt domain.DictType) (*domain.DictType, e
 						ELSE '删除'
 					END AS del_flag
 				FROM
-					tb_sys_dict_type WHERE dict_type = $1`, dt.DictType)
-
-	err := queryRow.Scan(
+					tb_sys_dict_type WHERE dict_type = $1`, dt.DictType).Scan(
 		&dictType.Id,
 		&dictType.DictName,
 		&dictType.DictType,
