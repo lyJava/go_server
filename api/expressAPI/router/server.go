@@ -11,20 +11,23 @@ import (
 
 type APIServer struct {
 	addr         string                          // 服务启动端口
-	express      service.ExpressServiceInterface // 快递接口
+	express      service.ExpressServiceInterface // 快递服务接口
 	user         service.UserServiceInterface    // 用户服务接口
-	rabbitmqConn *amqp.Connection                //rabbitmq连接
-	dict         service.DictTypeService
+	rabbitmqConn *amqp.Connection                // rabbitmq连接
+	dict         service.DictTypeService         // 字典服务接口
+	testExpress  service.TestExpressService      // 测试快递服务接口
 }
 
 // NewAPIServer 创建API服务
-func NewAPIServer(add string, express service.ExpressServiceInterface, user service.UserServiceInterface, conn *amqp.Connection, d service.DictTypeService) *APIServer {
+func NewAPIServer(add string, express service.ExpressServiceInterface, user service.UserServiceInterface,
+	conn *amqp.Connection, d service.DictTypeService, te service.TestExpressService) *APIServer {
 	return &APIServer{
 		addr:         add,
 		express:      express,
 		user:         user,
 		rabbitmqConn: conn,
 		dict:         d,
+		testExpress:  te,
 	}
 }
 
@@ -58,12 +61,17 @@ func (s *APIServer) Serve() {
 	downloadController := controller.DownloadControllerInit()
 	downloadController.RegisterRoutes(router)
 
-	rabbitmqConn := s.rabbitmqConn
-	orderController := controller.OrderControllerInit(rabbitmqConn)
+	// 订单控制器(测试rabbitmq)
+	orderController := controller.OrderControllerInit(s.rabbitmqConn)
 	orderController.RegisterRoutes(router)
 
+	// 字典类型控制器
 	dictController := controller.DictControllerInit(s.dict)
 	dictController.RegisterRoutes(router)
+
+	// 测试快递控制器
+	testExpressController := controller.TestExpressControllerInit(s.testExpress)
+	testExpressController.RegisterRoutes(router)
 
 	log.Println("api server starting at port====", s.addr)
 	log.Fatalln(http.ListenAndServe(s.addr, router))

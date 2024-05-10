@@ -158,26 +158,27 @@ func main() {
 	//utils.MergeImage()
 	//utils.MergeImages2("./image/图片.png", "./image/图片1.png")
 	//utils.MergeImages2("./image/test15.png", "./image/1714422153891.jpg", 1)
-	expressSQL := datasource.InitMysqlDB(cfg)
+	expressMySQL := datasource.InitMysqlDB(cfg)
 	//expressSQL := mysqlDB.InitMysqlDB(cfg)
 
 	postgresql := datasource.InitPostgresql()
-	pdb, err := postgresql.GetPostgresqlDB()
+	postgresqlDb, err := postgresql.GetPostgresqlDB()
 	if err != nil {
 		log.Printf("获取Postgresql数据库信息失败===%v", err)
 	}
 
-	db, err := expressSQL.GetDb()
+	mySqlDb, err := expressMySQL.GetDb()
 	if err != nil {
 		log.Printf("获取Mysql数据库信息失败===%v", err)
 	}
 
-	express := impl.NewExpressDB(db)
-	user := impl.NewUserDB(db)
-	dict := impl.NewDictTypeDb(pdb)
+	express := impl.NewExpressDB(mySqlDb)
+	user := impl.NewUserDB(mySqlDb)
+	dict := impl.NewDictTypeDb(postgresqlDb)
+	testExpressDB := impl.NewTestDictTypeDb(postgresqlDb)
 
 	serverPort := ":" + utils.ConvertIntToStr(config.EnvConfig.ServerPort)
-	api := router.NewAPIServer(serverPort, express, user, rabbitmq.ConnectRabbitmq(connString), dict)
+	api := router.NewAPIServer(serverPort, express, user, rabbitmq.ConnectRabbitmq(connString), dict, testExpressDB)
 	api.Serve()
 
 	//log.Printf("获取数据库信息===%v", dbWire)
