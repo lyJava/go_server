@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 )
 
 type TestDictTypeDb struct {
@@ -125,8 +126,57 @@ func (pg *TestDictTypeDb) SelectByNumAndPickupCode(expressNumber, pickupCode str
 	return &result, nil
 }
 
-func (pg *TestDictTypeDb) BatchSave(expresses []*domain.TestExpress) (int64, error) {
-	return 0, nil
+//goland:noinspection SqlResolve, SqlError
+func (pg *TestDictTypeDb) BatchSave(list []*domain.TestExpress) (int64, error) {
+	// 占位符切片
+	var placeholderList []string
+	// 对应的值
+	var valueArgList []interface{}
+	// 占位符的数量
+	numPlaceholders := 10
+
+	for i := 0; i < len(list); i += numPlaceholders {
+		end := i + numPlaceholders
+		if end > len(list) {
+			end = len(list)
+		}
+		for j := i; j < end; j++ {
+			testExpress := list[j]
+			placeholderList = append(placeholderList, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
+				len(valueArgList)+1, len(valueArgList)+2, len(valueArgList)+3, len(valueArgList)+4, len(valueArgList)+5,
+				len(valueArgList)+6, len(valueArgList)+7, len(valueArgList)+8, len(valueArgList)+9, len(valueArgList)+10))
+			valueArgList = append(valueArgList,
+				testExpress.ExpressName,
+				testExpress.ExpressNumber,
+				testExpress.PickupCode,
+				testExpress.FromUsername,
+				testExpress.FromUserPhone,
+				testExpress.FromUserAddress,
+				testExpress.FromUserIdNumber,
+				testExpress.CreateBy,
+				testExpress.Remarks,
+				testExpress.DelFlag,
+			)
+		}
+	}
+
+	batchSql := fmt.Sprintf(`INSERT INTO tb_test_express (express_name, express_number, pickup_code, from_username, 
+                             		from_user_phone,from_user_address,from_user_id_number,create_by,remarks, 
+                             		del_flag) VALUES %s %s`, strings.Join(placeholderList, ","), "\r\n")
+	log.Println("生成的批量sql===", batchSql)
+	result, err := pg.Db.Exec(batchSql, valueArgList...)
+	if err != nil {
+		log.Printf("批量新增执行错误===%v", err)
+		return 0, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("批量新增执行失败===%v", err)
+		return 0, err
+	}
+
+	return rowsAffected, nil
 }
 
 func (pg *TestDictTypeDb) PageList(te *domain.TestExpress, page, size int64) ([]*domain.TestExpress, int64, int64, error) {
@@ -136,13 +186,32 @@ func (pg *TestDictTypeDb) PageList(te *domain.TestExpress, page, size int64) ([]
 //goland:noinspection SqlResolve
 func (pg *TestDictTypeDb) CheckByNumAndPickupCode(expressNumber, pickupCode string) bool {
 	var selectCount int64
-	err := pg.Db.QueryRow(`SELECT COUNT(*) FROM tb_test_express WHERE express_number = $1 AND pickup_code = $2`, expressNumber, pickupCode).Scan(&selectCount)
+	err := pg.Db.QueryRow("SELECT COUNT(*) FROM tb_test_express WHERE express_number = $1 AND pickup_code = $2", expressNumber, pickupCode).Scan(&selectCount)
 	if err != nil {
-		log.Fatalf("通过快递单号与取件码查询异常===%v", err)
+		log.Printf("通过快递单号与取件码查询异常===%v", err)
 		return false
 	}
 	if selectCount >= 1 {
 		return true
 	}
 	return false
+}
+
+//goland:noinspection SqlResolve
+func (pg *TestDictTypeDb) BatchDelete(ids []string) (rows int64, err error) {
+	deleteSql := fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN (%s)", strings.Join(ids, ", "))
+	log.Println("测试快递批量删除sql===", deleteSql)
+	result, err := pg.Db.Exec(deleteSql)
+	if err != nil {
+		log.Printf("测试快递批量删除异常===%v", err)
+		return 0, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("测试快递批量删除执行失败===%v", err)
+		return 0, err
+	}
+
+	return rowsAffected, nil
 }
