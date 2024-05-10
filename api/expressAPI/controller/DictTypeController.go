@@ -25,6 +25,8 @@ func (d *DictController) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/dictType/list", d.handlePageList).Methods("POST")
 	router.HandleFunc("/dictType/save", d.handleSave).Methods("POST")
 	router.HandleFunc("/dictType/{dictTypeId}", d.handleDetail).Methods("GET")
+	router.HandleFunc("/dictType/update", d.handleUpdate).Methods("PUT")
+	router.HandleFunc("/dictType/{id}", d.handleDelete).Methods("DELETE")
 }
 
 // handlePageList 处理分页查询
@@ -80,5 +82,64 @@ func (d *DictController) handleDetail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.WriteJson(w, response.OkDataResp(detail))
+	return
+}
+
+func (d *DictController) handleUpdate(w http.ResponseWriter, r *http.Request) {
+	var dictType *domain.DictType
+	if err := json.NewDecoder(r.Body).Decode(&dictType); err != nil {
+		log.Printf("字典类型修改参数解析失败===%v", err)
+		response.WriteJson(w, response.FailMessageResp("修改参数解析失败"))
+		return
+	}
+
+	// 如果ID类型设置为*Int64这种就可以使用nil判断是否为空
+	if dictType.Id == nil {
+		response.WriteJson(w, response.FailMessageResp("ID不能为空"))
+		return
+	}
+
+	// 如果类型类型设置为*string这种就可以使用nil判断是否为空
+	if dictType.DictType == "" {
+		response.WriteJson(w, response.FailMessageResp("类型不能为空"))
+		return
+	}
+
+	isExist := d.service.CheckTypeIsExist(dictType.Id, dictType.DictType)
+	if isExist {
+		response.WriteJson(w, response.FailMessageResp("类型已存在"))
+		return
+	}
+
+	result, err := d.service.UpdateDictType(dictType)
+	if err != nil {
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
+		return
+	}
+	response.WriteJson(w, response.OkCodeMessageData("修改成功", result))
+	return
+}
+
+// handleDelete 处理查询
+func (d *DictController) handleDelete(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	if idStr == "" {
+		response.WriteJson(w, response.FailMessageResp("ID不能为空"))
+		return
+	}
+
+	id := utils.ConvertToInt64(idStr)
+	if id <= 10 {
+		response.WriteJson(w, response.FailMessageResp("系统字典不允许删除"))
+		return
+	}
+
+	result := d.service.DeleteDictType(id)
+	if !result {
+		response.WriteJson(w, response.FailMessageResp("删除失败"))
+		return
+	}
+	response.WriteJson(w, response.OkMessageResp("删除成功"))
 	return
 }

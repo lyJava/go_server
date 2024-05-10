@@ -13,14 +13,14 @@ type DictTypeDb struct {
 	Db *sql.DB
 }
 
-func NewDictTypeDb(db *sql.DB) *DictTypeDb {
+func NewDictTypeDb(pg *sql.DB) *DictTypeDb {
 	return &DictTypeDb{
-		Db: db,
+		Db: pg,
 	}
 }
 
 //goland:noinspection SqlResolve
-func (db *DictTypeDb) GetDictList(d *domain.DictType, page, sizeStr string) ([]*domain.DictType, int64, int64, error) {
+func (pg *DictTypeDb) GetDictList(d *domain.DictType, page, sizeStr string) ([]*domain.DictType, int64, int64, error) {
 	var dictTypeList []*domain.DictType
 	var totalRecords int64
 
@@ -28,7 +28,7 @@ func (db *DictTypeDb) GetDictList(d *domain.DictType, page, sizeStr string) ([]*
 
 	countSql := "SELECT COUNT(*) FROM tb_sys_dict_type" + buildWhereParam(d)
 	log.Println("字典类型分页countSql===", countSql)
-	err = db.Db.QueryRow(countSql).Scan(&totalRecords)
+	err = pg.Db.QueryRow(countSql).Scan(&totalRecords)
 	if err != nil {
 		log.Print(err)
 		return nil, 0, 0, err
@@ -62,7 +62,7 @@ func (db *DictTypeDb) GetDictList(d *domain.DictType, page, sizeStr string) ([]*
 				FROM
 					tb_sys_dict_type`+buildWhereParam(d)+" LIMIT %d OFFSET %d", pageSize, offset)
 	log.Println("字典类型分页查询sql===", querySql)
-	rows, err := db.Db.Query(querySql)
+	rows, err := pg.Db.Query(querySql)
 	if err != nil {
 		log.Print(err)
 		return nil, 0, 0, err
@@ -96,9 +96,9 @@ func (db *DictTypeDb) GetDictList(d *domain.DictType, page, sizeStr string) ([]*
 }
 
 //goland:noinspection SqlResolve
-func (db *DictTypeDb) SelectDictTypeById(id int64) (*domain.DictType, error) {
+func (pg *DictTypeDb) SelectDictTypeById(id int64) (*domain.DictType, error) {
 	var dictType = &domain.DictType{}
-	queryRow := db.Db.QueryRow(`
+	queryRow := pg.Db.QueryRow(`
 				SELECT
 					id,
 					dict_name,
@@ -146,8 +146,12 @@ func (db *DictTypeDb) SelectDictTypeById(id int64) (*domain.DictType, error) {
 // SaveDictType 保存字典类型
 //
 //goland:noinspection SqlResolve
-func (db *DictTypeDb) SaveDictType(dt *domain.DictType) (*domain.DictType, error) {
-	result, err := db.Db.Exec("INSERT INTO tb_sys_dict_type (dict_name, dict_type, type_status, create_by, create_time, update_by, update_time, remark) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, $5, CURRENT_TIMESTAMP, $6)",
+func (pg *DictTypeDb) SaveDictType(dt *domain.DictType) (*domain.DictType, error) {
+	result, err := pg.Db.Exec(
+		`INSERT INTO
+				 tb_sys_dict_type (dict_name, dict_type, type_status, create_by, create_time, update_by, update_time, remark)
+			   VALUES
+				 ($1, $2, $3, $4, CURRENT_TIMESTAMP, $5, CURRENT_TIMESTAMP, $6)`,
 		dt.DictName, dt.DictType, dt.TypeStatus, dt.CreateBy, dt.UpdateBy, dt.Remark)
 
 	if err != nil {
@@ -155,6 +159,7 @@ func (db *DictTypeDb) SaveDictType(dt *domain.DictType) (*domain.DictType, error
 		return nil, err
 	}
 
+	// postgresql不能返回新增的ID，只能通过其他方式查询新增后的那条数据
 	rowCount, err := result.RowsAffected()
 	if err != nil {
 		log.Fatalf("获取插入行数错误===%v", err)
@@ -163,7 +168,7 @@ func (db *DictTypeDb) SaveDictType(dt *domain.DictType) (*domain.DictType, error
 
 	var dictType *domain.DictType
 	if rowCount == 1 {
-		dictType, err = db.SelectDetailByObj(domain.NewDictTypeDetail(dt.DictType))
+		dictType, err = pg.SelectDetailByObj(domain.NewDictTypeDetail(dt.DictType))
 		if err != nil {
 			log.Printf("字典新增失败===%v", err)
 			return nil, errors.New("字典新增失败")
@@ -177,9 +182,47 @@ func (db *DictTypeDb) SaveDictType(dt *domain.DictType) (*domain.DictType, error
 }
 
 //goland:noinspection SqlResolve
-func (db *DictTypeDb) SelectDetailByObj(dt domain.DictType) (*domain.DictType, error) {
+func (pg *DictTypeDb) UpdateDictType(d *domain.DictType) (int64, error) {
+	result, err := pg.Db.Exec(`UPDATE tb_sys_dict_type SET dict_name=$1, dict_type=$2, type_status=$3, update_by=$4, update_time=CURRENT_TIMESTAMP, remark=$5 WHERE id = $6`,
+		d.DictName, d.DictType, d.TypeStatus, d.UpdateBy, d.Remark, d.Id)
+
+	if err != nil {
+		log.Printf("字典修改错误===%v", err)
+		return 0, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("字典修改失败===%v", err)
+		return 0, errors.New("字典修改失败")
+	}
+	return rowsAffected, nil
+}
+
+//goland:noinspection SqlResolve
+func (pg *DictTypeDb) DeleteDictType(id int64) bool {
+	result, err := pg.Db.Exec(`DELETE FROM tb_sys_dict_type WHERE id = $1`, id)
+	if err != nil {
+		log.Printf("字典删除错误===%v", err)
+		return false
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("字典删除失败===%v", err)
+		return false
+	}
+
+	if rowsAffected != 1 {
+		return false
+	}
+	return true
+}
+
+//goland:noinspection SqlResolve
+func (pg *DictTypeDb) SelectDetailByObj(dt domain.DictType) (*domain.DictType, error) {
 	var dictType = &domain.DictType{}
-	queryRow := db.Db.QueryRow(`
+	queryRow := pg.Db.QueryRow(`
 				SELECT
 					id,
 					dict_name,
@@ -222,6 +265,20 @@ func (db *DictTypeDb) SelectDetailByObj(dt domain.DictType) (*domain.DictType, e
 		return nil, err
 	}
 	return dictType, nil
+}
+
+//goland:noinspection SqlResolve
+func (pg *DictTypeDb) CheckTypeIsExist(id *int64, typeStr string) bool {
+	var count int64
+	err := pg.Db.QueryRow("SELECT COUNT(*) FROM tb_sys_dict_type WHERE dict_type = $1 AND id != $2", typeStr, id).Scan(&count)
+	if err != nil {
+		log.Printf("字典类型验证错误===%v", err)
+		return false
+	}
+	if count == 0 {
+		return false
+	}
+	return true
 }
 
 // buildWhereParam 构建多条件动态查询

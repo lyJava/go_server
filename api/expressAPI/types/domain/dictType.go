@@ -1,7 +1,7 @@
 package domain
 
 type DictType struct {
-	Id         int64  `json:"id,omitempty"`         // 主键ID
+	Id         *int64 `json:"id,omitempty"`         // 主键ID
 	DictName   string `json:"dictName,omitempty"`   // 字典类型名称
 	DictType   string `json:"dictType,omitempty"`   // 字典类型
 	TypeStatus string `json:"typeStatus,omitempty"` // 是否启用(0:正常；1:停用)

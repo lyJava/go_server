@@ -12,4 +12,13 @@ type DictTypeService interface {
 
 	// SaveDictType 新增字典类型
 	SaveDictType(d *domain.DictType) (*domain.DictType, error)
+
+	// UpdateDictType 修改字典类型
+	UpdateDictType(d *domain.DictType) (int64, error)
+
+	// CheckTypeIsExist 检查类型是否已经存在
+	CheckTypeIsExist(id *int64, typeStr string) bool
+
+	// DeleteDictType 删除
+	DeleteDictType(id int64) bool
 }
