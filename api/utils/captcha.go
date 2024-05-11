@@ -16,6 +16,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -255,6 +256,22 @@ func distortText(code string, intensity, frequency float64) string {
 	return distortedText
 }
 
+func textRandomColorCount(dc *freetype.Context, count int) {
+	// 随机颜色，确保颜色不太浅
+	var fontColor color.RGBA
+	for {
+		r := rand.Intn(128) + 128
+		g := rand.Intn(128) + 128
+		b := rand.Intn(128) + 128
+		sum := r + g + b
+		if sum < count {
+			fontColor = color.RGBA{R: uint8(r), G: uint8(g), B: uint8(b), A: 255}
+			break
+		}
+	}
+	dc.SetSrc(&image.Uniform{C: fontColor})
+}
+
 func textRandomColor(dc *freetype.Context) {
 	// 随机颜色，确保颜色不太浅
 	var fontColor color.RGBA
@@ -344,4 +361,83 @@ func getTextWidth(text string, font *truetype.Font, fontSize int) int {
 		width += adv.AdvanceWidth
 	}
 	return width.Ceil()
+}
+
+func GenerateMathCode(width, height int) (string, string, image.Image) {
+	rand.NewSource(time.Now().UnixNano())
+	//字体设置
+	fontFile, err := os.ReadFile("Arial Unicode.ttf")
+	if err != nil {
+		log.Println("open file failed")
+	}
+	parse, err := truetype.Parse(fontFile)
+	if err != nil {
+		log.Println("load parse failed")
+	}
+
+	// 选择运算符
+	operators := []string{"+", "-", "*"}
+	operator := operators[rand.Intn(len(operators))]
+
+	num1 := rand.Intn(10) // 第一个随机数
+	num2 := rand.Intn(10) // 第二个随机数
+
+	// 根据运算符调整数值以保证结果的合理性
+	switch operator {
+	case "-":
+		if num1 < num2 {
+			num1, num2 = num2, num1
+		}
+	case "*":
+		// 限制乘积的大小
+		for num1*num2 > 50 {
+			num2 = rand.Intn(10)
+		}
+	}
+
+	captchaText := strconv.Itoa(num1) + operator + strconv.Itoa(num2) + "=?"
+	var result string
+	switch operator {
+	case "+":
+		result = strconv.Itoa(num1 + num2)
+	case "-":
+		result = strconv.Itoa(num1 - num2)
+	case "*":
+		result = strconv.Itoa(num1 * num2)
+	}
+
+	// 创建一个RGBA图像
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	bgColor := color.RGBA{R: 240, G: 240, B: 240, A: 255}
+	draw.Draw(img, img.Bounds(), &image.Uniform{C: bgColor}, image.Pt(0, 0), draw.Src)
+
+	dc := freetype.NewContext()
+	dc.SetFont(parse)
+	dc.SetFontSize(float64(27))
+	dc.SetDPI(72)
+	dc.SetDst(img)
+	dc.SetClip(img.Bounds())
+	dc.SetSrc(&image.Uniform{C: color.RGBA{A: 255}})
+
+	textWidthOld := getTextWidth(captchaText, parse, 27)
+	startX := (width-textWidthOld)/2 - height + 10 - textWidthOld*5
+	pt := freetype.Pt(startX, 35)
+
+	for _, ch := range captchaText {
+		code := string(ch)
+		if code == "+" || code == "-" || code == "*" || code == "=" || code == "?" {
+			textRandomColorCount(dc, 400)
+		} else {
+			textRandomColor(dc)
+		}
+		_, err := dc.DrawString(code, pt)
+		if err != nil {
+			log.Println("Draw string failed:", err)
+			return "", "", nil
+		}
+		// 更新下一个字符的位置
+		pt.X += dc.PointToFixed(float64(32 * 5 / 6))
+	}
+
+	return captchaText, result, img
 }

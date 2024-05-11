@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"github.com/dchest/captcha"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"image/png"
 	"log"
@@ -39,6 +40,7 @@ func (*CaptchaController) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/captcha/create", CaptchaHandlerCreate).Methods("GET")
 	r.HandleFunc("/captcha/validate", CaptchaHandlerValidate).Methods("POST")
 	r.HandleFunc("/captcha/dchest", CaptchaByDchestHandler).Methods("GET")
+	r.HandleFunc("/captcha/math", handleMathCode).Methods("GET")
 }
 
 // CaptchaCustomerHandler 自定义验证码
@@ -181,6 +183,22 @@ func CaptchaByDchestHandler(w http.ResponseWriter, r *http.Request) {
 	err := captcha.WriteImage(w, captchaID, 150, 70)
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp("获取验证码失败"))
+		return
+	}
+}
+
+// handleMathCode 数学运算验证码
+func handleMathCode(w http.ResponseWriter, _ *http.Request) {
+	captchaText, result, img := utils.GenerateMathCode(160, 50)
+	log.Printf("验证码文本: %s", captchaText)
+	log.Printf("验证码结果: %s", result)
+	// 编码图片为PNG并发送给客户端
+	w.Header().Set("Content-Type", "image/png")
+	w.Header().Set("Captcha-Id", uuid.NewString())
+	// 这里不需要设置Content-Length长度
+	err := png.Encode(w, img)
+	if err != nil {
+		response.WriteJson(w, response.FailMessageResp("验证码生成失败"))
 		return
 	}
 }
