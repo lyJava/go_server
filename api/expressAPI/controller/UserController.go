@@ -9,10 +9,11 @@ import (
 	"apiProject/api/utils"
 	"encoding/base64"
 	"encoding/json"
-	"github.com/golang-jwt/jwt"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+
+	"github.com/golang-jwt/jwt"
+	"github.com/gorilla/mux"
 )
 
 // UserController 用户控制器
@@ -71,7 +72,7 @@ func (u *UserController) handlerCreateUser(w http.ResponseWriter, r *http.Reques
 	marshal, _ := json.MarshalIndent(creatUser, "", "    ")
 	log.Printf("用户新增===\n%s", marshal)
 
-	token, err := utils.CreatToken(creatUser, 7)
+	token, err := utils.CreateToken(creatUser, 7)
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
@@ -231,7 +232,7 @@ func (u *UserController) handlerUserLogin(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	token, err := utils.CreatAndSetAuthCookie(w, loginUser, 10)
+	token, err := utils.CreateAndSetAuthCookie(w, loginUser, 10)
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return

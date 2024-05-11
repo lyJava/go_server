@@ -15,8 +15,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/golang-jwt/jwt"
-	"golang.org/x/crypto/bcrypt"
 	"io"
 	"log"
 	_ "math/rand"
@@ -27,6 +25,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/golang-jwt/jwt"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // ConvertToInt64 字符串转换为int64
@@ -180,12 +181,12 @@ func CreateJWT(user *domain.User, days int64, secret []byte) (string, error) {
 	return tokenStr, nil
 }
 
-// CreatToken 创建token
+// CreateToken 创建token
 // 参数
 //
 //	userId: 用户信息
 //	days: 有效天数
-func CreatToken(user *domain.User, days int64) (string, error) {
+func CreateToken(user *domain.User, days int64) (string, error) {
 	secret := []byte(config.EnvConfig.JWTSecret)
 	token, err := CreateJWT(user, days, secret)
 	if err != nil {
@@ -194,13 +195,13 @@ func CreatToken(user *domain.User, days int64) (string, error) {
 	return token, nil
 }
 
-// CreatAndSetAuthCookie 创建并设置token到cookie
+// CreateAndSetAuthCookie 创建并设置token到cookie
 // 参数
 //
 //		userId: 用户ID
 //	 days: token有效天数
 //	 w:	http返回
-func CreatAndSetAuthCookie(w http.ResponseWriter, user *domain.User, days int64) (string, error) {
+func CreateAndSetAuthCookie(w http.ResponseWriter, user *domain.User, days int64) (string, error) {
 	secret := []byte(config.EnvConfig.JWTSecret)
 	token, err := CreateJWT(user, days, secret)
 	if err != nil {
