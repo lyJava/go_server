@@ -189,10 +189,12 @@ func CaptchaByDchestHandler(w http.ResponseWriter, r *http.Request) {
 
 // handleMathCode 数学运算验证码
 func handleMathCode(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Captcha-Id", uuid.NewString())
+	codeId := uuid.NewString()
+	w.Header().Set("Captcha-Id", codeId)
+	log.Println("验证码ID:", codeId)
 	captchaText, result, img := utils.GenerateMathCode(160, 50)
-	log.Printf("验证码文本: %s", captchaText)
-	log.Printf("验证码结果: %s", result)
+	log.Println("验证码文本:", captchaText)
+	log.Println("验证码结果:", result)
 	/*
 		// 编码图片为PNG并发送给客户端
 		w.Header().Set("Content-Type", "image/png")
