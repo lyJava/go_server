@@ -218,9 +218,9 @@ func CreateImage(code string) image.Image {
 	}*/
 
 	// 添加干扰线
-	addInterferenceLines(4, 10, rand.Intn(2), img)
+	AddInterferenceLines(4, 10, rand.Intn(2), img)
 	// 添加噪点
-	addNoise(100, 200, img)
+	AddNoise(100, 200, img)
 
 	/*file, err := os.Create("test" + code + ".png")
 	if err != nil {
@@ -288,8 +288,8 @@ func textRandomColor(dc *freetype.Context) {
 	dc.SetSrc(&image.Uniform{C: fontColor})
 }
 
-// addInterferenceLines 添加干扰线
-func addInterferenceLines(min, max, lineWidth int, img *image.RGBA) {
+// AddInterferenceLines 添加干扰线
+func AddInterferenceLines(min, max, lineWidth int, img image.Image) {
 	// 在图像上绘制随机直线来添加干扰线
 	count := rand.Intn(max-min) + min
 	for i := 0; i < count; i++ {
@@ -309,7 +309,14 @@ func addInterferenceLines(min, max, lineWidth int, img *image.RGBA) {
 }
 
 // drawLine 在图像上绘制直线
-func drawLine(img *image.RGBA, x1, y1, x2, y2 int, clr color.Color, width int) {
+func drawLine(img image.Image, x1, y1, x2, y2 int, clr color.Color, width int) {
+	rgba, ok := img.(*image.RGBA)
+	if !ok {
+		// 如果类型断言失败，说明 img 不是 *image.RGBA 类型
+		log.Println("img is not *image.RGBA")
+		return
+	}
+
 	dx := float64(x2 - x1)
 	dy := float64(y2 - y1)
 	steps := int(math.Max(math.Abs(dx), math.Abs(dy)))
@@ -321,7 +328,7 @@ func drawLine(img *image.RGBA, x1, y1, x2, y2 int, clr color.Color, width int) {
 	x, y := float64(x1), float64(y1)
 	if width == 0 {
 		for i := 0; i <= steps; i++ {
-			img.Set(int(x+0.5), int(y+0.5), clr)
+			rgba.Set(int(x+0.5), int(y+0.5), clr)
 			x += dX
 			y += dY
 		}
@@ -329,7 +336,7 @@ func drawLine(img *image.RGBA, x1, y1, x2, y2 int, clr color.Color, width int) {
 		for i := 0; i <= steps; i++ {
 			for w := -width / 2; w <= width/2; w++ {
 				for h := -width / 2; h <= width/2; h++ {
-					img.Set(int(x+float64(w)+rand.Float64()*0.5), int(y+float64(h)+rand.Float64()*0.8), clr)
+					rgba.Set(int(x+float64(w)+rand.Float64()*0.5), int(y+float64(h)+rand.Float64()*0.8), clr)
 				}
 			}
 			x += dX
@@ -338,14 +345,20 @@ func drawLine(img *image.RGBA, x1, y1, x2, y2 int, clr color.Color, width int) {
 	}
 }
 
-// addNoise 添加噪点
-func addNoise(min, max int, img *image.RGBA) {
+// AddNoise 添加噪点
+func AddNoise(min, max int, img image.Image) {
+	rgba, ok := img.(*image.RGBA)
+	if !ok {
+		// 如果类型断言失败，说明 img 不是 *image.RGBA 类型
+		log.Println("img is not *image.RGBA")
+		return
+	}
 	count := rand.Intn(max-min) + min
 	bounds := img.Bounds()
 	for i := 0; i < count; i++ {
 		x := rand.Intn(bounds.Max.X)
 		y := rand.Intn(bounds.Max.Y)
-		img.Set(x, y, color.RGBA{R: uint8(rand.Intn(256)), G: uint8(rand.Intn(256)), B: uint8(rand.Intn(256)), A: 255})
+		rgba.Set(x, y, color.RGBA{R: uint8(rand.Intn(256)), G: uint8(rand.Intn(256)), B: uint8(rand.Intn(256)), A: 255})
 	}
 }
 

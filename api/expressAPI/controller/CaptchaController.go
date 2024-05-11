@@ -189,15 +189,45 @@ func CaptchaByDchestHandler(w http.ResponseWriter, r *http.Request) {
 
 // handleMathCode 数学运算验证码
 func handleMathCode(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Captcha-Id", uuid.NewString())
 	captchaText, result, img := utils.GenerateMathCode(160, 50)
 	log.Printf("验证码文本: %s", captchaText)
 	log.Printf("验证码结果: %s", result)
-	// 编码图片为PNG并发送给客户端
-	w.Header().Set("Content-Type", "image/png")
-	w.Header().Set("Captcha-Id", uuid.NewString())
-	// 这里不需要设置Content-Length长度
-	err := png.Encode(w, img)
+	/*
+		// 编码图片为PNG并发送给客户端
+		w.Header().Set("Content-Type", "image/png")
+		// 添加噪点(这里会导致返回的响应头就没有Content-Length)
+		utils.AddNoise(200, 500, img)
+		// 这里需要设置Content-Length长度，默认响应头会增加Transfer-Encoding为chunked的属性
+		err := png.Encode(w, img)
+		if err != nil {
+			response.WriteJson(w, response.FailMessageResp("验证码生成失败"))
+			return
+		}
+	*/
+
+	// 添加干扰线
+	utils.AddInterferenceLines(3, 5, 1, img)
+
+	// 添加噪点(这里会导致返回的响应头就没有Content-Length，所以使用buf.WriteTo(w)返回图像)
+	utils.AddNoise(100, 220, img)
+
+	// 将图像编码为 PNG 格式
+	var buf bytes.Buffer
+	err := png.Encode(&buf, img)
 	if err != nil {
+		log.Println("Failed to encode image:", err)
+		response.WriteJson(w, response.FailMessageResp("验证码生成失败"))
+		return
+	}
+	// 设置响应内容类型，这里可以不设置，默认响应头也会返回Content-Type为image/png
+	w.Header().Set("Content-Type", "image/png")
+	// 设置Content-Length
+	w.Header().Set("Content-Length", strconv.Itoa(buf.Len()))
+	// 发送图像数据给客户端
+	_, err = buf.WriteTo(w)
+	if err != nil {
+		log.Println("Failed to send image data:", err)
 		response.WriteJson(w, response.FailMessageResp("验证码生成失败"))
 		return
 	}
