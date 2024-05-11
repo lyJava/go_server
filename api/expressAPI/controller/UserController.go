@@ -77,7 +77,12 @@ func (u *UserController) handlerCreateUser(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	response.WriteJson(w, response.OkDataResp(token))
+	// 创建map返回数据
+	dataMap := map[string]interface{}{
+		"token": token,
+		"user":  creatUser,
+	}
+	response.WriteJson(w, response.OkDataResp(dataMap))
 	return
 }
 

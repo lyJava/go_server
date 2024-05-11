@@ -10,6 +10,7 @@ type User struct {
 	Password   string `json:"password,omitempty"`   // 密码
 	CreateBy   string `json:"createBy,omitempty"`   // 创建人
 	CreateTime string `json:"createTime,omitempty"` // 创建时间
+	UpdateBy   string `json:"updateBy,omitempty"`   // 修改人
 	UpdateTime string `json:"updateTime,omitempty"` // 更新时间
 	Token      string `json:"token,omitempty"`      // 令牌
 }
