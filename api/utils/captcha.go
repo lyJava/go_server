@@ -74,7 +74,7 @@ func GenerateImage(code string) image.Image {
 
 	// 背景色设置为灰白色
 	bgColor := color.RGBA{R: 240, G: 240, B: 240, A: 255}
-	draw.Draw(img, img.Bounds(), &image.Uniform{C: bgColor}, image.ZP, draw.Src)
+	draw.Draw(img, img.Bounds(), &image.Uniform{C: bgColor}, image.Pt(0, 0), draw.Src)
 
 	// 使用默认字体
 	face := basicfont.Face7x13
@@ -140,7 +140,7 @@ func drawRect(img draw.Image, point image.Point, color color.Color) {
 
 	// 绘制矩形
 	rect := image.Rect(point.X, point.Y, point.X+width, point.Y+height)
-	draw.Draw(img, rect, &image.Uniform{color}, image.ZP, draw.Src)
+	draw.Draw(img, rect, &image.Uniform{C: color}, image.Pt(0, 0), draw.Src)
 }
 
 //https://blog.csdn.net/m0_46198325/article/details/134913801
@@ -151,7 +151,7 @@ func CreateImage(code string) image.Image {
 	h := 50
 	bgColor := color.RGBA{R: 240, G: 240, B: 240, A: 255}
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
-	draw.Draw(img, img.Bounds(), &image.Uniform{C: bgColor}, image.ZP, draw.Src)
+	draw.Draw(img, img.Bounds(), &image.Uniform{C: bgColor}, image.Pt(0, 0), draw.Src)
 
 	//字体设置
 	fontFile, err := os.ReadFile("Arial Unicode.ttf")
