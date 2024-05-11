@@ -403,7 +403,7 @@ func GenerateMathCode(width, height int) (string, string, image.Image) {
 		}
 	case "*":
 		// 限制乘积的大小
-		for num1*num2 > 50 {
+		for num1*num2 > 100 {
 			num2 = rand.Intn(10)
 		}
 	}
