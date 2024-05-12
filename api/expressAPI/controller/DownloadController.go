@@ -6,7 +6,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
-	"github.com/gorilla/mux"
 	"io"
 	"log"
 	"net/http"
@@ -14,6 +13,8 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 // DownloadController 下载控制器
@@ -128,7 +129,7 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 		}*/
 		var files []string
 		files = append(files, filePath)
-		buf, err := utils.CreatZipBuffer(files)
+		buf, err := utils.CreateZipBuffer(files)
 		if err != nil {
 			response.WriteJson(w, response.FailMessageResp(err.Error()))
 			return

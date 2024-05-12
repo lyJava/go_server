@@ -102,7 +102,7 @@ func EncryptOAEP(publicKey, password []byte) ([]byte, error) {
 }
 
 // DecryptOAEP 解密
-func DecryptOAEP(privateKey, cipherdata []byte) ([]byte, error) {
+func DecryptOAEP(privateKey, cipherData []byte) ([]byte, error) {
 	block, _ := pem.Decode(privateKey)
 	if block == nil {
 		err := fmt.Errorf("failed to parse certificate PEM")
@@ -115,5 +115,5 @@ func DecryptOAEP(privateKey, cipherdata []byte) ([]byte, error) {
 	}
 
 	h := sha256.New()
-	return rsa.DecryptOAEP(h, rand.Reader, priv, cipherdata, nil)
+	return rsa.DecryptOAEP(h, rand.Reader, priv, cipherData, nil)
 }

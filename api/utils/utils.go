@@ -15,6 +15,8 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"github.com/golang-jwt/jwt"
+	"golang.org/x/crypto/bcrypt"
 	"io"
 	"log"
 	_ "math/rand"
@@ -25,9 +27,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/golang-jwt/jwt"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // ConvertToInt64 字符串转换为int64
@@ -85,7 +84,7 @@ func (t *LocalTime) String() string {
 	if t == nil || t.IsZero() {
 		return ""
 	}
-	return fmt.Sprintf("%s", time.Time(*t).Format("2006-01-02 15:04:05"))
+	return time.Time(*t).Format("2006-01-02 15:04:05")
 }
 
 func (t *LocalTime) IsZero() bool {
@@ -125,12 +124,16 @@ func (t *LocalTime) UnmarshalJSON(data []byte) error {
 
 func (t LocalTime) MarshalJSON() ([]byte, error) {
 	tTime := time.Time(t)
+	/*
+		在这个函数中，t 是 LocalTime 类型的接收者，它是一个自定义类型。在 Go 语言中，对于结构体或自定义类型的方法，即使接收者是指针类型，
+		如果使用的是非指针类型的值来调用该方法，Go 语言也会自动进行值到指针的转换。因此，在 MarshalJSON 方法中，
+		t 的类型是 LocalTime，即使 t 为 nil，也不等于 nil。因此，您无需检查 &t == nil 来判断 t 是否为零值或空值
+	*/
 	// 如果时间值是空或者0值 返回为null 如果写空字符串会报错
-	if &t == nil || t.IsZero() {
-		return []byte("null"), nil
+	if t.IsZero() {
+		return []byte(""), nil
 	}
 	return []byte(fmt.Sprintf("\"%s\"", tTime.Format("2006-01-02 15:04:05"))), nil
-
 }
 
 //https://blog.csdn.net/tongweizhen/article/details/124190235
@@ -145,7 +148,7 @@ func (t LocalTime) MarshalJSON() ([]byte, error) {
 //
 //	string yyyy-MM-dd HH:mm:ss
 func FormatTime(t time.Time) string {
-	return fmt.Sprintf("%s", t.Format("2006-01-02 15:04:05"))
+	return t.Format("2006-01-02 15:04:05")
 }
 
 // HashPassword 返回密码hash
@@ -314,7 +317,7 @@ func RsaEncrypt(publicKeyByte []byte, origData []byte) ([]byte, error) {
 }
 
 // RsaDecrypt 解密
-func RsaDecrypt(privateKeyByte []byte, ciphertext []byte) ([]byte, error) {
+func RsaDecrypt(privateKeyByte []byte, cipherText []byte) ([]byte, error) {
 	block, _ := pem.Decode(privateKeyByte)
 	if block == nil {
 		return nil, errors.New("private key error")
@@ -338,7 +341,7 @@ func RsaDecrypt(privateKeyByte []byte, ciphertext []byte) ([]byte, error) {
 	}
 
 	privateKey := privateInterface.(*rsa.PrivateKey)
-	decryptDataByte, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, ciphertext)
+	decryptDataByte, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, cipherText)
 	if err != nil {
 		log.Printf("RSA私钥解密错误===%v", err)
 		return nil, errors.New("解密失败")
@@ -383,8 +386,8 @@ func GetSuffix(str string) string {
 	return suffix
 }
 
-// CreatZipBuffer 创建ZIP文件到缓冲区
-func CreatZipBuffer(files []string) (*bytes.Buffer, error) {
+// CreateZipBuffer 创建ZIP文件到缓冲区
+func CreateZipBuffer(files []string) (*bytes.Buffer, error) {
 	// 创建 ZIP 文件
 	zipBuffer := new(bytes.Buffer)
 	zw := zip.NewWriter(zipBuffer)
