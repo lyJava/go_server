@@ -104,19 +104,18 @@ func (td *TestExpressController) handleTestExpressPage(w http.ResponseWriter, r 
 	var queryMap = make(map[string]interface{})
 	err := json.NewDecoder(r.Body).Decode(&queryMap)
 	if err != nil {
-		log.Printf("快递分页查询参数解析失败===%v", err)
+		log.Printf("测试快递分页查询参数解析失败===%v", err)
 		response.WriteJson(w, response.FailMessageResp("测试快递快递分页查询参数解析失败"))
 		return
 	}
 	utils.CloseBodyError("测试快递分页查询失败", w, r)
 
-	// 转换 page 和 size
 	page, _ := queryMap["page"].(string)
 	size, _ := queryMap["size"].(string)
 	log.Printf("测试快递分页查询分页参数===page=%v,size=%v", page, size)
 
 	if utils.ConvertToInt64(size) > 500 {
-		response.WriteJson(w, response.FailMessageResp("分页查询每页不能超过500条"))
+		response.WriteJson(w, response.FailMessageResp("测试快递分页查询单次不能超过500条"))
 		return
 	}
 
@@ -124,16 +123,14 @@ func (td *TestExpressController) handleTestExpressPage(w http.ResponseWriter, r 
 
 	queryObj := queryMap["obj"]
 	if queryObj != nil {
-		// 转换 obj
 		testExpressObj, ok := queryObj.(map[string]interface{})
 		if !ok {
 			log.Println("测试快递分页查询参数obj类型错误")
-			response.WriteJson(w, response.FailMessageResp("快递分页查询参数obj类型错误"))
+			response.WriteJson(w, response.FailMessageResp("测试快递分页查询参数obj类型错误"))
 			return
 		}
 
 		testExpress = &domain.TestExpress{
-			// 从 obj 中获取属性值，并进行类型断言 domain.TestExpress 的字段类型进行适当的转换
 			ExpressName:      getStrFromMap(testExpressObj, "expressName"),
 			ExpressNumber:    getStrFromMap(testExpressObj, "expressNumber"),
 			PickupCode:       getStrFromMap(testExpressObj, "pickupCode"),
