@@ -2,6 +2,11 @@ package utils
 
 import (
 	"fmt"
+	"github.com/golang/freetype"
+	"github.com/golang/freetype/truetype"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/basicfont"
+	"golang.org/x/image/math/fixed"
 	"image"
 	"image/color"
 	"image/draw"
@@ -15,12 +20,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/golang/freetype"
-	"github.com/golang/freetype/truetype"
-	"golang.org/x/image/font"
-	"golang.org/x/image/font/basicfont"
-	"golang.org/x/image/math/fixed"
 )
 
 // 验证码字符集
@@ -150,7 +149,7 @@ func drawRect(img draw.Image, point image.Point, color color.Color) {
 //https://blog.csdn.net/m0_46198325/article/details/134913801
 
 func CreateImage(code string) image.Image {
-	
+
 	fontPath, err := GetFontPath("/api/expressAPI", "/Arial Unicode.ttf")
 	if err != nil {
 		log.Println("获取字体文件路径异常")
@@ -390,7 +389,7 @@ func getTextWidth(text string, font *truetype.Font, fontSize int) int {
 
 func GenerateMathCode(width, height int) (string, string, image.Image) {
 	rand.NewSource(time.Now().UnixNano())
-	
+
 	fontPath, err := GetFontPath("/api/expressAPI", "/Arial Unicode.ttf")
 	if err != nil {
 		log.Println("获取字体文件路径异常")
