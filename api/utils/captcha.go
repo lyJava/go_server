@@ -150,14 +150,14 @@ func drawRect(img draw.Image, point image.Point, color color.Color) {
 
 func CreateImage(code string) image.Image {
 
-	fontPath, err := GetFontPath("/api/expressAPI", "/Arial Unicode.ttf")
+	/* fontPath, err := GetFontPath("/api/expressAPI", "/Arial Unicode.ttf")
 	if err != nil {
 		log.Println("获取字体文件路径异常")
 		return nil
-	}
+	} */
 
 	//字体设置
-	fontFile, err := os.ReadFile(fontPath)
+	fontFile, err := os.ReadFile(fontAbsolutePath)
 	if err != nil {
 		log.Println("open file failed")
 		return nil
@@ -390,13 +390,13 @@ func getTextWidth(text string, font *truetype.Font, fontSize int) int {
 func GenerateMathCode(width, height int) (string, string, image.Image) {
 	rand.NewSource(time.Now().UnixNano())
 
-	fontPath, err := GetFontPath("/api/expressAPI", "/Arial Unicode.ttf")
+	/* fontPath, err := GetFontPath("/api/expressAPI", "/Arial Unicode.ttf")
 	if err != nil {
 		log.Println("获取字体文件路径异常")
 		return "", "", nil
-	}
+	} */
 	//字体设置
-	fontFile, err := os.ReadFile(fontPath)
+	fontFile, err := os.ReadFile(fontAbsolutePath)
 	if err != nil {
 		log.Printf("open font file failed ===%v", err)
 		return "", "", nil
@@ -485,4 +485,16 @@ func GetFontPath(currentRelativePath, fontPath string) (string, error) {
 	fontAbsolutePath := filepath.Join(strings.TrimSuffix(path, currentRelativePath), fontPath)
 	log.Println("字体文件路径", fontAbsolutePath)
 	return fontAbsolutePath, nil
+}
+
+// fontAbsolutePath 字体文件绝对路径
+var fontAbsolutePath string
+
+// init 初始化的时候获取字体文件绝对路径
+func init() {
+	fontPath, err := GetFontPath("/api/expressAPI", "/Arial Unicode.ttf")
+	if err != nil {
+		log.Printf("获取字体文件路径异常===%v", err)
+	}
+	fontAbsolutePath = fontPath
 }
