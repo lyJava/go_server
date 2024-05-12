@@ -34,6 +34,10 @@ func (e *ExpressDB) CreateExpress(express *domain.Express) (*domain.Express, err
 	//express.ID = id
 	//express.CreateTime = FormatTime(timeNow)
 	express, err = e.GetExpress(id)
+	if err != nil {
+		log.Printf("获取快递异常===%v", err)
+		return nil, err
+	}
 	return express, nil
 }
 
