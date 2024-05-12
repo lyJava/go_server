@@ -2,11 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"github.com/golang/freetype"
-	"github.com/golang/freetype/truetype"
-	"golang.org/x/image/font"
-	"golang.org/x/image/font/basicfont"
-	"golang.org/x/image/math/fixed"
 	"image"
 	"image/color"
 	"image/draw"
@@ -16,8 +11,16 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
+
+	"github.com/golang/freetype"
+	"github.com/golang/freetype/truetype"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/basicfont"
+	"golang.org/x/image/math/fixed"
 )
 
 // 验证码字符集
@@ -147,22 +150,31 @@ func drawRect(img draw.Image, point image.Point, color color.Color) {
 //https://blog.csdn.net/m0_46198325/article/details/134913801
 
 func CreateImage(code string) image.Image {
+	
+	fontPath, err := GetFontPath("/api/expressAPI", "/Arial Unicode.ttf")
+	if err != nil {
+		log.Println("获取字体文件路径异常")
+		return nil
+	}
+
+	//字体设置
+	fontFile, err := os.ReadFile(fontPath)
+	if err != nil {
+		log.Println("open file failed")
+		return nil
+	}
+	parse, err := truetype.Parse(fontFile)
+	if err != nil {
+		log.Println("load parse failed")
+		return nil
+	}
+
 	rand.NewSource(time.Now().UnixNano())
 	w := 140
 	h := 50
 	bgColor := color.RGBA{R: 240, G: 240, B: 240, A: 255}
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 	draw.Draw(img, img.Bounds(), &image.Uniform{C: bgColor}, image.Pt(0, 0), draw.Src)
-
-	//字体设置
-	fontFile, err := os.ReadFile("Arial Unicode.ttf")
-	if err != nil {
-		log.Println("open file failed")
-	}
-	parse, err := truetype.Parse(fontFile)
-	if err != nil {
-		log.Println("load parse failed")
-	}
 
 	fontSize := 32
 	fontDPI := 72.0
@@ -378,14 +390,22 @@ func getTextWidth(text string, font *truetype.Font, fontSize int) int {
 
 func GenerateMathCode(width, height int) (string, string, image.Image) {
 	rand.NewSource(time.Now().UnixNano())
-	//字体设置
-	fontFile, err := os.ReadFile("Arial Unicode.ttf")
+	
+	fontPath, err := GetFontPath("/api/expressAPI", "/Arial Unicode.ttf")
 	if err != nil {
-		log.Println("open file failed")
+		log.Println("获取字体文件路径异常")
+		return "", "", nil
+	}
+	//字体设置
+	fontFile, err := os.ReadFile(fontPath)
+	if err != nil {
+		log.Printf("open font file failed ===%v", err)
+		return "", "", nil
 	}
 	parse, err := truetype.Parse(fontFile)
 	if err != nil {
-		log.Println("load parse failed")
+		log.Printf("load font failed===%v", err)
+		return "", "", nil
 	}
 
 	// 选择运算符
@@ -453,4 +473,17 @@ func GenerateMathCode(width, height int) (string, string, image.Image) {
 	}
 
 	return captchaText, result, img
+}
+
+// GetFontPath 获取字体文件绝对路径
+func GetFontPath(currentRelativePath, fontPath string) (string, error) {
+	path, err := os.Getwd()
+	if err != nil {
+		log.Printf("获取当前目录错误===%v", err)
+		return "", err
+	}
+	log.Println("当前绝对路径", path)
+	fontAbsolutePath := filepath.Join(strings.TrimSuffix(path, currentRelativePath), fontPath)
+	log.Println("字体文件路径", fontAbsolutePath)
+	return fontAbsolutePath, nil
 }
