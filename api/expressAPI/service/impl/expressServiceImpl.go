@@ -96,7 +96,7 @@ func (e *ExpressDB) SelectExpressPage(expressName string, pageStr, sizeStr strin
 		log.Print(err)
 		return nil, 0, 0, err
 	}
-	defer rows.Close()
+	// defer rows.Close()
 
 	// 创建 Express 对象数组
 	//var expressesArray []*Express
@@ -137,6 +137,7 @@ func (e *ExpressDB) SelectExpressPage(expressName string, pageStr, sizeStr strin
 	if err != nil {
 		return expressesList, 0, 0, err
 	}
+	RowsClose(rows, "快递分页查询")
 	// 返回查询结果数组
 	return expressesList, totalRecords, totalPages, nil
 }
@@ -162,12 +163,16 @@ func (e *ExpressDB) SelectExpressPageByParam(param *param.ExpressSearchParam) ([
 		log.Print(err)
 		return nil, 0, 0, err
 	}
-	defer rows.Close()
+	// todo 这里的rows必须关闭，使用defer方式时候，rows,Close()位置不重要，但是使用自定义方法关闭rows，就得注意下关闭调用的顺序
+	// defer rows.Close()
 
 	expressesArray, err := e.buildPageData(rows)
 	if err != nil {
 		return expressesArray, 0, 0, err
 	}
+
+	RowsClose(rows, "快递分页查询")
+
 	// 返回查询结果数组
 	return expressesArray, totalRecords, totalPages, nil
 }
