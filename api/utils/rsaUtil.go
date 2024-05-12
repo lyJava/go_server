@@ -26,8 +26,8 @@ func GenerateRSAKey2File(bits int, publicKeyName, privateKeyName string) (err er
 		return
 	}
 
-	fmt.Println(string(publicKeyWriter.Bytes()))
-	fmt.Println(string(privateKeyWriter.Bytes()))
+	log.Println("公钥写入", publicKeyWriter.String())
+	log.Println("私钥写入", privateKeyWriter.String())
 
 	err = os.WriteFile(publicKeyName, publicKeyWriter.Bytes(), 0444)
 	if err != nil {
