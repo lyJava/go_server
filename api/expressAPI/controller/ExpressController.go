@@ -79,7 +79,6 @@ func (e *ExpressController) handlerCrete(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	response.WriteJson(w, response.OkDataResp(t))
-	return
 }
 
 func (e *ExpressController) handlerGet(w http.ResponseWriter, r *http.Request) {
@@ -95,7 +94,6 @@ func (e *ExpressController) handlerGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response.WriteJson(w, response.OkDataResp(t))
-	return
 }
 
 func (e *ExpressController) handlerDetail(w http.ResponseWriter, r *http.Request) {
@@ -113,7 +111,6 @@ func (e *ExpressController) handlerDetail(w http.ResponseWriter, r *http.Request
 	}
 
 	response.WriteJson(w, response.OkDataResp(t))
-	return
 }
 
 func (e *ExpressController) handlerSelectPage(w http.ResponseWriter, r *http.Request) {
@@ -133,7 +130,6 @@ func (e *ExpressController) handlerSelectPage(w http.ResponseWriter, r *http.Req
 	response.WriteJson(w, response.OkDataResp(pageDataMap))*/
 
 	response.WriteJson(w, response.OkDataResp(response.NewPageData(totalRecords, totalPages, expressPage)))
-	return
 }
 
 func (e *ExpressController) handlerSelectPageParam(w http.ResponseWriter, r *http.Request) {
@@ -166,7 +162,6 @@ func (e *ExpressController) handlerSelectPageParam(w http.ResponseWriter, r *htt
 	}
 
 	response.WriteJson(w, response.OkDataResp(response.NewPageData(totalRecords, totalPages, expressPage)))
-	return
 }
 
 func (e *ExpressController) handlerDelete(w http.ResponseWriter, r *http.Request) {
@@ -182,7 +177,6 @@ func (e *ExpressController) handlerDelete(w http.ResponseWriter, r *http.Request
 		return
 	}
 	response.WriteJson(w, response.OkDataResp(t))
-	return
 }
 
 func (e *ExpressController) handlerUpdate(w http.ResponseWriter, r *http.Request) {
@@ -206,7 +200,6 @@ func (e *ExpressController) handlerUpdate(w http.ResponseWriter, r *http.Request
 		return
 	}
 	response.WriteJson(w, response.OkDataResp(t))
-	return
 }
 
 func (e *ExpressController) handlerBatchDelete(w http.ResponseWriter, r *http.Request) {
@@ -239,7 +232,6 @@ func (e *ExpressController) handlerBatchDelete(w http.ResponseWriter, r *http.Re
 		return
 	}
 	response.WriteJson(w, response.OkDataResp(t))
-	return
 }
 
 // handlerBatchInsert 批量新增
@@ -270,5 +262,4 @@ func (e *ExpressController) handlerBatchInsert(w http.ResponseWriter, r *http.Re
 		return
 	}
 	response.WriteJson(w, response.OkDataResp(t))
-	return
 }

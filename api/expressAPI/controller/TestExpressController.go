@@ -47,7 +47,6 @@ func (td *TestExpressController) handleTestExpressSave(w http.ResponseWriter, r 
 	}
 
 	response.WriteJson(w, response.OkCodeMessageData("新增成功", result))
-	return
 }
 
 func (td *TestExpressController) handleTestExpressBatchSave(w http.ResponseWriter, r *http.Request) {
@@ -73,7 +72,6 @@ func (td *TestExpressController) handleTestExpressBatchSave(w http.ResponseWrite
 	}
 
 	response.WriteJson(w, response.OkCodeMessageData("测试快递批量新增成功", result))
-	return
 }
 
 func (td *TestExpressController) handleTestExpressBatchDelete(w http.ResponseWriter, r *http.Request) {
@@ -99,5 +97,4 @@ func (td *TestExpressController) handleTestExpressBatchDelete(w http.ResponseWri
 	}
 
 	response.WriteJson(w, response.OkCodeMessageData("测试快递批量删除成功", result))
-	return
 }

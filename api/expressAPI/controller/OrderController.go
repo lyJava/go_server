@@ -109,5 +109,4 @@ func (mq *OrderController) CreateHandler(w http.ResponseWriter, r *http.Request)
 	}()
 
 	response.WriteJson(w, response.OkMessageResp("订单消息发送成功"))
-	return
 }

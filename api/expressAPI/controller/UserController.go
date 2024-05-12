@@ -47,7 +47,6 @@ func (u *UserController) handlerGetUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	response.WriteJson(w, response.OkDataResp(t))
-	return
 }
 
 // handlerCreateUser 处理创建用户
@@ -62,17 +61,17 @@ func (u *UserController) handlerCreateUser(w http.ResponseWriter, r *http.Reques
 	utils.CloseBodyError("用户新增失败", w, r)
 
 	user.Password = utils.HashPassword(user.Password)
-	creatUser, err := u.userService.CreatUser(user)
+	createUser, err := u.userService.CreateUser(user)
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
 
 	// 将json格式化输出
-	marshal, _ := json.MarshalIndent(creatUser, "", "    ")
+	marshal, _ := json.MarshalIndent(createUser, "", "    ")
 	log.Printf("用户新增===\n%s", marshal)
 
-	token, err := utils.CreateToken(creatUser, 7)
+	token, err := utils.CreateToken(createUser, 7)
 	if err != nil {
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
@@ -81,10 +80,9 @@ func (u *UserController) handlerCreateUser(w http.ResponseWriter, r *http.Reques
 	// 创建map返回数据
 	dataMap := map[string]interface{}{
 		"token": token,
-		"user":  creatUser,
+		"user":  createUser,
 	}
 	response.WriteJson(w, response.OkDataResp(dataMap))
-	return
 }
 
 // handlerCheckPwd 验证密码
@@ -182,8 +180,8 @@ func (u *UserController) handlerCheckPwd(w http.ResponseWriter, r *http.Request)
 		response.WriteJson(w, response.FailMessageResp("密码验证失败"))
 		return
 	}
+	
 	response.WriteJson(w, response.OkMessageResp("密码验证成功"))
-	return
 }
 
 // handlerUserLogin 用户登录
@@ -239,5 +237,4 @@ func (u *UserController) handlerUserLogin(w http.ResponseWriter, r *http.Request
 	}
 
 	response.WriteJson(w, response.OkDataResp(token))
-	return
 }

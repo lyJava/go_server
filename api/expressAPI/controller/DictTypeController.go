@@ -47,7 +47,6 @@ func (d *DictController) handlePageList(w http.ResponseWriter, r *http.Request) 
 	}
 
 	response.WriteJson(w, response.OkDataResp(response.NewPageData(totalRecords, totalPages, list)))
-	return
 }
 
 // handleSave 处理保存
@@ -68,7 +67,6 @@ func (d *DictController) handleSave(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.WriteJson(w, response.OkDataResp(saveDictType))
-	return
 }
 
 // handleDetail 处理查询
@@ -87,7 +85,6 @@ func (d *DictController) handleDetail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.WriteJson(w, response.OkDataResp(detail))
-	return
 }
 
 func (d *DictController) handleUpdate(w http.ResponseWriter, r *http.Request) {
@@ -123,8 +120,8 @@ func (d *DictController) handleUpdate(w http.ResponseWriter, r *http.Request) {
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
+
 	response.WriteJson(w, response.OkCodeMessageData("修改成功", result))
-	return
 }
 
 // handleDelete 处理查询
@@ -147,6 +144,6 @@ func (d *DictController) handleDelete(w http.ResponseWriter, r *http.Request) {
 		response.WriteJson(w, response.FailMessageResp("删除失败"))
 		return
 	}
+	
 	response.WriteJson(w, response.OkMessageResp("删除成功"))
-	return
 }
