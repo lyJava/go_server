@@ -1,6 +1,10 @@
 package impl
 
-import "apiProject/api/utils"
+import (
+	"apiProject/api/utils"
+	"database/sql"
+	"log"
+)
 
 // BuildPageOffset 计算总页数，偏移量
 func BuildPageOffset(pageStr, sizeStr interface{}, totalRecords int64) (int64, int64, int64) {
@@ -30,4 +34,15 @@ func BuildPageOffset(pageStr, sizeStr interface{}, totalRecords int64) (int64, i
 	// 计算总页数
 	totalPages := (totalRecords + size - 1) / size
 	return size, offset, totalPages
+}
+
+// RowsClose 关闭rows
+func RowsClose(rows *sql.Rows, message string) error {
+	err := rows.Close()
+	if err != nil {
+		log.Printf(message+"关闭row结果错误===%v", err)
+		return err
+	} 
+	log.Println(message + "结果成功关闭")
+	return nil
 }
