@@ -7,6 +7,9 @@ import (
 	"github.com/spf13/viper"
 	"log"
 	"os"
+	"path"
+	"path/filepath"
+	"runtime"
 	"time"
 )
 
@@ -46,9 +49,29 @@ func InitConfig() *types.MysqlConfig {
 	}*/
 }
 
+// 获取当前执行文件绝对路径（go run）
+func getCurrentAbPathByCaller() string {
+	var abPath string
+	_, filename, _, ok := runtime.Caller(0)
+	if ok {
+		abPath = path.Dir(filename)
+	}
+	return abPath
+}
+
 // buildConfig 构建并返回配置对象
 func buildConfig() (types.ServerConfigItem, types.SqlConfigItem, types.RsaKey, types.JwtSecret, types.RabbitmqConfigItem) {
-	viperConfig := ReadConfig("config", "application", "yml")
+	log.Println("当前执行文件的路径:", getCurrentAbPathByCaller())
+	currentPath, err := os.Getwd()
+	if err != nil {
+		log.Printf("获取当前目录错误===%v", err)
+	}
+	log.Println("获取当前工作目录路径:", currentPath)
+	// /Users/yangge/GolandProjects/apiProject/api/expressAPI/config/application.yml
+	configAbsolutePath := filepath.Join(currentPath, "config")
+	log.Println("获取配置文件绝对路径:", configAbsolutePath)
+	// todo 需要配置Working directory与当前的main.go的目录保持一直，不然会出现go run main.go启动与golang的debug工具启动获取目录不一致情况
+	viperConfig := ReadConfig(configAbsolutePath, "application", "yml")
 
 	var serverConfig types.ServerConfig
 	//serverMap := viperConfig.Get("server").(map[string]interface{})
