@@ -48,7 +48,7 @@ func InitConfig() *types.MysqlConfig {
 
 // buildConfig 构建并返回配置对象
 func buildConfig() (types.ServerConfigItem, types.SqlConfigItem, types.RsaKey, types.JwtSecret, types.RabbitmqConfigItem) {
-	viperConfig := ReadConfig("api/expressApi/config", "application", "yml")
+	viperConfig := ReadConfig("config", "application", "yml")
 
 	var serverConfig types.ServerConfig
 	//serverMap := viperConfig.Get("server").(map[string]interface{})
