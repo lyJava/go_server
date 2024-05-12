@@ -26,6 +26,7 @@ func (td *TestExpressController) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/testExpress/batchSave", td.handleTestExpressBatchSave).Methods("POST")
 	router.HandleFunc("/testExpress/batchDelete", td.handleTestExpressBatchDelete).Methods("POST")
 	router.HandleFunc("/testExpress/page", td.handleTestExpressPage).Methods("POST")
+	router.HandleFunc("/testExpress/{id}", td.handleTestExpressGetById).Methods("GET")
 }
 
 func (td *TestExpressController) handleTestExpressSave(w http.ResponseWriter, r *http.Request) {
@@ -156,6 +157,25 @@ func (td *TestExpressController) handleTestExpressPage(w http.ResponseWriter, r 
 
 	response.WriteJson(w, response.OkDataResp(response.NewPageData(totalRecord, totalPage, list)))
 }
+
+func (td* TestExpressController) handleTestExpressGetById(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	var id = vars["id"]
+	if id == "" {
+		response.WriteJson(w, response.FailMessageResp("ID参数不能为空"))
+		return
+	}
+
+	detail, err := td.service.SelectById(utils.ConvertToInt64(id))
+	if err != nil {
+		log.Printf("测试快递通过ID查询失败===%v", err)
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
+		return
+	}
+
+	response.WriteJson(w, response.OkDataResp(detail))
+}
+
 
 func getStrFromMap(m map[string]interface{}, key string) string {
 	if val, ok := m[key]; ok {

@@ -69,8 +69,8 @@ func (pg *TestDictTypeDb) Save(te *domain.TestExpress) (*domain.TestExpress, err
 //goland:noinspection SqlResolve,SqlCaseVsIf
 func (pg *TestDictTypeDb) SelectByNumAndPickupCode(expressNumber, pickupCode string) (*domain.TestExpress, error) {
 	// 返回值这里不需要加上*号
-	var result domain.TestExpress
-	err := pg.Db.QueryRow(
+	testExpress := &domain.TestExpress{}
+	row := pg.Db.QueryRow(
 		`SELECT
 				id,
 				express_name,
@@ -102,28 +102,15 @@ func (pg *TestDictTypeDb) SelectByNumAndPickupCode(expressNumber, pickupCode str
 				tb_test_express
 			WHERE
 				express_number = $1
-				AND pickup_code = $2`, expressNumber, pickupCode).
-		Scan(&result.Id,
-			&result.ExpressName,
-			&result.ExpressNumber,
-			&result.PickupCode,
-			&result.FromUsername,
-			&result.FromUserPhone,
-			&result.FromUserAddress,
-			&result.FromUserIdNumber,
-			&result.CreateBy,
-			&result.CreateTime,
-			&result.UpdateBy,
-			&result.UpdateTime,
-			&result.Remarks,
-			&result.DelFlag)
+				AND pickup_code = $2`, expressNumber, pickupCode)
+	err := rowScan(row, testExpress)
 	if err != nil {
 		log.Printf("通过快递单号与取件码查询异常===%v", err)
 		return nil, err
 	}
 
 	// 这里需要加上&
-	return &result, nil
+	return testExpress, nil
 }
 
 //goland:noinspection SqlResolve, SqlError
@@ -234,38 +221,63 @@ func (pg *TestDictTypeDb) PageList(te *domain.TestExpress, page, size int64) ([]
 
 	for rows.Next() {
 		testExpress := &domain.TestExpress{}
-		err := rows.Scan(&testExpress.Id,
-			&testExpress.ExpressName,
-			&testExpress.ExpressNumber,
-			&testExpress.PickupCode,
-			&testExpress.FromUsername,
-			&testExpress.FromUserPhone,
-			&testExpress.FromUserAddress,
-			&testExpress.FromUserIdNumber,
-			&testExpress.CreateBy,
-			&testExpress.CreateTime,
-			&testExpress.UpdateBy,
-			&testExpress.UpdateTime,
-			&testExpress.Remarks,
-			&testExpress.DelFlag)
-
+		err := rowsScan(rows, testExpress)
 		if err != nil {
-			log.Printf("测试快递分页返回异常===%v", err)
+			log.Printf("测试快递分页返回异常===%v", err.Error())
 			return nil, 0, 0, err
 		}
 
 		list = append(list, testExpress)
 	}
 
-	err = rows.Close()
+	err = RowsClose(rows, "测试快递分页查询")
 	if err != nil {
-		log.Printf("测试快餐查询分页关闭row结果错误===%v", err)
 		return nil, 0, 0, err
-	} else {
-		log.Println("测试快递查询分页row结果成功关闭")
 	}
 
 	return list, totalRecords, totalPages, nil
+}
+
+func (pg *TestDictTypeDb) SelectById(id int64) (*domain.TestExpress, error) {
+	row := pg.Db.QueryRow(
+		`SELECT
+			id,
+			express_name,
+			express_number,
+			pickup_code,
+			from_username,
+			from_user_phone,
+			from_user_address,
+			from_user_id_number,
+			create_by,
+			CASE
+				WHEN create_time IS NOT NULL THEN to_char(create_time, 'YYYY-MM-DD HH24:MI:SS')
+				ELSE ''
+			END AS create_time,
+			CASE
+				WHEN update_by IS NULL THEN ''
+				ELSE update_by
+			END AS update_by,
+			CASE
+				WHEN update_time IS NOT NULL THEN to_char(update_time, 'YYYY-MM-DD HH24:MI:SS')
+				ELSE ''
+			END AS update_time,
+			remarks,
+			CASE
+				WHEN del_flag = 0 THEN '正常'
+				ELSE '删除'
+			END AS del_flag
+		FROM
+			tb_test_express
+		WHERE id = $1`, id)
+
+	textExpress := &domain.TestExpress{}
+	err := rowScan(row, textExpress)
+	if err != nil {
+		log.Printf("通过ID查询测试快递异常===%v", err)
+		return nil, err
+	}
+	return textExpress, nil
 }
 
 //goland:noinspection SqlResolve
@@ -352,4 +364,50 @@ func buildCountByEntity(te *domain.TestExpress) string {
 	}
 
 	return ""
+}
+
+// rowScan 将数据行row转换到结构体
+func rowScan(row *sql.Row, testExpress *domain.TestExpress) error {
+	err := row.Scan(&testExpress.Id,
+		&testExpress.ExpressName,
+		&testExpress.ExpressNumber,
+		&testExpress.PickupCode,
+		&testExpress.FromUsername,
+		&testExpress.FromUserPhone,
+		&testExpress.FromUserAddress,
+		&testExpress.FromUserIdNumber,
+		&testExpress.CreateBy,
+		&testExpress.CreateTime,
+		&testExpress.UpdateBy,
+		&testExpress.UpdateTime,
+		&testExpress.Remarks,
+		&testExpress.DelFlag)
+	if err != nil {
+		log.Printf("测试快递数据转换错===%v", err)
+		return err
+	}
+	return nil
+}
+
+// rowsScan 将数据行rows转换到结构体
+func rowsScan(rows *sql.Rows, testExpress *domain.TestExpress) error {
+	err := rows.Scan(&testExpress.Id,
+		&testExpress.ExpressName,
+		&testExpress.ExpressNumber,
+		&testExpress.PickupCode,
+		&testExpress.FromUsername,
+		&testExpress.FromUserPhone,
+		&testExpress.FromUserAddress,
+		&testExpress.FromUserIdNumber,
+		&testExpress.CreateBy,
+		&testExpress.CreateTime,
+		&testExpress.UpdateBy,
+		&testExpress.UpdateTime,
+		&testExpress.Remarks,
+		&testExpress.DelFlag)
+	if err != nil {
+		log.Printf("测试快递数据转换错===%v", err)
+		return err
+	}
+	return nil
 }
