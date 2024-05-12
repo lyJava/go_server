@@ -4,7 +4,7 @@ package domain
 //
 // 设置了omitempty,字段的值为空值时，JSON序列化时将忽略该字段，因此不会显示空值。
 type TestExpress struct {
-	ID               *int64 `json:"id,omitempty"`               // 主键ID
+	Id               *int64 `json:"id,omitempty"`               // 主键ID
 	ExpressName      string `json:"expressName,omitempty"`      // 快递名称
 	ExpressNumber    string `json:"expressNumber,omitempty"`    // 快递单号
 	PickupCode       string `json:"pickupCode,omitempty"`       // 取件码
