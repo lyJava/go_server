@@ -55,7 +55,7 @@ func (u *UserDB) GetUserById(id int64) (*domain.User, error) {
 	return user, nil
 }
 
-func (u *UserDB) CreatUser(user *domain.User) (*domain.User, error) {
+func (u *UserDB) CreateUser(user *domain.User) (*domain.User, error) {
 	// 执行查询操作
 	row, err := u.Db.Exec(
 		`INSERT INTO
