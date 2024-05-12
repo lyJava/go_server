@@ -1,4 +1,4 @@
-package send
+package mailSend
 
 import (
 	"apiProject/email/common"
@@ -20,6 +20,7 @@ import (
 	"time"
 )
 
+// SendMail 发送邮件
 func SendMail(config common.MailConfig, content common.MailContent) {
 	// 连接到SMTP服务器
 	auth := smtp.PlainAuth("", config.Email, config.Password, config.Host)
@@ -298,7 +299,7 @@ func SendMail2(config common.MailConfig, content common.MailContent) {
 
 	// 发送邮件
 	if err := d.DialAndSend(mail); err != nil {
-		log.Fatalf("Failed to send email: %v", err)
+		log.Fatalf("Failed to mailSend email: %v", err)
 	}
 	elapsedTime := time.Since(startTime).Seconds()
 	log.Printf("gmail方式发送邮件成功！耗时： %s 秒", fmt.Sprintf("%.2f", elapsedTime))

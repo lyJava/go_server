@@ -2,7 +2,7 @@ package main
 
 import (
 	"apiProject/email/common"
-	"apiProject/email/send"
+	"apiProject/email/mailSend"
 )
 
 func main() {
@@ -27,7 +27,7 @@ func main() {
 	//
 	//"/Users/yangge/Downloads/雪落黄山 _ 当霜染一半山头, 风也不再轻柔｜8K超清.mp4",
 	// /Users/yangge/Downloads/20240215005635413-Screenrecorder-2024-02-15-00-54-00-961.mp4
-	send.SendMail(config, content)
+	mailSend.SendMail(config, content)
 
 	config2 := common.MailConfig{
 		Host:     "smtp.qq.com",
@@ -49,5 +49,5 @@ func main() {
 		},
 	}
 
-	send.SendMail2(config2, content2)
+	mailSend.SendMail2(config2, content2)
 }
