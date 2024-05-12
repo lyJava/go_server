@@ -25,6 +25,7 @@ func (td *TestExpressController) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/testExpress/save", td.handleTestExpressSave).Methods("POST")
 	router.HandleFunc("/testExpress/batchSave", td.handleTestExpressBatchSave).Methods("POST")
 	router.HandleFunc("/testExpress/batchDelete", td.handleTestExpressBatchDelete).Methods("POST")
+	router.HandleFunc("/testExpress/page", td.handleTestExpressPage).Methods("POST")
 }
 
 func (td *TestExpressController) handleTestExpressSave(w http.ResponseWriter, r *http.Request) {
@@ -97,4 +98,63 @@ func (td *TestExpressController) handleTestExpressBatchDelete(w http.ResponseWri
 	}
 
 	response.WriteJson(w, response.OkCodeMessageData("测试快递批量删除成功", result))
+}
+
+func (td *TestExpressController) handleTestExpressPage(w http.ResponseWriter, r *http.Request) {
+	var queryMap = make(map[string]interface{})
+	err := json.NewDecoder(r.Body).Decode(&queryMap)
+	if err != nil {
+		log.Printf("快递分页查询参数解析失败===%v", err)
+		response.WriteJson(w, response.FailMessageResp("测试快递快递分页查询参数解析失败"))
+		return
+	}
+	utils.CloseBodyError("测试快递分页查询失败", w, r)
+
+	// 转换 page 和 size
+	page, _ := queryMap["page"].(string)
+	size, _ := queryMap["size"].(string)
+
+	log.Printf("测试快递分页查询分页参数===page=%v,size=%v", page, size)
+	// 转换 obj
+	testExpressObj, ok := queryMap["obj"].(map[string]interface{})
+	if !ok {
+		log.Println("测试快递分页查询参数obj类型错误")
+		response.WriteJson(w, response.FailMessageResp("快递分页查询参数obj类型错误"))
+		return
+	}
+
+	testExpress := &domain.TestExpress{
+		// 从 obj 中获取属性值，并进行类型断言 domain.TestExpress 的字段类型进行适当的转换
+		ExpressName:      getStrFromMap(testExpressObj, "expressName"),
+		ExpressNumber:    getStrFromMap(testExpressObj, "expressNumber"),
+		PickupCode:       getStrFromMap(testExpressObj, "pickupCode"),
+		FromUsername:     getStrFromMap(testExpressObj, "fromUsername"),
+		FromUserPhone:    getStrFromMap(testExpressObj, "fromUserPhone"),
+		FromUserAddress:  getStrFromMap(testExpressObj, "fromUserAddress"),
+		FromUserIdNumber: getStrFromMap(testExpressObj, "fromUserIdNumber"),
+		CreateBy:         getStrFromMap(testExpressObj, "createBy"),
+		Remarks:          getStrFromMap(testExpressObj, "remarks"),
+		DelFlag:          getStrFromMap(testExpressObj, "delFlag"),
+	}
+
+	marshal, _ := json.MarshalIndent(testExpressObj, "", "    ")
+	log.Printf("测试快递分页查询对象参数===\r\n%s", string(marshal))
+
+	list, totalRecord, totalPage, err := td.service.PageList(testExpress, utils.ConvertToInt64(page), utils.ConvertToInt64(size))
+	if err != nil {
+		log.Printf("快递分页查询失败===%v", err)
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
+		return
+	}
+
+	response.WriteJson(w, response.OkDataResp(response.NewPageData(totalRecord, totalPage, list)))
+}
+
+func getStrFromMap(m map[string]interface{}, key string) string {
+	if val, ok := m[key]; ok {
+		if strVal, ok := val.(string); ok {
+			return strVal
+		}
+	}
+	return ""
 }

@@ -2,8 +2,8 @@ package impl
 
 import (
 	"apiProject/api/expressAPI/types/domain"
+	"apiProject/api/utils"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -25,7 +25,7 @@ func (pg *TestDictTypeDb) Save(te *domain.TestExpress) (*domain.TestExpress, err
 	isExist := pg.CheckByNumAndPickupCode(te.ExpressNumber, te.PickupCode)
 	if isExist {
 		log.Printf("快递单号：%s与取件码：%s不能重复", te.ExpressNumber, te.PickupCode)
-		return nil, errors.New(fmt.Sprintf("快递单号：%s与取件码：%s不能重复", te.ExpressNumber, te.PickupCode))
+		return nil, fmt.Errorf("快递单号：%s与取件码：%s不能重复", te.ExpressNumber, te.PickupCode)
 	}
 
 	result, err := pg.Db.Exec(`INSERT INTO tb_test_express(express_name, express_number, pickup_code, from_username, 
@@ -103,7 +103,7 @@ func (pg *TestDictTypeDb) SelectByNumAndPickupCode(expressNumber, pickupCode str
 			WHERE
 				express_number = $1
 				AND pickup_code = $2`, expressNumber, pickupCode).
-		Scan(&result.ID,
+		Scan(&result.Id,
 			&result.ExpressName,
 			&result.ExpressNumber,
 			&result.PickupCode,
@@ -180,7 +180,92 @@ func (pg *TestDictTypeDb) BatchSave(list []*domain.TestExpress) (int64, error) {
 }
 
 func (pg *TestDictTypeDb) PageList(te *domain.TestExpress, page, size int64) ([]*domain.TestExpress, int64, int64, error) {
-	return nil, 0, 0, nil
+	// 查询总记录数
+	var totalRecords int64
+	countSql := "SELECT COUNT(*) FROM tb_test_express" + buildCountByEntity(te)
+	log.Println("测试快递分页查询count的sql===", countSql)
+
+	err := pg.Db.QueryRow(countSql).Scan(&totalRecords)
+	if err != nil {
+		log.Printf("测试快递分页查询总条数错误===%v", err)
+		return nil, 0, 0, err
+	}
+
+	size, offset, totalPages := BuildPageOffset(page, size, totalRecords)
+
+	rows, err := pg.Db.Query(fmt.Sprintf(`SELECT
+					id,
+					express_name,
+					express_number,
+					pickup_code,
+					from_username,
+					from_user_phone,
+					from_user_address,
+					from_user_id_number,
+					create_by,
+					CASE
+						WHEN create_time IS NOT NULL THEN to_char(create_time, 'YYYY-MM-DD HH24:MI:SS')
+						ELSE ''
+					END AS create_time,
+					CASE
+						WHEN update_by IS NULL THEN ''
+						ELSE update_by
+					END AS update_by,
+					CASE
+						WHEN update_time IS NOT NULL THEN to_char(update_time, 'YYYY-MM-DD HH24:MI:SS')
+						ELSE ''
+					END AS update_time,
+					remarks,
+					CASE
+						WHEN del_flag = 0 THEN '正常'
+						ELSE '删除'
+					END AS del_flag
+				FROM
+					tb_test_express %s
+				ORDER BY id DESC	
+				OFFSET $1 LIMIT $2`, buildCountByEntity(te)), offset, size)
+
+	if err != nil {
+		log.Printf("测试快递分页查询行数错误===%v", err)
+		return nil, 0, 0, err
+	}
+
+	var list []*domain.TestExpress
+
+	for rows.Next() {
+		testExpress := &domain.TestExpress{}
+		err := rows.Scan(&testExpress.Id,
+			&testExpress.ExpressName,
+			&testExpress.ExpressNumber,
+			&testExpress.PickupCode,
+			&testExpress.FromUsername,
+			&testExpress.FromUserPhone,
+			&testExpress.FromUserAddress,
+			&testExpress.FromUserIdNumber,
+			&testExpress.CreateBy,
+			&testExpress.CreateTime,
+			&testExpress.UpdateBy,
+			&testExpress.UpdateTime,
+			&testExpress.Remarks,
+			&testExpress.DelFlag)
+
+		if err != nil {
+			log.Printf("测试快递分页返回异常===%v", err)
+			return nil, 0, 0, err
+		}
+
+		list = append(list, testExpress)
+	}
+
+	err = rows.Close()
+	if err != nil {
+		log.Printf("测试快餐查询分页关闭row结果错误===%v", err)
+		return nil, 0, 0, err
+	} else {
+		log.Println("测试快递查询分页row结果成功关闭")
+	}
+
+	return list, totalRecords, totalPages, nil
 }
 
 //goland:noinspection SqlResolve
@@ -214,4 +299,57 @@ func (pg *TestDictTypeDb) BatchDelete(ids []string) (rows int64, err error) {
 	}
 
 	return rowsAffected, nil
+}
+
+// 构建 WHERE 子句
+func buildCountByEntity(te *domain.TestExpress) string {
+	if te != nil {
+		var clauses []string
+		expressName := te.ExpressName
+		expressNumber := te.ExpressNumber
+		pickupCode := te.PickupCode
+		fromUsername := te.FromUsername
+		fromUserPhone := te.FromUserPhone
+		fromUserAddress := te.FromUserAddress
+		fromUserIdNumber := te.FromUserIdNumber
+		createBy := te.CreateBy
+		delFlag := te.DelFlag
+
+		if expressName != "" {
+			clauses = append(clauses, "express_name LIKE CONCAT('%', '"+expressName+"', '%')")
+		}
+		if expressNumber != "" {
+			clauses = append(clauses, "express_number LIKE CONCAT('%', '"+expressNumber+"', '%')")
+		}
+		if pickupCode != "" {
+			clauses = append(clauses, "pickup_code = '"+pickupCode+"'")
+		}
+
+		if fromUsername != "" {
+			clauses = append(clauses, "from_username LIKE CONCAT('%', '"+fromUsername+"', '%')")
+		}
+		if fromUserPhone != "" {
+			clauses = append(clauses, "from_user_phone LIKE CONCAT('%', '"+fromUserPhone+"', '%')")
+		}
+		if fromUserAddress != "" {
+			clauses = append(clauses, "from_user_address LIKE CONCAT('%', '"+fromUserAddress+"', '%')")
+		}
+		if fromUserIdNumber != "" {
+			clauses = append(clauses, "from_user_id_number ='"+fromUserIdNumber+"'")
+		}
+
+		if createBy != "" {
+			clauses = append(clauses, "create_by LIKE CONCAT('%', '"+createBy+"', '%')")
+		}
+
+		if delFlag != "" {
+			clauses = append(clauses, fmt.Sprintf("del_flag = %d", utils.ConvertToInt64(delFlag)))
+		}
+
+		if len(clauses) > 0 {
+			return " WHERE " + strings.Join(clauses, " AND ")
+		}
+	}
+
+	return ""
 }
