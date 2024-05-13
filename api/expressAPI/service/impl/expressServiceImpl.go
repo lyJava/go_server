@@ -342,13 +342,13 @@ func buildWhereClauseByParam(param *param.ExpressSearchParam) string {
 func buildOrderBy(param *param.ExpressSearchParam) string {
 	if param != nil {
 		var orderBy string
-		field := param.Field
+		column := param.Column
 		order := param.Order
 
-		if field == "" && order == "" {
+		if column == "" && order == "" {
 			orderBy = " ORDER BY id DESC"
 		} else {
-			orderBy = " ORDER BY " + field + " " + order
+			orderBy = " ORDER BY " + column + " " + order
 		}
 		return orderBy
 	}

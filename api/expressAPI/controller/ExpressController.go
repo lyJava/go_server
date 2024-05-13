@@ -155,10 +155,10 @@ func (e *ExpressController) handlerSelectPageParam(w http.ResponseWriter, r *htt
 		return
 	}
 	
-	field, order := utils.HandlerColumnOrder(searchParam.Field, searchParam.Order)
-	searchParam.Field = field
+	column, order := utils.HandlerColumnOrder(searchParam.Column, searchParam.Order)
+	searchParam.Column = column
 	searchParam.Order = order
-	
+
 	log.Println("快递分页查询参数===", searchParam)
 
 	expressPage, totalRecords, totalPages, err := e.expressService.SelectExpressPageByParam(&searchParam)

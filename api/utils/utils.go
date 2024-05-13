@@ -583,9 +583,9 @@ func ConvertOrder(key string) string {
 }
 
 // HandlerColumnOrder 处理列排序
-func HandlerColumnOrder(field, order string) (string, string) {
-	if field == "" && order == "" {
+func HandlerColumnOrder(column, order string) (string, string) {
+	if column == "" && order == "" {
 		return "", ""
 	}
-	return CamelToSnakeCase(field), ConvertOrder(order)
+	return CamelToSnakeCase(column), ConvertOrder(order)
 }

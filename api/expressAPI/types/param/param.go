@@ -12,7 +12,7 @@ type ExpressSearchParam struct {
 	CreateBy      string `json:"createBy"`      // 创建人
 	Page          int64  `json:"page"`          // 当前页码
 	Size          int64  `json:"size"`          // 每页条数
-	Field         string `json:"field"`         // 排序的列
+	Column        string `json:"column"`        // 排序的列
 	Order         string `json:"order"`         // 降序或者升序
 }
 
