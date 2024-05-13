@@ -25,10 +25,12 @@ func (e *ExpressDB) CreateExpress(express *domain.Express) (*domain.Express, err
 	rows, err := e.Db.Exec("INSERT INTO tool_express_manage(user_id, express_name, express_number, from_name, from_phone, from_address, pickup_code, create_by, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
 		express.UserId, express.ExpressName, express.ExpressNumber, express.FromName, express.FromPhone, express.FromAddress, express.PickupCode, express.CreateBy, time.Now())
 	if err != nil {
+		log.Printf("快递新增执行sql错误===%v", err)
 		return nil, err
 	}
 	id, err := rows.LastInsertId()
 	if err != nil {
+		log.Printf("快递新增返回新增数据的ID错误===%v", err)
 		return nil, err
 	}
 	//express.ID = id
@@ -42,13 +44,11 @@ func (e *ExpressDB) CreateExpress(express *domain.Express) (*domain.Express, err
 }
 
 func (e *ExpressDB) GetExpress(id int64) (*domain.Express, error) {
-	// 执行查询操作
-	row := e.Db.QueryRow("SELECT id, IFNULL(user_id, ''), IFNULL(express_name, ''), IFNULL(express_number, ''), IFNULL(from_name, ''), IFNULL(from_phone, ''), IFNULL(from_address, ''), IFNULL(pickup_code, ''), IFNULL(create_by, ''), IFNULL(DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s' ), ''), IFNULL(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s' ), '') FROM tool_express_manage WHERE id = ?", id)
 	// 创建 Express 对象
 	express := &domain.Express{}
 
-	// 从查询结果中扫描数据到 Express 对象
-	err := row.Scan(
+	// 执行查询操作，将查询结果中扫描数据到 Express 对象
+	err := e.Db.QueryRow("SELECT id, IFNULL(user_id, ''), IFNULL(express_name, ''), IFNULL(express_number, ''), IFNULL(from_name, ''), IFNULL(from_phone, ''), IFNULL(from_address, ''), IFNULL(pickup_code, ''), IFNULL(create_by, ''), IFNULL(DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s' ), ''), IFNULL(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s' ), '') FROM tool_express_manage WHERE id = ?", id).Scan(
 		&express.ID,
 		&express.UserId,
 		&express.ExpressName,
@@ -62,6 +62,7 @@ func (e *ExpressDB) GetExpress(id int64) (*domain.Express, error) {
 		&express.UpdateTime,
 	)
 	if err != nil {
+		log.Printf("快递查询构建数据错误===%v", err)
 		return nil, err
 	}
 
@@ -76,7 +77,7 @@ func (e *ExpressDB) SelectExpressPage(expressName string, pageStr, sizeStr strin
 	log.Printf("查询条数sql===%s", countSql)
 	err := e.Db.QueryRow(countSql).Scan(&totalRecords)
 	if err != nil {
-		log.Print(err)
+		log.Printf("快递分页sql查询条数错误===%v", err)
 		return nil, 0, 0, err
 	}
 
@@ -93,7 +94,7 @@ func (e *ExpressDB) SelectExpressPage(expressName string, pageStr, sizeStr strin
 	log.Printf("查询分页sql===%s, offset===%d, size====%d", limitQuerySql, offset, size)
 	rows, err := e.Db.Query(limitQuerySql, offset, size)
 	if err != nil {
-		log.Print(err)
+		log.Printf("快递分页sql查询错误===%v", err)
 		return nil, 0, 0, err
 	}
 	// defer rows.Close()
@@ -135,6 +136,7 @@ func (e *ExpressDB) SelectExpressPage(expressName string, pageStr, sizeStr strin
 	//}
 	expressesList, err := e.buildPageData(rows)
 	if err != nil {
+		log.Printf("快递分页构建数据错误===%v", err)
 		return expressesList, 0, 0, err
 	}
 	RowsClose(rows, "快递分页查询")
@@ -149,18 +151,18 @@ func (e *ExpressDB) SelectExpressPageByParam(param *param.ExpressSearchParam) ([
 	//log.Printf("查询条数sql===%s", countSql)
 	err := e.Db.QueryRow(countSql).Scan(&totalRecords)
 	if err != nil {
-		log.Print(err)
+		log.Printf("快递分页查询总条数数据转换错误===%v", err)
 		return nil, 0, 0, err
 	}
 
 	size, offset, totalPages := BuildPageOffset(param.Page, param.Size, totalRecords)
 
 	// 构建 SQL 查询语句
-	limitQuerySql := "SELECT id, IFNULL(user_id, ''), IFNULL(express_name, ''), IFNULL(express_number,''), IFNULL(from_name, ''), IFNULL(from_phone, ''), IFNULL(from_address, ''), IFNULL(pickup_code, ''), IFNULL(create_by, ''), IFNULL(DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s' ), ''), IFNULL(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s' ), '') FROM tool_express_manage" + buildOrderBy(param) + buildWhereClauseByParam(param) + " LIMIT ?, ?"
+	limitQuerySql := "SELECT id, IFNULL(user_id, ''), IFNULL(express_name, ''), IFNULL(express_number,''), IFNULL(from_name, ''), IFNULL(from_phone, ''), IFNULL(from_address, ''), IFNULL(pickup_code, ''), IFNULL(create_by, ''), IFNULL(DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s' ), ''), IFNULL(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s' ), '') FROM tool_express_manage" + buildWhereClauseByParam(param) + buildOrderBy(param) + " LIMIT ?, ?"
 	log.Printf("查询分页sql===%s, offset===%d, size====%d", limitQuerySql, offset, size)
 	rows, err := e.Db.Query(limitQuerySql, offset, size)
 	if err != nil {
-		log.Print(err)
+		log.Printf("快递分页查询数据列表错误===%v", err)
 		return nil, 0, 0, err
 	}
 	// todo 这里的rows必须关闭，使用defer方式时候，rows,Close()位置不重要，但是使用自定义方法关闭rows，就得注意下关闭调用的顺序
@@ -168,6 +170,7 @@ func (e *ExpressDB) SelectExpressPageByParam(param *param.ExpressSearchParam) ([
 
 	expressesArray, err := e.buildPageData(rows)
 	if err != nil {
+		log.Printf("快递分页查询数据构建错误===%v", err)
 		return expressesArray, 0, 0, err
 	}
 
@@ -202,7 +205,7 @@ func (e *ExpressDB) buildPageData(rows *sql.Rows) ([]*domain.Express, error) {
 			&express.UpdateTime,
 		)
 		if err != nil {
-			log.Print(err)
+			log.Printf("构建快递集合错误===%v", err)
 			return nil, err
 		}
 
@@ -212,7 +215,7 @@ func (e *ExpressDB) buildPageData(rows *sql.Rows) ([]*domain.Express, error) {
 
 	// 检查遍历过程中是否有错误
 	if err := rows.Err(); err != nil {
-		log.Print(err)
+		log.Printf("快递数据遍历错误===%v", err)
 		return nil, err
 	}
 	return expressesList, nil
@@ -221,12 +224,12 @@ func (e *ExpressDB) buildPageData(rows *sql.Rows) ([]*domain.Express, error) {
 func (e *ExpressDB) DeleteById(id int64) (int64, error) {
 	rows, err := e.Db.Exec("DELETE FROM tool_express_manage WHERE id = ?", id)
 	if err != nil {
-		log.Println(err)
+		log.Printf("快递删除执行错误===%v", err)
 		return 0, nil
 	}
 	rowsAffected, err := rows.RowsAffected()
 	if err != nil {
-		log.Println(err)
+		log.Printf("快递删除获取执行条数错误===%v", err)
 		return 0, nil
 	}
 	if rowsAffected == 0 {
@@ -239,11 +242,12 @@ func (e *ExpressDB) UpdateExpress(express *domain.Express) (int64, error) {
 	rows, err := e.Db.Exec("UPDATE tool_express_manage SET user_id = ?, express_name = ?, express_number = ?, from_name = ?, from_phone = ?, from_address= ?, pickup_code = ?, create_by = ?, update_time = ? WHERE id = ?",
 		express.UserId, express.ExpressName, express.ExpressNumber, express.FromName, express.FromPhone, express.FromAddress, express.PickupCode, express.CreateBy, time.Now(), express.ID)
 	if err != nil {
-		log.Println(err)
+		log.Printf("快递更新执行错误===%v", err)
 		return 0, err
 	}
 	count, err := rows.RowsAffected()
 	if err != nil {
+		log.Printf("快递更新获取执行条数错误===%v", err)
 		return 0, err
 	}
 	return count, nil
@@ -255,12 +259,12 @@ func (e *ExpressDB) BatchDeleteByIds(ids []string) (int64, error) {
 	log.Printf("批量删除sql===%s", deleteSql)
 	rows, err := e.Db.Exec(deleteSql)
 	if err != nil {
-		log.Println(err)
+		log.Printf("快递批量删除执行错误===%v", err)
 		return 0, nil
 	}
 	rowsAffected, err := rows.RowsAffected()
 	if err != nil {
-		log.Println(err)
+		log.Printf("快递批量删除获取执行条数错误===%v", err)
 		return 0, nil
 	}
 	if rowsAffected == 0 {
@@ -282,12 +286,13 @@ func (e *ExpressDB) BatchCreateExpress(list []*domain.Express) (int64, error) {
 	// 执行批量新增sql
 	rows, err := e.Db.Exec(stmt, valueArgs...)
 	if err != nil {
-		log.Println(err)
+		log.Printf("快递批量新增执行错误===%v", err)
 		return 0, err
 	}
 
 	count, err := rows.RowsAffected()
 	if err != nil {
+		log.Printf("快递批量新增获取执行条数错误===%v", err)
 		return 0, err
 	}
 
