@@ -589,3 +589,52 @@ func HandlerColumnOrder(column, order string) (string, string) {
 	}
 	return CamelToSnakeCase(column), ConvertOrder(order)
 }
+
+// DownloadFile 下载文件
+func DownloadFile(fileNamePath string, w http.ResponseWriter, r *http.Request) {
+	file, err := OpenFile(fileNamePath)
+	if err != nil {
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
+		return
+	}
+
+	defer file.Close()
+
+	fileInfo, err := GetFileInfo(file)
+	if err != nil {
+		log.Println("获取文件信息异常", err.Error())
+		response.WriteJson(w, response.FailMessageResp("获取文件信息失败"))
+		return
+	}
+
+	log.Println("文件大小", fileInfo.Size())
+
+	var fileMineType string
+
+	// 获取文件扩展名
+	suffix := strings.ToLower(filepath.Ext(fileInfo.Name()))
+	// 检查文件扩展名是否为.xlsx 或.xls
+	if suffix == ".xlsx" {
+		// excel 2007格式
+		fileMineType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	} else if suffix == ".xls" {
+		fileMineType = "application/vnd.ms-excel"
+	} else {
+		// 读取文件的前512字节
+		buffer := make([]byte, 512)
+		_, err = file.Read(buffer)
+		if err != nil {
+			log.Println("读取文件异常", err.Error())
+			response.WriteJson(w, response.FailMessageResp("读取文件失败"))
+			return
+		}
+		fileMineType = http.DetectContentType(buffer)
+	}
+	log.Println("当前文件MIME:", fileMineType)
+
+	w.Header().Set("Content-Type", fileMineType)
+	// 对文件名进行编码处理，避免在firefox或postman中请求下载变成response.bin
+	w.Header().Set("Content-Disposition", "attachment; filename*=utf-8''"+url.QueryEscape(fileNamePath))
+	w.Header().Set("Content-Transfer-Encoding", "binary")
+	http.ServeFile(w, r, fileNamePath)
+}
