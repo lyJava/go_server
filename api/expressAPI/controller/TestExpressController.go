@@ -175,10 +175,18 @@ func (td *TestExpressController) handleTestExpressPage(w http.ResponseWriter, r 
 		"备注",
 		"是否删除",
 	}
-	filePath := utils.WriteTestExpressToExcel("/excel/data_"+time.Now().Format("20060102150405")+".xlsx", headers, list)
+	excelName := "data_" + time.Now().Format("20060102150405") + ".xlsx"
+	filePath := utils.WriteTestExpressToExcel("/excel/"+excelName, headers, list)
 	log.Println("生成excel路径===", filePath)
 
-	response.WriteJson(w, response.OkDataResp(response.NewPageData(totalRecord, totalPage, list)))
+	downloadUrl := "http://localhost:3000/testExpress/export/excel?fileName=" + excelName
+	log.Println("Excel下载链接===", downloadUrl)
+
+	dataMap := map[string]interface{}{
+		"pageData":    response.NewPageData(totalRecord, totalPage, list),
+		"downloadUrl": downloadUrl,
+	}
+	response.WriteJson(w, response.OkDataResp(dataMap))
 }
 
 func (td *TestExpressController) handleTestExpressGetById(w http.ResponseWriter, r *http.Request) {
@@ -198,7 +206,7 @@ func (td *TestExpressController) handleTestExpressGetById(w http.ResponseWriter,
 	}
 
 	// 设置表头
-	headers := []string{
+	/* headers := []string{
 		"主键ID",
 		"快递名称",
 		"快递单号",
@@ -217,7 +225,7 @@ func (td *TestExpressController) handleTestExpressGetById(w http.ResponseWriter,
 
 	var list []*domain.TestExpress
 	list = append(list, detail)
-	utils.WriteTestExpressToExcel("/excel/data_"+time.Now().Format("20060102150405")+".xlsx", headers, list)
+	utils.WriteTestExpressToExcel("/excel/data_"+time.Now().Format("20060102150405")+".xlsx", headers, list) */
 	response.WriteJson(w, response.OkDataResp(detail))
 }
 

@@ -607,8 +607,6 @@ func DownloadFile(fileNamePath string, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("文件大小", fileInfo.Size())
-
 	var fileMineType string
 
 	// 获取文件扩展名
