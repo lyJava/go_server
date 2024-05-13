@@ -9,6 +9,9 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
+	"time"
 )
 
 type TestExpressController struct {
@@ -27,6 +30,7 @@ func (td *TestExpressController) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/testExpress/batchDelete", td.handleTestExpressBatchDelete).Methods("POST")
 	router.HandleFunc("/testExpress/page", td.handleTestExpressPage).Methods("POST")
 	router.HandleFunc("/testExpress/{id}", td.handleTestExpressGetById).Methods("GET")
+	router.HandleFunc("/testExpress/export/excel", td.handleTestExpressExport).Methods("GET")
 }
 
 func (td *TestExpressController) handleTestExpressSave(w http.ResponseWriter, r *http.Request) {
@@ -154,11 +158,30 @@ func (td *TestExpressController) handleTestExpressPage(w http.ResponseWriter, r 
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
+	// 设置表头
+	headers := []string{
+		"主键ID",
+		"快递名称",
+		"快递单号",
+		"取件码",
+		"发件人姓名",
+		"发件人手机",
+		"发件人地址",
+		"发件人身份证号",
+		"创建人",
+		"创建时间",
+		"修改人",
+		"修改时间",
+		"备注",
+		"是否删除",
+	}
+	filePath := utils.WriteTestExpressToExcel("/excel/data_"+time.Now().Format("20060102150405")+".xlsx", headers, list)
+	log.Println("生成excel路径===", filePath)
 
 	response.WriteJson(w, response.OkDataResp(response.NewPageData(totalRecord, totalPage, list)))
 }
 
-func (td* TestExpressController) handleTestExpressGetById(w http.ResponseWriter, r *http.Request) {
+func (td *TestExpressController) handleTestExpressGetById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var id = vars["id"]
 	if id == "" {
@@ -167,15 +190,53 @@ func (td* TestExpressController) handleTestExpressGetById(w http.ResponseWriter,
 	}
 
 	detail, err := td.service.SelectById(utils.ConvertToInt64(id))
+	log.Println("测试快递详情", detail)
 	if err != nil {
 		log.Printf("测试快递通过ID查询失败===%v", err)
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
 
+	// 设置表头
+	headers := []string{
+		"主键ID",
+		"快递名称",
+		"快递单号",
+		"取件码",
+		"发件人姓名",
+		"发件人手机",
+		"发件人地址",
+		"发件人身份证号",
+		"创建人",
+		"创建时间",
+		"修改人",
+		"修改时间",
+		"备注",
+		"是否删除",
+	}
+
+	var list []*domain.TestExpress
+	list = append(list, detail)
+	utils.WriteTestExpressToExcel("/excel/data_"+time.Now().Format("20060102150405")+".xlsx", headers, list)
 	response.WriteJson(w, response.OkDataResp(detail))
 }
 
+// handleTestExpressExport 导出Excel
+func (td *TestExpressController) handleTestExpressExport(w http.ResponseWriter, r *http.Request) {
+	fileName := r.URL.Query().Get("fileName")
+	if fileName == "" {
+		response.WriteJson(w, response.FailMessageResp("文件名不能为空"))
+		return
+	}
+	currentPath, err := os.Getwd()
+	if err != nil {
+		log.Printf("获取当前目录错误===%v", err)
+	}
+	log.Println("获取当前目录:", currentPath)
+
+	filePath := filepath.Join(currentPath+"/excel", fileName)
+	utils.DownloadFile(filePath, w, r)
+}
 
 func getStrFromMap(m map[string]interface{}, key string) string {
 	if val, ok := m[key]; ok {
