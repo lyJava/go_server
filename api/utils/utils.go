@@ -15,8 +15,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/golang-jwt/jwt"
-	"golang.org/x/crypto/bcrypt"
 	"io"
 	"log"
 	_ "math/rand"
@@ -27,6 +25,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+
+	"github.com/golang-jwt/jwt"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // ConvertToInt64 字符串转换为int64
@@ -553,4 +555,37 @@ func CloseBodyError(message string, w http.ResponseWriter, r *http.Request) {
 		response.WriteJson(w, response.FailMessageResp(message))
 		return
 	}
+}
+
+// CamelToSnakeCase 将驼峰形式的字符串转换为下划线形式
+func CamelToSnakeCase(s string) string {
+	var buffer bytes.Buffer
+	for i, r := range s {
+		if unicode.IsUpper(r) {
+			if i > 0 {
+				buffer.WriteRune('_')
+			}
+			buffer.WriteRune(unicode.ToLower(r))
+		} else {
+			buffer.WriteRune(r)
+		}
+	}
+	return buffer.String()
+}
+
+// ConvertOrder 将ant design 表格排序转换为sql排序关键字
+func ConvertOrder(key string) string {
+	orderMap := map[string]string{
+		"ascend":  "ASC",
+		"descend": "DESC",
+	}
+	return orderMap[key]
+}
+
+// HandlerColumnOrder 处理列排序
+func HandlerColumnOrder(field, order string) (string, string) {
+	if field == "" && order == "" {
+		return "", ""
+	}
+	return CamelToSnakeCase(field), ConvertOrder(order)
 }

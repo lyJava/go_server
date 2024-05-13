@@ -154,6 +154,12 @@ func (e *ExpressController) handlerSelectPageParam(w http.ResponseWriter, r *htt
 		response.WriteJson(w, response.FailMessageResp("查询分页数据失败"))
 		return
 	}
+	
+	field, order := utils.HandlerColumnOrder(searchParam.Field, searchParam.Order)
+	searchParam.Field = field
+	searchParam.Order = order
+	
+	log.Println("快递分页查询参数===", searchParam)
 
 	expressPage, totalRecords, totalPages, err := e.expressService.SelectExpressPageByParam(&searchParam)
 	if err != nil {

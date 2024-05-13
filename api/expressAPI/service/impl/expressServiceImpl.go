@@ -156,8 +156,8 @@ func (e *ExpressDB) SelectExpressPageByParam(param *param.ExpressSearchParam) ([
 	size, offset, totalPages := BuildPageOffset(param.Page, param.Size, totalRecords)
 
 	// 构建 SQL 查询语句
-	limitQuerySql := "SELECT id, IFNULL(user_id, ''), IFNULL(express_name, ''), IFNULL(express_number,''), IFNULL(from_name, ''), IFNULL(from_phone, ''), IFNULL(from_address, ''), IFNULL(pickup_code, ''), IFNULL(create_by, ''), IFNULL(DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s' ), ''), IFNULL(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s' ), '') FROM tool_express_manage" + buildWhereClauseByParam(param) + " LIMIT ?, ?"
-	//log.Printf("查询分页sql===%s, offset===%d, size====%d", limitQuerySql, offset, size)
+	limitQuerySql := "SELECT id, IFNULL(user_id, ''), IFNULL(express_name, ''), IFNULL(express_number,''), IFNULL(from_name, ''), IFNULL(from_phone, ''), IFNULL(from_address, ''), IFNULL(pickup_code, ''), IFNULL(create_by, ''), IFNULL(DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s' ), ''), IFNULL(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s' ), '') FROM tool_express_manage" + buildOrderBy(param) + buildWhereClauseByParam(param) + " LIMIT ?, ?"
+	log.Printf("查询分页sql===%s, offset===%d, size====%d", limitQuerySql, offset, size)
 	rows, err := e.Db.Query(limitQuerySql, offset, size)
 	if err != nil {
 		log.Print(err)
@@ -335,6 +335,22 @@ func buildWhereClauseByParam(param *param.ExpressSearchParam) string {
 		if len(clauses) > 0 {
 			return " WHERE " + strings.Join(clauses, " AND ")
 		}
+	}
+	return ""
+}
+
+func buildOrderBy(param *param.ExpressSearchParam) string {
+	if param != nil {
+		var orderBy string
+		field := param.Field
+		order := param.Order
+
+		if field == "" && order == "" {
+			orderBy = " ORDER BY id DESC"
+		} else {
+			orderBy = " ORDER BY " + field + " " + order
+		}
+		return orderBy
 	}
 	return ""
 }
