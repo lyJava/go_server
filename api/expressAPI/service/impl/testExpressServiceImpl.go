@@ -249,7 +249,10 @@ func (pg *TestDictTypeDb) SelectById(id int64) (*domain.TestExpress, error) {
 			from_user_phone,
 			from_user_address,
 			from_user_id_number,
-			create_by,
+			CASE
+				WHEN create_by IS NULL THEN ''
+				ELSE create_by
+			END AS create_by,
 			CASE
 				WHEN create_time IS NOT NULL THEN to_char(create_time, 'YYYY-MM-DD HH24:MI:SS')
 				ELSE ''
