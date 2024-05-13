@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -337,8 +338,16 @@ func DownloadHandler3(w http.ResponseWriter, r *http.Request) {
 		useZip = true
 	}
 
+	currentPath, err := os.Getwd()
+	if err != nil {
+		log.Printf("获取当前目录错误===%v", err)
+	}
+	log.Println("获取当前工作目录路径:", currentPath)
+
+	currentFilePath := strings.TrimSuffix(currentPath, "/api/expressAPI") + "/upload"
+	log.Println("currentFilePath:", currentFilePath)
 	// 文件路径拼接
-	filePath := filepath.Join("./upload", fileName)
+	filePath := filepath.Join(currentFilePath, fileName)
 
 	if useZip {
 		var files []string
