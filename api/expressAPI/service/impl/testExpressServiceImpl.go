@@ -166,6 +166,7 @@ func (pg *TestDictTypeDb) BatchSave(list []*domain.TestExpress) (int64, error) {
 	return rowsAffected, nil
 }
 
+//goland:noinspection SqlResolve,SqlCaseVsIf,SqlCaseVsLimit
 func (pg *TestDictTypeDb) PageList(te *domain.TestExpress, page, size int64) ([]*domain.TestExpress, int64, int64, error) {
 	// 查询总记录数
 	var totalRecords int64
@@ -238,6 +239,7 @@ func (pg *TestDictTypeDb) PageList(te *domain.TestExpress, page, size int64) ([]
 	return list, totalRecords, totalPages, nil
 }
 
+//goland:noinspection SqlResolve,SqlCaseVsIf
 func (pg *TestDictTypeDb) SelectById(id int64) (*domain.TestExpress, error) {
 	row := pg.Db.QueryRow(
 		`SELECT
