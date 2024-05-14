@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/tmc/langchaingo/llms"
 	"github.com/tmc/langchaingo/llms/ollama"
-	"io"
 	"log"
 	"net/http"
 )
@@ -38,7 +37,9 @@ func (td *LlmsController) handleOllama3Ask(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	defer func(Body io.ReadCloser) {
+	// 使用了defer会在请求完成后处理关闭
+	defer utils.CloseBodyError("大模型问答请求body", w, r)
+	/*defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
 			log.Printf("大模型问答请求body关闭错误===%v", err)
@@ -46,7 +47,7 @@ func (td *LlmsController) handleOllama3Ask(w http.ResponseWriter, r *http.Reques
 			return
 		}
 		log.Println("大模型问答请求body关闭成功")
-	}(r.Body)
+	}(r.Body)*/
 
 	log.Println("大模型问答请求body内容===", body)
 
