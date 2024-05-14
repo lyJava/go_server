@@ -3,6 +3,7 @@ package router
 import (
 	"apiProject/api/expressAPI/controller"
 	"apiProject/api/expressAPI/service"
+	"apiProject/api/utils"
 	"github.com/gorilla/mux"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
@@ -72,6 +73,10 @@ func (s *APIServer) Serve() {
 	// 测试快递控制器
 	testExpressController := controller.TestExpressControllerInit(s.testExpress)
 	testExpressController.RegisterRoutes(router)
+
+	// 大模型控制器
+	llmsController := controller.LlmsControllerInit(utils.CreateModel("llama3"))
+	llmsController.RegisterRoutes(router)
 
 	log.Println("api server starting at port====", s.addr)
 	log.Fatalln(http.ListenAndServe(s.addr, router))
