@@ -181,7 +181,8 @@ func (pg *TestDictTypeDb) PageList(te *domain.TestExpress, page, size int64) ([]
 
 	size, offset, totalPages := BuildPageOffset(page, size, totalRecords)
 
-	rows, err := pg.Db.Query(fmt.Sprintf(`SELECT
+	rows, err := pg.Db.Query(fmt.Sprintf(
+		`SELECT
 					id,
 					express_name,
 					express_number,
