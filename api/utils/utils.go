@@ -549,12 +549,12 @@ func GetFileInfo(file *os.File) (os.FileInfo, error) {
 
 // CloseBodyError 处理请求体关闭可能存在的异常
 func CloseBodyError(message string, w http.ResponseWriter, r *http.Request) {
-	err := r.Body.Close()
-	if err != nil {
-		log.Printf("关闭请求体出现错误===%v", err)
-		response.WriteJson(w, response.FailMessageResp(message))
+	if err := r.Body.Close(); err != nil {
+		log.Printf("%s关闭出现错误===%v", message, err)
+		response.WriteJson(w, response.FailMessageResp(message+"关闭失败"))
 		return
 	}
+	log.Println(message + "关闭成功")
 }
 
 // CamelToSnakeCase 将驼峰形式的字符串转换为下划线形式
