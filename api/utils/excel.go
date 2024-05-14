@@ -12,6 +12,7 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+//goland:noinspection GoUnhandledErrorResult
 func CreateExcel() {
 	f := excelize.NewFile()
 
@@ -48,33 +49,9 @@ func CreateExcel() {
 	}
 }
 
-func WriteDataToExcel(fileName string, data interface{}) {
-	// 打开文件
-	f, err := excelize.OpenFile(filepath.Join(fileName))
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	// 关闭文件
-	defer func() {
-		if err := f.Close(); err != nil {
-			fmt.Println(err)
-		}
-	}()
-	f.SetCellValue("Sheet1", "A2", "快递名称")
-	f.SetCellValue("Sheet1", "B2", "快递单号")
-	f.SetCellValue("Sheet1", "C2", "取件码")
-	f.SetCellValue("Sheet1", "D2", "发件人姓名")
-	f.SetCellValue("Sheet1", "E2", "发件人手机")
-	f.SetCellValue("Sheet1", "F2", "发件人地址")
-	f.SetCellValue("Sheet1", "G2", "发件人身份证号")
-	f.SetCellValue("Sheet1", "H2", "创建人")
-	f.SetCellValue("Sheet1", "I2", "创建时间")
-	f.SetCellValue("Sheet1", "J2", "修改人")
-	f.SetCellValue("Sheet1", "K2", "修改时间")
-}
-
 // WriteTestExpressToExcel 将测试快递数据写入Excel
+//
+//goland:noinspection GoUnhandledErrorResult
 func WriteTestExpressToExcel(fileName string, headers []string, list []*domain.TestExpress) string {
 	f := excelize.NewFile()
 
