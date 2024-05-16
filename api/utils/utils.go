@@ -649,7 +649,7 @@ func ConvertInt64ListToStrList(list []int64) []string {
 	return strList
 }
 
-// ConvertStrToIntList 字符串转换int64数组
+// ConvertStrToIntList 字符串转换int64切片
 func ConvertStrToIntList(str string) []int64 {
 	if str == "" || len(str) == 0 {
 		return nil
@@ -699,7 +699,7 @@ func GenerateArgs(ids []interface{}) []interface{} {
 
 // BuildArgsWithBrackets 将参数使用括号构建
 func BuildArgsWithBrackets(args []any) string {
-	output := "("
+	/*output := "("
 	for i, arg := range args {
 		output += fmt.Sprintf("%v", arg)
 		if i < len(args)-1 {
@@ -707,5 +707,15 @@ func BuildArgsWithBrackets(args []any) string {
 		}
 	}
 	output += ")"
-	return output
+	return output*/
+	var builder strings.Builder
+	builder.WriteString("(")
+	for i, arg := range args {
+		builder.WriteString(fmt.Sprintf("%v", arg))
+		if i < len(args)-1 {
+			builder.WriteString(", ")
+		}
+	}
+	builder.WriteString(")")
+	return builder.String()
 }
