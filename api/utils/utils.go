@@ -636,3 +636,76 @@ func DownloadFile(fileNamePath string, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Transfer-Encoding", "binary")
 	http.ServeFile(w, r, fileNamePath)
 }
+
+// ConvertInt64ListToStrList int64数组转换字符串数组
+func ConvertInt64ListToStrList(list []int64) []string {
+	if len(list) == 0 {
+		return nil
+	}
+	strList := make([]string, 0, len(list))
+	for _, i := range list {
+		strList = append(strList, ConvertInt64ToStr(i))
+	}
+	return strList
+}
+
+// ConvertStrToIntList 字符串转换int64数组
+func ConvertStrToIntList(str string) []int64 {
+	if str == "" || len(str) == 0 {
+		return nil
+	}
+	strList := strings.Split(str, ",")
+	int64List := make([]int64, 0, len(strList))
+	for _, s := range strList {
+		i := strings.TrimSpace(s)
+		int64List = append(int64List, ConvertToInt64(i))
+	}
+	return int64List
+}
+
+// ConvertStrListToIntList 字符串数组转换int64数组
+func ConvertStrListToIntList(list []string) []int64 {
+	if len(list) == 0 {
+		return nil
+	}
+	int64List := make([]int64, 0, len(list))
+	for _, s := range list {
+		i := strings.TrimSpace(s)
+		int64List = append(int64List, ConvertToInt64(i))
+	}
+	return int64List
+}
+
+// GeneratePlaceholders 生成占位符字符串，例如: $1, $2, $3
+func GeneratePlaceholders(n int) string {
+	if n <= 0 {
+		return ""
+	}
+	var placeholders []string
+	for i := 1; i <= n; i++ {
+		placeholders = append(placeholders, fmt.Sprintf("$%d", i))
+	}
+	return strings.Join(placeholders, ", ")
+}
+
+// GenerateArgs 构建args参数列表
+func GenerateArgs(ids []interface{}) []interface{} {
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		args[i] = id
+	}
+	return args
+}
+
+// BuildArgsWithBrackets 将参数使用括号构建
+func BuildArgsWithBrackets(args []any) string {
+	output := "("
+	for i, arg := range args {
+		output += fmt.Sprintf("%v", arg)
+		if i < len(args)-1 {
+			output += ", "
+		}
+	}
+	output += ")"
+	return output
+}
