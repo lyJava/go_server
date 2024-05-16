@@ -81,7 +81,7 @@ func (td *TestExpressController) handleTestExpressBatchSave(w http.ResponseWrite
 }
 
 func (td *TestExpressController) handleTestExpressBatchDelete(w http.ResponseWriter, r *http.Request) {
-	var ids []string
+	var ids []any
 	err := json.NewDecoder(r.Body).Decode(&ids)
 	if err != nil {
 		log.Printf("快递新增参数解析失败===%v", err)
@@ -89,7 +89,13 @@ func (td *TestExpressController) handleTestExpressBatchDelete(w http.ResponseWri
 		return
 	}
 
-	utils.CloseBodyError("测试快递批量删除失败", w, r)
+	// 加上defer会在请求结束后关闭
+	defer utils.CloseBodyError("测试快递批量删除", w, r)
+
+	if len(ids) == 0 {
+		response.WriteJson(w, response.FailMessageResp("测试快递批量删除参数验证失败"))
+		return
+	}
 
 	result, err := td.service.BatchDelete(ids)
 	if err != nil {

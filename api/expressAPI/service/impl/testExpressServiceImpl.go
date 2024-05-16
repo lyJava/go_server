@@ -301,10 +301,13 @@ func (pg *TestDictTypeDb) CheckByNumAndPickupCode(expressNumber, pickupCode stri
 }
 
 //goland:noinspection SqlResolve
-func (pg *TestDictTypeDb) BatchDelete(ids []string) (rows int64, err error) {
-	deleteSql := fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN (%s)", strings.Join(ids, ", "))
-	log.Println("测试快递批量删除sql===", deleteSql)
-	result, err := pg.Db.Exec(deleteSql)
+func (pg *TestDictTypeDb) BatchDelete(ids []interface{}) (rows int64, err error) {
+	//deleteSql := fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN (%s)", strings.Join(ids, ", "))
+	deleteSql := fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN (%s)", utils.GeneratePlaceholders(len(ids)))
+	log.Printf("测试快递批量删除sql===%s", fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN %s", utils.BuildArgsWithBrackets(ids)))
+	// 手动构建参数列表
+	args := utils.GenerateArgs(ids)
+	result, err := pg.Db.Exec(deleteSql, args...)
 	if err != nil {
 		log.Printf("测试快递批量删除异常===%v", err)
 		return 0, err

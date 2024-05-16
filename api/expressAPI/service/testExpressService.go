@@ -19,6 +19,6 @@ type TestExpressService interface {
 	//      int64: 总页数
 	PageList(te *domain.TestExpress, page, size int64) ([]*domain.TestExpress, int64, int64, error)
 	// BatchDelete 批量删除
-	BatchDelete(ids []string) (rows int64, err error)
+	BatchDelete(ids []interface{}) (rows int64, err error)
 	SelectById(id int64) (*domain.TestExpress, error)
 }
