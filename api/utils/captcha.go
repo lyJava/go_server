@@ -167,12 +167,12 @@ func CreateImage(code string) image.Image {
 	//字体设置
 	fontFile, err := os.ReadFile(fontAbsolutePath)
 	if err != nil {
-		log.Println("open file failed")
+		log.Printf("open file failed:%+v", err)
 		return nil
 	}
 	parse, err := truetype.Parse(fontFile)
 	if err != nil {
-		log.Println("load parse failed")
+		log.Printf("load parse failed:%+v", err)
 		return nil
 	}
 
@@ -203,7 +203,7 @@ func CreateImage(code string) image.Image {
 		textRandomColor(dc)
 		_, err := dc.DrawString(string(ch), pt)
 		if err != nil {
-			log.Println("Draw string failed:", err)
+			log.Printf("Draw string failed:%+v", err)
 			return nil
 		}
 		// 更新下一个字符的位置
@@ -425,12 +425,12 @@ func GenerateMathCode(width, height int) (string, string, image.Image) {
 	//字体设置
 	fontFile, err := os.ReadFile(fontAbsolutePath)
 	if err != nil {
-		log.Printf("open font file failed ===%v", err)
+		log.Printf("open font file failed ===%+v", err)
 		return "", "", nil
 	}
 	parse, err := truetype.Parse(fontFile)
 	if err != nil {
-		log.Printf("load font failed===%v", err)
+		log.Printf("load font failed===%+v", err)
 		return "", "", nil
 	}
 
@@ -491,7 +491,7 @@ func GenerateMathCode(width, height int) (string, string, image.Image) {
 		}
 		_, err := dc.DrawString(code, pt)
 		if err != nil {
-			log.Println("Draw string failed:", err)
+			log.Printf("Draw string failed:%+v", err)
 			return "", "", nil
 		}
 		// 更新下一个字符的位置
@@ -514,7 +514,7 @@ func GenerateMathCode(width, height int) (string, string, image.Image) {
 func GetFontPath(currentRelativePath, fontPath string) (string, error) {
 	path, err := os.Getwd()
 	if err != nil {
-		log.Printf("获取当前目录错误===%v", err)
+		log.Printf("获取当前目录错误===%+v", err)
 		return "", err
 	}
 	log.Println("当前绝对路径", path)
@@ -530,7 +530,8 @@ var fontAbsolutePath string
 func init() {
 	fontPath, err := GetFontPath("/api/expressAPI", "/Arial Unicode.ttf")
 	if err != nil {
-		log.Printf("获取字体文件路径异常===%v", err)
+		// fmt.Printf("%+v", err)或者log.Printf("%+v", err)记录详细的错误信息，包括堆栈跟踪，非常适合用于生产环境中的错误记录和调试
+		log.Printf("获取字体文件路径异常===%+v", err)
 	}
 	fontAbsolutePath = fontPath
 }
