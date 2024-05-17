@@ -49,7 +49,7 @@ func (u *UserDB) GetUserById(id int64) (*domain.User, error) {
 		&user.UpdateTime,
 	)
 	if err != nil {
-		log.Printf("get user by id error ==%v", err)
+		log.Printf("get user by id error ==%+v", err)
 		return nil, errors.New("获取用户失败")
 	}
 	return user, nil
@@ -64,16 +64,17 @@ func (u *UserDB) CreateUser(user *domain.User) (*domain.User, error) {
 		user.Username, user.Nickname, user.Phone, user.Email, user.Password, user.CreateBy, user.Token)
 
 	if err != nil {
-		log.Printf("exec error ==%v", err)
+		log.Printf("用户创建执行错误==%+v", err)
 		return nil, errors.New("创建用户失败")
 	}
 	id, err := row.LastInsertId()
 	if err != nil {
-		log.Printf("row get lastInsertId error ==%v", err)
+		log.Printf("用户创建获取最后ID错误==%+v", err)
 		return nil, errors.New("创建用户失败")
 	}
 	userById, err := u.GetUserById(id)
 	if err != nil {
+		log.Printf("用户通过ID查询错误==%+v", err)
 		return nil, errors.New("创建用户失败")
 	}
 	return userById, nil
@@ -98,6 +99,7 @@ func (u *UserDB) UserLogin(us *domain.User) (*domain.User, error) {
 		&user.Password,
 	)
 	if err != nil {
+		log.Printf("用户登录查询错误==%+v", err)
 		return nil, err
 	}
 	return user, nil

@@ -6,12 +6,14 @@ import (
 	"apiProject/api/response"
 	"apiProject/api/utils"
 	"encoding/json"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/spf13/cast"
 )
 
 type TestExpressController struct {
@@ -93,7 +95,7 @@ func (td *TestExpressController) handlerTestExpressBatchDelete(w http.ResponseWr
 	}
 
 	// 加上defer会在请求结束后关闭
-	defer utils.CloseBodyError("测试快递批量删除", w, r)
+	defer utils.CloseBodyError("测试快递批量删除请求", w, r)
 
 	if len(ids) == 0 {
 		response.WriteJson(w, response.FailMessageResp("测试快递批量删除参数验证失败"))
@@ -208,7 +210,7 @@ func (td *TestExpressController) handlerTestExpressGetById(w http.ResponseWriter
 		return
 	}
 
-	detail, err := td.service.SelectById(utils.ConvertToInt64(id))
+	detail, err := td.service.SelectById(cast.ToInt64(id))
 	log.Println("测试快递详情", detail)
 	if err != nil {
 		log.Printf("测试快递通过ID查询失败===%v", err)

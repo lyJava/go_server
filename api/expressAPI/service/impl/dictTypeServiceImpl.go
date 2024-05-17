@@ -137,7 +137,7 @@ func (pg *DictTypeDb) SelectDictTypeById(id int64) (*domain.DictType, error) {
 		&dictType.Remark,
 		&dictType.DelFlag)
 	if err != nil {
-		log.Printf("字典详情查询错误===%v", err)
+		log.Printf("字典详情查询错误===%+v", err)
 		return nil, err
 	}
 	return dictType, nil
@@ -155,14 +155,14 @@ func (pg *DictTypeDb) SaveDictType(dt *domain.DictType) (*domain.DictType, error
 		dt.DictName, dt.DictType, dt.TypeStatus, dt.CreateBy, dt.UpdateBy, dt.Remark)
 
 	if err != nil {
-		log.Printf("字典新增错误===%v", err)
+		log.Printf("字典新增错误===%+v", err)
 		return nil, err
 	}
 
 	// postgresql不能返回新增的ID，只能通过其他方式查询新增后的那条数据
 	rowCount, err := result.RowsAffected()
 	if err != nil {
-		log.Fatalf("获取插入行数错误===%v", err)
+		log.Fatalf("获取插入行数错误===%+v", err)
 		return nil, err
 	}
 
@@ -170,7 +170,7 @@ func (pg *DictTypeDb) SaveDictType(dt *domain.DictType) (*domain.DictType, error
 	if rowCount == 1 {
 		dictType, err = pg.SelectDetailByObj(domain.NewDictTypeDetail(dt.DictType))
 		if err != nil {
-			log.Printf("字典新增失败===%v", err)
+			log.Printf("字典新增失败===%+v", err)
 			return nil, errors.New("字典新增失败")
 		}
 	} else {
@@ -197,13 +197,13 @@ func (pg *DictTypeDb) UpdateDictType(d *domain.DictType) (int64, error) {
 		d.DictName, d.DictType, d.TypeStatus, d.UpdateBy, d.Remark, d.Id)
 
 	if err != nil {
-		log.Printf("字典修改错误===%v", err)
+		log.Printf("字典修改错误===%+v", err)
 		return 0, err
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Printf("字典修改失败===%v", err)
+		log.Printf("字典修改失败===%+v", err)
 		return 0, errors.New("字典修改失败")
 	}
 	return rowsAffected, nil
@@ -213,13 +213,13 @@ func (pg *DictTypeDb) UpdateDictType(d *domain.DictType) (int64, error) {
 func (pg *DictTypeDb) DeleteDictType(id int64) bool {
 	result, err := pg.Db.Exec(`DELETE FROM tb_sys_dict_type WHERE id = $1`, id)
 	if err != nil {
-		log.Printf("字典删除错误===%v", err)
+		log.Printf("字典删除错误===%+v", err)
 		return false
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Printf("字典删除失败===%v", err)
+		log.Printf("字典删除失败===%+v", err)
 		return false
 	}
 
@@ -269,7 +269,7 @@ func (pg *DictTypeDb) SelectDetailByObj(dt domain.DictType) (*domain.DictType, e
 		&dictType.Remark,
 		&dictType.DelFlag)
 	if err != nil {
-		log.Printf("字典详情查询错误===%v", err)
+		log.Printf("字典详情查询错误===%+v", err)
 		return nil, err
 	}
 	return dictType, nil
@@ -280,7 +280,7 @@ func (pg *DictTypeDb) CheckTypeIsExist(id *int64, typeStr string) bool {
 	var count int64
 	err := pg.Db.QueryRow("SELECT COUNT(*) FROM tb_sys_dict_type WHERE dict_type = $1 AND id != $2", typeStr, id).Scan(&count)
 	if err != nil {
-		log.Printf("字典类型验证错误===%v", err)
+		log.Printf("字典类型验证错误===%+v", err)
 		return false
 	}
 	if count == 0 {

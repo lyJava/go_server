@@ -1,8 +1,8 @@
 package impl
 
 import (
-	"apiProject/api/utils"
 	"database/sql"
+	"github.com/spf13/cast"
 	"log"
 )
 
@@ -14,7 +14,7 @@ func BuildPageOffset(pageStr, sizeStr interface{}, totalRecords int64) (int64, i
 	case int64:
 		page = v
 	case string:
-		page = utils.ConvertToInt64(v)
+		page = cast.ToInt64(v)
 	default:
 		return 0, 0, 0
 	}
@@ -23,7 +23,7 @@ func BuildPageOffset(pageStr, sizeStr interface{}, totalRecords int64) (int64, i
 	case int64:
 		size = v
 	case string:
-		size = utils.ConvertToInt64(v)
+		size = cast.ToInt64(v)
 
 	default:
 		return 0, 0, 0
@@ -40,9 +40,9 @@ func BuildPageOffset(pageStr, sizeStr interface{}, totalRecords int64) (int64, i
 func RowsClose(rows *sql.Rows, message string) error {
 	err := rows.Close()
 	if err != nil {
-		log.Printf(message+"关闭row结果错误===%v", err)
+		log.Printf(message+"关闭row结果错误===%+v", err)
 		return err
-	} 
+	}
 	log.Println(message + "结果成功关闭")
 	return nil
 }

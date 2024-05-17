@@ -15,6 +15,8 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"github.com/golang-jwt/jwt"
+	"golang.org/x/crypto/bcrypt"
 	"io"
 	"log"
 	_ "math/rand"
@@ -26,9 +28,6 @@ import (
 	"strings"
 	"time"
 	"unicode"
-
-	"github.com/golang-jwt/jwt"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // ConvertToInt64 字符串转换为int64
@@ -36,7 +35,7 @@ func ConvertToInt64(str string) int64 {
 
 	intVal, err := strconv.ParseInt(str, 10, 64)
 	if err != nil {
-		fmt.Println("字符串转换int64失败:", err)
+		fmt.Printf("字符串转换int64失败:%+v", err)
 	}
 	return intVal
 }
@@ -46,7 +45,7 @@ func ConvertToInt(str string) int {
 	// 将字符串转换为 int64 类型
 	intVal, err := strconv.ParseInt(str, 10, 64)
 	if err != nil {
-		fmt.Println("字符串转换int64失败:", err)
+		fmt.Printf("字符串转换int64失败:%+v", err)
 	}
 	return int(intVal)
 }
@@ -65,7 +64,7 @@ func ConvertIntToStr(val int) string {
 func ConvertStrToBool(val string) (bool, error) {
 	parseBool, err := strconv.ParseBool(val)
 	if err != nil {
-		log.Println("string convert to bool error", err.Error())
+		log.Printf("string convert to bool error:%+v", err.Error())
 		return false, err
 	}
 	return parseBool, nil
@@ -107,7 +106,7 @@ func (t *LocalTime) Scan(v interface{}) error {
 		*t = LocalTime(value)
 		return nil
 	}
-	return fmt.Errorf("can not convert %v to timestamp", v)
+	return fmt.Errorf("can not convert %+v to timestamp", v)
 }
 
 func (t *LocalTime) UnmarshalJSON(data []byte) error {
@@ -192,7 +191,7 @@ func CreateJWT(user *domain.User, days int64, secret []byte) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenStr, err := token.SignedString(secret)
 	if err != nil {
-		fmt.Printf("%+v", err)
+		fmt.Printf("创建JWT凭证错误===%+v", err)
 		return "", err
 	}
 	return tokenStr, nil
@@ -207,7 +206,7 @@ func CreateToken(user *domain.User, days int64) (string, error) {
 	secret := []byte(config.EnvConfig.JWTSecret)
 	token, err := CreateJWT(user, days, secret)
 	if err != nil {
-		fmt.Printf("%+v", err)
+		fmt.Printf("创建凭证错误===%+v", err)
 		return "", errors.New("创建token失败")
 	}
 	return token, nil
@@ -223,7 +222,7 @@ func CreateAndSetAuthCookie(w http.ResponseWriter, user *domain.User, days int64
 	secret := []byte(config.EnvConfig.JWTSecret)
 	token, err := CreateJWT(user, days, secret)
 	if err != nil {
-		log.Printf("create and set token error === %s", err)
+		log.Printf("create and set token error === %+v", err)
 		return "", errors.New("创建并设置token失败")
 	}
 
@@ -317,20 +316,20 @@ func RsaEncrypt(publicKeyByte []byte, origData []byte) ([]byte, error) {
 	case "PUBLIC KEY":
 		pubInterface, err = x509.ParsePKCS1PublicKey(block.Bytes)
 	default:
-		log.Printf("未知的公钥类型===%s", block.Type)
+		log.Printf("未知的公钥类型===%s, %+v", block.Type, err)
 		err = fmt.Errorf("未知的公钥类型: %s", block.Type)
 	}
 
 	if err != nil {
-		log.Printf("RSA公钥解析错误===%v", err)
-		return nil, fmt.Errorf("解析公钥失败: %v", err)
+		log.Printf("RSA公钥解析错误===%+v", err)
+		return nil, fmt.Errorf("解析公钥失败: %+v", err)
 	}
 
 	publicKey := pubInterface.(*rsa.PublicKey)
 	// 加密数据
 	encryptDataByte, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, origData)
 	if err != nil {
-		log.Printf("RSA公钥加密错误===%v", err)
+		log.Printf("RSA公钥加密错误===%+v", err)
 		return nil, errors.New("加密失败")
 	}
 	return encryptDataByte, nil
@@ -356,19 +355,19 @@ func RsaDecrypt(privateKeyByte []byte, cipherText []byte) ([]byte, error) {
 	} else if block.Type == "PRIVATE KEY" {
 		privateInterface, err = x509.ParsePKCS8PrivateKey(block.Bytes)
 	} else {
-		log.Printf("未知的私钥类型===%v", err)
+		log.Printf("未知的私钥类型===%+v", err)
 		err = errors.New("解密失败")
 	}
 
 	if err != nil {
-		log.Printf("RSA私钥解析错误===%v", err)
+		log.Printf("RSA私钥解析错误===%+v", err)
 		return nil, err
 	}
 
 	privateKey := privateInterface.(*rsa.PrivateKey)
 	decryptDataByte, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, cipherText)
 	if err != nil {
-		log.Printf("RSA私钥解密错误===%v", err)
+		log.Printf("RSA私钥解密错误===%+v", err)
 		return nil, errors.New("解密失败")
 	}
 	return decryptDataByte, nil
@@ -382,7 +381,7 @@ func RsaDecrypt(privateKeyByte []byte, cipherText []byte) ([]byte, error) {
 func GetKeyByteByPath(pemPath string) ([]byte, error) {
 	fileByte, err := os.ReadFile(pemPath)
 	if err != nil {
-		log.Printf("read key byte from %s failed %s", pemPath, err.Error())
+		log.Printf("read key byte from %s failed %+v", pemPath, err)
 		return nil, errors.New("读取密钥文件错误")
 	}
 	log.Printf("read key byte from %s success", pemPath)
@@ -507,14 +506,14 @@ func CreateZipTemp(fileNames []string, tempPathPattern string) (*os.File, error)
 		// 打开文件
 		file, err := OpenFile(fileName)
 		if err != nil {
-			fmt.Printf("%+v", err)
+			fmt.Printf("遍历文件错误===%+v", err)
 			return &os.File{}, err
 		}
 		defer file.Close()
 
 		fileInfo, err := GetFileInfo(file)
 		if err != nil {
-			fmt.Printf("%+v", err)
+			fmt.Printf("获取文件信息错误===%+v", err)
 			return &os.File{}, err
 		}
 
@@ -540,7 +539,7 @@ func CreateZipTemp(fileNames []string, tempPathPattern string) (*os.File, error)
 		for {
 			n, err := file.Read(buf)
 			if err == io.EOF {
-				fmt.Printf("%+v", err)
+				fmt.Printf("读取文件错误===%+v", err)
 				break
 			}
 			if err != nil {
@@ -587,7 +586,7 @@ func GetFileInfo(file *os.File) (os.FileInfo, error) {
 	// 获取临时文件信息
 	fileInfo, err := file.Stat()
 	if err != nil {
-		log.Println("获取文件信息异常", err.Error())
+		log.Printf("获取文件信息异常===%+v", err)
 		return nil, err
 	}
 
@@ -607,7 +606,7 @@ func GetFileInfo(file *os.File) (os.FileInfo, error) {
 //	r (*http.Request): 请求
 func CloseBodyError(message string, w http.ResponseWriter, r *http.Request) {
 	if err := r.Body.Close(); err != nil {
-		log.Printf("%s关闭出现错误===%v", message, err)
+		log.Printf("%s关闭出现错误===%+v", message, err)
 		response.WriteJson(w, response.FailMessageResp(message+"关闭失败"))
 		return
 	}
@@ -657,6 +656,7 @@ func HandlerColumnOrder(column, order string) (string, string) {
 func DownloadFile(fileNamePath string, w http.ResponseWriter, r *http.Request) {
 	file, err := OpenFile(fileNamePath)
 	if err != nil {
+		log.Printf("下载文件出现错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
@@ -665,7 +665,7 @@ func DownloadFile(fileNamePath string, w http.ResponseWriter, r *http.Request) {
 
 	fileInfo, err := GetFileInfo(file)
 	if err != nil {
-		log.Println("获取文件信息异常", err.Error())
+		log.Printf("获取文件信息异常===%+v",err)
 		response.WriteJson(w, response.FailMessageResp("获取文件信息失败"))
 		return
 	}

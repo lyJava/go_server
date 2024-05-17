@@ -152,11 +152,11 @@ func (e *ExpressController) handlerSelectPageParam(w http.ResponseWriter, r *htt
 		return
 	}
 
-	defer r.Body.Close()
+	defer utils.CloseBodyError("快递分页请求", w, r)
 
 	if err := sonic.Unmarshal(body, &searchParam); err != nil {
 		log.Printf("sonic.Unmarshal错误===%s+v", err)
-		response.WriteJson(w, response.FailMessageResp("查询分页数据失败"))
+		response.WriteJson(w, response.FailMessageResp("获取分页数据失败"))
 		return
 	}
 
@@ -199,7 +199,7 @@ func (e *ExpressController) handlerUpdate(w http.ResponseWriter, r *http.Request
 		response.WriteJson(w, response.FailCodeMessageResp(http.StatusInternalServerError, "获取参数失败"))
 		return
 	}
-	defer r.Body.Close()
+	defer utils.CloseBodyError("快递更新请求", w, r)
 
 	var express *domain.Express
 	err = json.Unmarshal(body, &express)
@@ -225,7 +225,7 @@ func (e *ExpressController) handlerBatchDelete(w http.ResponseWriter, r *http.Re
 		response.WriteJson(w, response.FailMessageResp("批量删除参数获取失败"))
 		return
 	}
-	utils.CloseBodyError("快递批量新增失败", w, r)
+	defer utils.CloseBodyError("快递批量删除请求", w, r)
 
 	var ids []string
 	err = json.Unmarshal(body, &ids)
@@ -263,7 +263,7 @@ func (e *ExpressController) handlerBatchInsert(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	defer r.Body.Close()
+	defer utils.CloseBodyError("快递批量新增请求", w, r)
 
 	if len(list) == 0 {
 		response.WriteJson(w, response.FailMessageResp("批量新增参数不能为空"))
