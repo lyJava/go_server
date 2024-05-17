@@ -192,6 +192,7 @@ func CreateJWT(user *domain.User, days int64, secret []byte) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenStr, err := token.SignedString(secret)
 	if err != nil {
+		fmt.Printf("%+v", err)
 		return "", err
 	}
 	return tokenStr, nil
@@ -206,6 +207,7 @@ func CreateToken(user *domain.User, days int64) (string, error) {
 	secret := []byte(config.EnvConfig.JWTSecret)
 	token, err := CreateJWT(user, days, secret)
 	if err != nil {
+		fmt.Printf("%+v", err)
 		return "", errors.New("创建token失败")
 	}
 	return token, nil
@@ -274,7 +276,7 @@ func RSADecode(val string) string {
 	// 解码
 	cipherText, err := base64.StdEncoding.DecodeString(val)
 	if err != nil {
-		fmt.Println("Error decoding:", err)
+		fmt.Printf("Error decoding:%+v", err)
 	}
 	log.Printf("base64解码===%s", string(cipherText))
 
@@ -432,6 +434,7 @@ func CreateZipBuffer(files []string) (*bytes.Buffer, error) {
 		// 打开要添加到 ZIP 文件的文件
 		file, err := os.Open(filePath)
 		if err != nil {
+			fmt.Printf("打开zip文件错误===%+v", err)
 			return nil, err
 		}
 		defer file.Close()
@@ -444,6 +447,7 @@ func CreateZipBuffer(files []string) (*bytes.Buffer, error) {
 
 		header, err := zip.FileInfoHeader(fileInfo)
 		if err != nil {
+			fmt.Printf("获取zip文件头部信息错误===%+v", err)
 			return nil, err
 		}
 
@@ -453,11 +457,13 @@ func CreateZipBuffer(files []string) (*bytes.Buffer, error) {
 		// 创建zip文件头
 		writer, err := zw.CreateHeader(header)
 		if err != nil {
+			fmt.Printf("创建zip头错误===%+v", err)
 			return nil, err
 		}
 
 		_, err = io.Copy(writer, file)
 		if err != nil {
+			fmt.Printf("项zip文件中复制错误===%+v", err)
 			return nil, err
 		}
 	}
@@ -480,7 +486,7 @@ func CreateZipTemp(fileNames []string, tempPathPattern string) (*os.File, error)
 	// 创建临时文件, tempPathPattern为"temp-zip-*.zip"表示临时文件为temp-zip-xxxxx.zip格式
 	tmpFile, err := os.CreateTemp("", tempPathPattern)
 	if err != nil {
-		log.Println("创建临时文件异常", err.Error())
+		log.Printf("创建临时文件错误===%+v", err)
 		return &os.File{}, err
 	}
 
@@ -501,12 +507,14 @@ func CreateZipTemp(fileNames []string, tempPathPattern string) (*os.File, error)
 		// 打开文件
 		file, err := OpenFile(fileName)
 		if err != nil {
+			fmt.Printf("%+v", err)
 			return &os.File{}, err
 		}
 		defer file.Close()
 
 		fileInfo, err := GetFileInfo(file)
 		if err != nil {
+			fmt.Printf("%+v", err)
 			return &os.File{}, err
 		}
 
@@ -515,7 +523,7 @@ func CreateZipTemp(fileNames []string, tempPathPattern string) (*os.File, error)
 		// 将文件添加到 ZIP 文件中
 		fileInZip, err := zw.Create(fileInfo.Name())
 		if err != nil {
-			log.Println("创建ZIP文件内部异常", err.Error())
+			log.Printf("创建ZIP文件内部错误===%+v", err)
 			return &os.File{}, err
 		}
 
@@ -532,16 +540,17 @@ func CreateZipTemp(fileNames []string, tempPathPattern string) (*os.File, error)
 		for {
 			n, err := file.Read(buf)
 			if err == io.EOF {
+				fmt.Printf("%+v", err)
 				break
 			}
 			if err != nil {
-				log.Println("读取文件异常", err.Error())
+				log.Printf("读取文件异常===%+v", err)
 				return &os.File{}, err
 			}
 
 			_, err = fileInZip.Write(buf[:n])
 			if err != nil {
-				log.Println("写入ZIP文件内部异常", err.Error())
+				log.Printf("写入ZIP文件内部异常==%+v", err)
 				return &os.File{}, err
 			}
 		}
@@ -549,7 +558,7 @@ func CreateZipTemp(fileNames []string, tempPathPattern string) (*os.File, error)
 
 	// 关闭 ZIP 编写器
 	if err := zw.Close(); err != nil {
-		log.Println("关闭ZIP编写器异常", err.Error())
+		log.Printf("关闭ZIP编写器异常===%+v", err)
 		return &os.File{}, err
 	}
 	return tmpFile, nil
@@ -563,7 +572,7 @@ func CreateZipTemp(fileNames []string, tempPathPattern string) (*os.File, error)
 func OpenFile(fileName string) (*os.File, error) {
 	file, err := os.Open(fileName)
 	if err != nil {
-		log.Println("打开文件异常", err.Error())
+		log.Printf("打开文件异常===%+v", err)
 		return &os.File{}, err
 	}
 	return file, nil
@@ -676,7 +685,7 @@ func DownloadFile(fileNamePath string, w http.ResponseWriter, r *http.Request) {
 		buffer := make([]byte, 512)
 		_, err = file.Read(buffer)
 		if err != nil {
-			log.Println("读取文件异常", err.Error())
+			log.Printf("读取文件异常===%+v", err)
 			response.WriteJson(w, response.FailMessageResp("读取文件失败"))
 			return
 		}
