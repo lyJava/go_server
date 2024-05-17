@@ -25,16 +25,16 @@ func TestExpressControllerInit(s service.TestExpressService) *TestExpressControl
 }
 
 func (td *TestExpressController) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/testExpress/save", td.handleTestExpressSave).Methods("POST")
-	router.HandleFunc("/testExpress/batchSave", td.handleTestExpressBatchSave).Methods("POST")
-	router.HandleFunc("/testExpress/batchDelete", td.handleTestExpressBatchDelete).Methods("POST")
-	router.HandleFunc("/testExpress/page", td.handleTestExpressPage).Methods("POST")
-	router.HandleFunc("/testExpress/{id}", td.handleTestExpressGetById).Methods("GET")
-	router.HandleFunc("/testExpress/export/excel", td.handleTestExpressExport).Methods("GET")
+	router.HandleFunc("/testExpress/save", td.handlerTestExpressSave).Methods("POST")
+	router.HandleFunc("/testExpress/batchSave", td.handlerTestExpressBatchSave).Methods("POST")
+	router.HandleFunc("/testExpress/batchDelete", td.handlerTestExpressBatchDelete).Methods("POST")
+	router.HandleFunc("/testExpress/page", td.handlerTestExpressPage).Methods("POST")
+	router.HandleFunc("/testExpress/{id}", td.handlerTestExpressGetById).Methods("GET")
+	router.HandleFunc("/testExpress/export/excel", td.handlerTestExpressExport).Methods("GET")
 }
 
-// handleTestExpressSave 新增
-func (td *TestExpressController) handleTestExpressSave(w http.ResponseWriter, r *http.Request) {
+// handlerTestExpressSave 新增
+func (td *TestExpressController) handlerTestExpressSave(w http.ResponseWriter, r *http.Request) {
 	var testExpress *domain.TestExpress
 	err := json.NewDecoder(r.Body).Decode(&testExpress)
 	if err != nil {
@@ -56,8 +56,8 @@ func (td *TestExpressController) handleTestExpressSave(w http.ResponseWriter, r 
 	response.WriteJson(w, response.OkCodeMessageData("新增成功", result))
 }
 
-// handleTestExpressBatchSave 批量新增
-func (td *TestExpressController) handleTestExpressBatchSave(w http.ResponseWriter, r *http.Request) {
+// handlerTestExpressBatchSave 批量新增
+func (td *TestExpressController) handlerTestExpressBatchSave(w http.ResponseWriter, r *http.Request) {
 	var testExpressList []*domain.TestExpress
 	err := json.NewDecoder(r.Body).Decode(&testExpressList)
 	if err != nil {
@@ -82,8 +82,8 @@ func (td *TestExpressController) handleTestExpressBatchSave(w http.ResponseWrite
 	response.WriteJson(w, response.OkCodeMessageData("测试快递批量新增成功", result))
 }
 
-// handleTestExpressBatchDelete 批量删除
-func (td *TestExpressController) handleTestExpressBatchDelete(w http.ResponseWriter, r *http.Request) {
+// handlerTestExpressBatchDelete 批量删除
+func (td *TestExpressController) handlerTestExpressBatchDelete(w http.ResponseWriter, r *http.Request) {
 	var ids []any
 	err := json.NewDecoder(r.Body).Decode(&ids)
 	if err != nil {
@@ -114,8 +114,8 @@ func (td *TestExpressController) handleTestExpressBatchDelete(w http.ResponseWri
 	response.WriteJson(w, response.OkCodeMessageData("测试快递批量删除成功", result))
 }
 
-// handleTestExpressPage 分页查询
-func (td *TestExpressController) handleTestExpressPage(w http.ResponseWriter, r *http.Request) {
+// handlerTestExpressPage 分页查询
+func (td *TestExpressController) handlerTestExpressPage(w http.ResponseWriter, r *http.Request) {
 	var queryMap = make(map[string]interface{})
 	err := json.NewDecoder(r.Body).Decode(&queryMap)
 	if err != nil {
@@ -199,8 +199,8 @@ func (td *TestExpressController) handleTestExpressPage(w http.ResponseWriter, r 
 	response.WriteJson(w, response.OkDataResp(dataMap))
 }
 
-// handleTestExpressGetById 查询
-func (td *TestExpressController) handleTestExpressGetById(w http.ResponseWriter, r *http.Request) {
+// handlerTestExpressGetById 查询
+func (td *TestExpressController) handlerTestExpressGetById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var id = vars["id"]
 	if id == "" {
@@ -240,8 +240,8 @@ func (td *TestExpressController) handleTestExpressGetById(w http.ResponseWriter,
 	response.WriteJson(w, response.OkDataResp(detail))
 }
 
-// handleTestExpressExport 导出Excel
-func (td *TestExpressController) handleTestExpressExport(w http.ResponseWriter, r *http.Request) {
+// handlerTestExpressExport 导出Excel
+func (td *TestExpressController) handlerTestExpressExport(w http.ResponseWriter, r *http.Request) {
 	fileName := r.URL.Query().Get("fileName")
 	if fileName == "" {
 		response.WriteJson(w, response.FailMessageResp("文件名不能为空"))

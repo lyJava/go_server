@@ -25,15 +25,15 @@ func OrderControllerInit(conn *amqp.Connection) *OrderController {
 }
 
 func (mq *OrderController) RegisterRoutes(r *mux.Router) {
-	r.HandleFunc("/order/create", mq.CreateHandler).Methods("POST")
+	r.HandleFunc("/order/create", mq.handlerCreate).Methods("POST")
 }
 
 var queueName = "create_order_queue"
 var exchangeName = "create_order_exchange"
 var routingKey = "create_order_routing_key"
 
-// CreateHandler 创建订单
-func (mq *OrderController) CreateHandler(w http.ResponseWriter, r *http.Request) {
+// handlerCreate 创建订单
+func (mq *OrderController) handlerCreate(w http.ResponseWriter, r *http.Request) {
 	var order param.Order
 
 	body, err := io.ReadAll(r.Body)
