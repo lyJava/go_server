@@ -154,6 +154,10 @@ func FormatTime(t time.Time) string {
 }
 
 // HashPassword 返回密码hash
+//
+// 参数
+//
+//	pwd (string): 密码
 func HashPassword(pwd string) string {
 	password, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
 	if err != nil {
@@ -163,6 +167,13 @@ func HashPassword(pwd string) string {
 	return string(password)
 }
 
+// CreateJWT 创建JWT凭证
+//
+// 参数
+//
+//	user (*domain.User): 用户信息
+//	days (int64): 有效天数
+//	secret ([]byte): 加密字符串
 func CreateJWT(user *domain.User, days int64, secret []byte) (string, error) {
 	// "userId":     strconv.Itoa(int(userId)),
 	//token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -170,7 +181,7 @@ func CreateJWT(user *domain.User, days int64, secret []byte) (string, error) {
 	//	"expireTime": time.Now().Add(time.Hour * 24 * time.Duration(days)).Unix(), // 设置有效期为20天
 	//})
 	//tokenStr, err := token.SignedString(secret)
-	c := types.MyClaims{
+	claims := types.MyClaims{
 		UserId:   strconv.FormatInt(user.UserId, 10),
 		Username: user.Username,
 		StandardClaims: jwt.StandardClaims{
@@ -178,7 +189,7 @@ func CreateJWT(user *domain.User, days int64, secret []byte) (string, error) {
 			Issuer:    "el-admin",                                                  // 签发人
 		},
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenStr, err := token.SignedString(secret)
 	if err != nil {
 		return "", err
@@ -203,9 +214,9 @@ func CreateToken(user *domain.User, days int64) (string, error) {
 // CreateAndSetAuthCookie 创建并设置token到cookie
 // 参数
 //
-//		userId: 用户ID
-//	 days: token有效天数
-//	 w:	http返回
+//	userId: 用户ID
+//	days: token有效天数
+//	w:	http返回
 func CreateAndSetAuthCookie(w http.ResponseWriter, user *domain.User, days int64) (string, error) {
 	secret := []byte(config.EnvConfig.JWTSecret)
 	token, err := CreateJWT(user, days, secret)
@@ -284,6 +295,11 @@ func RSADecode(val string) string {
 }
 
 // RsaEncrypt 加密
+//
+// 参数
+//
+//	publicKeyByte ([]byte): 公钥byte
+//	origData ([]byte): 加密byte
 func RsaEncrypt(publicKeyByte []byte, origData []byte) ([]byte, error) {
 	block, _ := pem.Decode(publicKeyByte)
 	if block == nil {
@@ -319,6 +335,11 @@ func RsaEncrypt(publicKeyByte []byte, origData []byte) ([]byte, error) {
 }
 
 // RsaDecrypt 解密
+//
+// 参数
+//
+//	privateKeyByte ([]byte): 密钥byte
+//	cipherText ([]byte): 解密byte
 func RsaDecrypt(privateKeyByte []byte, cipherText []byte) ([]byte, error) {
 	block, _ := pem.Decode(privateKeyByte)
 	if block == nil {
@@ -352,6 +373,10 @@ func RsaDecrypt(privateKeyByte []byte, cipherText []byte) ([]byte, error) {
 }
 
 // GetKeyByteByPath 从文件中读取密钥
+//
+// 参数
+//
+//	pemPath (string): 密钥路径
 func GetKeyByteByPath(pemPath string) ([]byte, error) {
 	fileByte, err := os.ReadFile(pemPath)
 	if err != nil {
@@ -363,6 +388,10 @@ func GetKeyByteByPath(pemPath string) ([]byte, error) {
 }
 
 // GetPrefix 获取前缀
+//
+// 参数
+//
+//	str (string): 文件名
 func GetPrefix(str string) string {
 	var prefix = ""
 	lastDotIndex := strings.LastIndex(str, ".")
@@ -376,6 +405,10 @@ func GetPrefix(str string) string {
 }
 
 // GetSuffix 获取后缀
+//
+// 参数
+//
+//	str (string): 文件名
 func GetSuffix(str string) string {
 	var suffix = ""
 	lastDotIndex := strings.LastIndex(str, ".")
@@ -442,7 +475,7 @@ func CreateZipBuffer(files []string) (*bytes.Buffer, error) {
 // 参数
 //
 //	fileNames 文件路径加名称
-//	 tempPathPattern 临时文件路径形式
+//	tempPathPattern 临时文件路径形式
 func CreateZipTemp(fileNames []string, tempPathPattern string) (*os.File, error) {
 	// 创建临时文件, tempPathPattern为"temp-zip-*.zip"表示临时文件为temp-zip-xxxxx.zip格式
 	tmpFile, err := os.CreateTemp("", tempPathPattern)
@@ -522,6 +555,11 @@ func CreateZipTemp(fileNames []string, tempPathPattern string) (*os.File, error)
 	return tmpFile, nil
 }
 
+// OpenFile 打开文件
+//
+// 参数
+//
+//	fileName (string): 文件名
 func OpenFile(fileName string) (*os.File, error) {
 	file, err := os.Open(fileName)
 	if err != nil {
@@ -532,6 +570,10 @@ func OpenFile(fileName string) (*os.File, error) {
 }
 
 // GetFileInfo 获取文件信息
+//
+// 参数
+//
+//	file (*os.File): 文件对象
 func GetFileInfo(file *os.File) (os.FileInfo, error) {
 	// 获取临时文件信息
 	fileInfo, err := file.Stat()
@@ -548,6 +590,12 @@ func GetFileInfo(file *os.File) (os.FileInfo, error) {
 }
 
 // CloseBodyError 处理请求体关闭可能存在的异常
+//
+// 参数
+//
+//	message (string): 消息
+//	w (http.ResponseWriter): 返回
+//	r (*http.Request): 请求
 func CloseBodyError(message string, w http.ResponseWriter, r *http.Request) {
 	if err := r.Body.Close(); err != nil {
 		log.Printf("%s关闭出现错误===%v", message, err)
@@ -591,6 +639,12 @@ func HandlerColumnOrder(column, order string) (string, string) {
 }
 
 // DownloadFile 下载文件
+//
+// 参数
+//
+//	fileNamePath (string): 文件名称路径
+//	w (http.ResponseWriter): 返回
+//	r (*http.Request): 请求
 func DownloadFile(fileNamePath string, w http.ResponseWriter, r *http.Request) {
 	file, err := OpenFile(fileNamePath)
 	if err != nil {
@@ -637,6 +691,21 @@ func DownloadFile(fileNamePath string, w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, fileNamePath)
 }
 
+// GetStrFromMap 从map中获取value
+//
+// 参数
+//
+//	m (map[string]interface{}): map
+//	key (string): map的key
+func GetStrFromMap(m map[string]interface{}, key string) string {
+	if val, ok := m[key]; ok {
+		if strVal, ok := val.(string); ok {
+			return strVal
+		}
+	}
+	return ""
+}
+
 // ConvertInt64ListToStrList int64数组转换字符串数组
 func ConvertInt64ListToStrList(list []int64) []string {
 	if len(list) == 0 {
@@ -663,7 +732,15 @@ func ConvertStrToIntList(str string) []int64 {
 	return int64List
 }
 
-// ConvertStrListToIntList 字符串数组转换int64数组
+// ConvertStrListToIntList 字符串切片转换int64切片
+//
+// 参数
+//
+//	list ([]string): 字符串切片
+//
+// 返回
+//
+//	[]int64: int64切片
 func ConvertStrListToIntList(list []string) []int64 {
 	if len(list) == 0 {
 		return nil
@@ -677,6 +754,9 @@ func ConvertStrListToIntList(list []string) []int64 {
 }
 
 // GeneratePlaceholders 生成占位符字符串，例如: $1, $2, $3
+// 参数
+//
+//	n (int): 生成的数量
 func GeneratePlaceholders(n int) string {
 	if n <= 0 {
 		return ""
@@ -688,16 +768,28 @@ func GeneratePlaceholders(n int) string {
 	return strings.Join(placeholders, ", ")
 }
 
-// GenerateArgs 构建args参数列表
+// GenerateArgs 构建arg切片
+// 参数
+//
+//	ids ([]interface{}): 泛型切片
+//
+// 返回
+//
+//	[]interface{}: 泛型切片
 func GenerateArgs(ids []interface{}) []interface{} {
 	args := make([]interface{}, len(ids))
-	for i, id := range ids {
+	/* for i, id := range ids {
 		args[i] = id
-	}
+	} */
+	copy(args, ids)
 	return args
 }
 
 // BuildArgsWithBrackets 将参数使用括号构建
+//
+// 参数
+//
+//	args ([]any): 参数
 func BuildArgsWithBrackets(args []any) string {
 	/*output := "("
 	for i, arg := range args {
@@ -718,4 +810,33 @@ func BuildArgsWithBrackets(args []any) string {
 	}
 	builder.WriteString(")")
 	return builder.String()
+}
+
+// TimeForHuman 格式化日期
+//
+// 参数
+//
+//	timeValue (int64): 10位时间戳
+func TimeForHuman(timeValue int64) string {
+	SECOND := int64(1)
+	MINUTE := SECOND * 60
+	HOUR := MINUTE * 60
+	DAY := HOUR * 24
+	DAY8 := DAY * 8
+
+	nowTime := time.Now().Unix()
+	diffTime := nowTime - timeValue
+
+	log.Printf("传入==%v,当前==%v,时间差==%v", timeValue, nowTime, diffTime)
+	if diffTime <= MINUTE {
+		return "刚刚"
+	} else if diffTime < HOUR {
+		return fmt.Sprintf("%d分钟前", int(diffTime/MINUTE))
+	} else if diffTime <= DAY {
+		return fmt.Sprintf("%d小时前", int(diffTime/HOUR))
+	} else if diffTime <= DAY8 {
+		return fmt.Sprintf("%d天前", int(diffTime/DAY))
+	} else {
+		return time.Unix(timeValue, 0).Format("2006-01-02")
+	}
 }

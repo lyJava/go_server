@@ -142,16 +142,16 @@ func (td *TestExpressController) handleTestExpressPage(w http.ResponseWriter, r 
 		}
 
 		testExpress = &domain.TestExpress{
-			ExpressName:      getStrFromMap(testExpressObj, "expressName"),
-			ExpressNumber:    getStrFromMap(testExpressObj, "expressNumber"),
-			PickupCode:       getStrFromMap(testExpressObj, "pickupCode"),
-			FromUsername:     getStrFromMap(testExpressObj, "fromUsername"),
-			FromUserPhone:    getStrFromMap(testExpressObj, "fromUserPhone"),
-			FromUserAddress:  getStrFromMap(testExpressObj, "fromUserAddress"),
-			FromUserIdNumber: getStrFromMap(testExpressObj, "fromUserIdNumber"),
-			CreateBy:         getStrFromMap(testExpressObj, "createBy"),
-			Remarks:          getStrFromMap(testExpressObj, "remarks"),
-			DelFlag:          getStrFromMap(testExpressObj, "delFlag"),
+			ExpressName:      utils.GetStrFromMap(testExpressObj, "expressName"),
+			ExpressNumber:    utils.GetStrFromMap(testExpressObj, "expressNumber"),
+			PickupCode:       utils.GetStrFromMap(testExpressObj, "pickupCode"),
+			FromUsername:     utils.GetStrFromMap(testExpressObj, "fromUsername"),
+			FromUserPhone:    utils.GetStrFromMap(testExpressObj, "fromUserPhone"),
+			FromUserAddress:  utils.GetStrFromMap(testExpressObj, "fromUserAddress"),
+			FromUserIdNumber: utils.GetStrFromMap(testExpressObj, "fromUserIdNumber"),
+			CreateBy:         utils.GetStrFromMap(testExpressObj, "createBy"),
+			Remarks:          utils.GetStrFromMap(testExpressObj, "remarks"),
+			DelFlag:          utils.GetStrFromMap(testExpressObj, "delFlag"),
 		}
 	}
 
@@ -252,11 +252,3 @@ func (td *TestExpressController) handleTestExpressExport(w http.ResponseWriter, 
 	utils.DownloadFile(filePath, w, r)
 }
 
-func getStrFromMap(m map[string]interface{}, key string) string {
-	if val, ok := m[key]; ok {
-		if strVal, ok := val.(string); ok {
-			return strVal
-		}
-	}
-	return ""
-}
