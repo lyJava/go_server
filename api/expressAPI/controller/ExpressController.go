@@ -62,6 +62,7 @@ func (e *ExpressController) handlerCrete(w http.ResponseWriter, r *http.Request)
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		log.Printf("新增参数读取错误===%s+v", err)
 		response.WriteJson(w, response.FailMessageResp("新增失败"))
 		return
 	}
@@ -70,12 +71,15 @@ func (e *ExpressController) handlerCrete(w http.ResponseWriter, r *http.Request)
 	//err = json.Unmarshal(body, &express)
 	err = sonic.Unmarshal(body, &express)
 	if err != nil {
+		log.Printf("新增参数解析错误===%s+v", err)
 		response.WriteJson(w, response.FailMessageResp("新增失败"))
 		return
 	}
 
 	t, err := e.expressService.CreateExpress(express)
 	if err != nil {
+		log.Printf("新增操作错误===%s+v", err)
+		response.WriteJson(w, response.FailMessageResp("新增失败"))
 		return
 	}
 	response.WriteJson(w, response.OkDataResp(t))
@@ -106,6 +110,7 @@ func (e *ExpressController) handlerDetail(w http.ResponseWriter, r *http.Request
 	id := utils.ConvertToInt64(dataId)
 	t, err := e.expressService.GetExpress(id)
 	if err != nil {
+		log.Printf("获取详情数据错误===%s+v", err)
 		response.WriteJson(w, response.FailMessageResp("获取详情数据失败"))
 		return
 	}
@@ -142,7 +147,7 @@ func (e *ExpressController) handlerSelectPageParam(w http.ResponseWriter, r *htt
 	// 单个新增数据量比较小使用io.ReadAll
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Println(err)
+		log.Printf("获取分页错误===%s+v", err)
 		response.WriteJson(w, response.FailMessageResp("分页参数解析失败"))
 		return
 	}
@@ -150,11 +155,11 @@ func (e *ExpressController) handlerSelectPageParam(w http.ResponseWriter, r *htt
 	defer r.Body.Close()
 
 	if err := sonic.Unmarshal(body, &searchParam); err != nil {
-		log.Println(err)
+		log.Printf("sonic.Unmarshal错误===%s+v", err)
 		response.WriteJson(w, response.FailMessageResp("查询分页数据失败"))
 		return
 	}
-	
+
 	column, order := utils.HandlerColumnOrder(searchParam.Column, searchParam.Order)
 	searchParam.Column = column
 	searchParam.Order = order
@@ -163,6 +168,7 @@ func (e *ExpressController) handlerSelectPageParam(w http.ResponseWriter, r *htt
 
 	expressPage, totalRecords, totalPages, err := e.expressService.SelectExpressPageByParam(&searchParam)
 	if err != nil {
+		log.Printf("分页查询错误===%s+v", err)
 		response.WriteJson(w, response.FailCodeMessageResp(http.StatusInternalServerError, "查询分页数据失败"))
 		return
 	}
@@ -179,6 +185,7 @@ func (e *ExpressController) handlerDelete(w http.ResponseWriter, r *http.Request
 	}
 	t, err := e.expressService.DeleteById(utils.ConvertToInt64(queryId))
 	if err != nil {
+		log.Printf("删除操作错误===%s+v", err)
 		response.WriteJson(w, response.FailCodeMessageResp(http.StatusInternalServerError, "删除失败"))
 		return
 	}
@@ -188,6 +195,7 @@ func (e *ExpressController) handlerDelete(w http.ResponseWriter, r *http.Request
 func (e *ExpressController) handlerUpdate(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		log.Printf("读取更新参数错误===%s+v", err)
 		response.WriteJson(w, response.FailCodeMessageResp(http.StatusInternalServerError, "获取参数失败"))
 		return
 	}
@@ -196,12 +204,14 @@ func (e *ExpressController) handlerUpdate(w http.ResponseWriter, r *http.Request
 	var express *domain.Express
 	err = json.Unmarshal(body, &express)
 	if err != nil {
+		log.Printf("解析更新参数错误===%s+v", err)
 		response.WriteJson(w, response.FailCodeMessageResp(http.StatusInternalServerError, "解析参数失败"))
 		return
 	}
 
 	t, err := e.expressService.UpdateExpress(express)
 	if err != nil {
+		log.Printf("更新操作错误===%s+v", err)
 		response.WriteJson(w, response.FailCodeMessageResp(http.StatusInternalServerError, "更新失败"))
 		return
 	}
@@ -211,6 +221,7 @@ func (e *ExpressController) handlerUpdate(w http.ResponseWriter, r *http.Request
 func (e *ExpressController) handlerBatchDelete(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		log.Printf("批量删除参数读取错误===%s+v", err)
 		response.WriteJson(w, response.FailMessageResp("批量删除参数获取失败"))
 		return
 	}
@@ -219,6 +230,7 @@ func (e *ExpressController) handlerBatchDelete(w http.ResponseWriter, r *http.Re
 	var ids []string
 	err = json.Unmarshal(body, &ids)
 	if err != nil {
+		log.Printf("批量删除参数解析错误===%s+v", err)
 		response.WriteJson(w, response.FailMessageResp("批量删除参数解析失败"))
 		return
 	}
@@ -234,6 +246,7 @@ func (e *ExpressController) handlerBatchDelete(w http.ResponseWriter, r *http.Re
 	}
 	t, err := e.expressService.BatchDeleteByIds(ids)
 	if err != nil {
+		log.Printf("批量删除参数操作错误===%s+v", err)
 		response.WriteJson(w, response.FailMessageResp("批量删除失败"))
 		return
 	}
@@ -245,7 +258,7 @@ func (e *ExpressController) handlerBatchInsert(w http.ResponseWriter, r *http.Re
 	var list []*domain.Express
 	// 大批量情况下使用json.NewDecoder与Decode
 	if err := json.NewDecoder(r.Body).Decode(&list); err != nil {
-		log.Println(err)
+		log.Printf("批量新增参数解析错误===%s+v", err)
 		response.WriteJson(w, response.FailMessageResp("批量新增参数解析失败"))
 		return
 	}
@@ -264,6 +277,7 @@ func (e *ExpressController) handlerBatchInsert(w http.ResponseWriter, r *http.Re
 
 	t, err := e.expressService.BatchCreateExpress(list)
 	if err != nil {
+		log.Printf("批量新增操作错误===%s+v", err)
 		response.WriteJson(w, response.FailMessageResp("批量新增失败"))
 		return
 	}
