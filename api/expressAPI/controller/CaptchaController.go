@@ -36,15 +36,15 @@ func CaptchaControllerInit() *CaptchaController {
 }
 
 func (*CaptchaController) RegisterRoutes(r *mux.Router) {
-	r.HandleFunc("/captcha", CaptchaCustomerHandler).Methods("GET")
-	r.HandleFunc("/captcha/create", CaptchaHandlerCreate).Methods("GET")
-	r.HandleFunc("/captcha/validate", CaptchaHandlerValidate).Methods("POST")
-	r.HandleFunc("/captcha/dchest", CaptchaByDchestHandler).Methods("GET")
-	r.HandleFunc("/captcha/math", handleMathCode).Methods("GET")
+	r.HandleFunc("/captcha", handlerCaptchaCustomer).Methods("GET")
+	r.HandleFunc("/captcha/create", handlerCaptchaCreate).Methods("GET")
+	r.HandleFunc("/captcha/validate", handlerCaptchaValidate).Methods("POST")
+	r.HandleFunc("/captcha/dchest", handlerCaptchaByDchest).Methods("GET")
+	r.HandleFunc("/captcha/math", handlerMathCode).Methods("GET")
 }
 
 // CaptchaCustomerHandler 自定义验证码
-func CaptchaCustomerHandler(w http.ResponseWriter, r *http.Request) {
+func handlerCaptchaCustomer(w http.ResponseWriter, r *http.Request) {
 	code := utils.RandomCode(4, "")
 	// cache.Set("captcha_"+code, code, 30)
 	img := utils.CreateImage(code)
@@ -74,8 +74,8 @@ func CaptchaCustomerHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// CaptchaHandlerCreate 使用github.com/dchest/captcha生成验证码，返回该验证码对象
-func CaptchaHandlerCreate(w http.ResponseWriter, r *http.Request) {
+// handlerCaptchaCreate 使用github.com/dchest/captcha生成验证码，返回该验证码对象
+func handlerCaptchaCreate(w http.ResponseWriter, r *http.Request) {
 	//current, _ := user.Current()
 	//log.Println("当前用户id：", current.Uid)
 	//log.Println("当前用户的username：", current.Username)
@@ -113,8 +113,8 @@ func CaptchaHandlerCreate(w http.ResponseWriter, r *http.Request) {
 	response.WriteJson(w, response.OkDataResp(imageData))
 }
 
-// CaptchaHandlerValidate 校验验证码
-func CaptchaHandlerValidate(w http.ResponseWriter, r *http.Request) {
+// handlerCaptchaValidate 校验验证码
+func handlerCaptchaValidate(w http.ResponseWriter, r *http.Request) {
 	//id := r.URL.Query().Get("id")
 	//code := r.URL.Query().Get("code")
 
@@ -176,8 +176,8 @@ func CaptchaHandlerValidate(w http.ResponseWriter, r *http.Request) {
 	response.WriteJson(w, response.OkMessageResp("验证成功"))
 }
 
-// CaptchaByDchestHandler 返回dchest验证码，验证码ID放入请求头
-func CaptchaByDchestHandler(w http.ResponseWriter, r *http.Request) {
+// handlerCaptchaByDchest 返回dchest验证码，验证码ID放入请求头
+func handlerCaptchaByDchest(w http.ResponseWriter, r *http.Request) {
 	captchaID := captcha.NewLen(4)
 	w.Header().Set("Captcha-Id", captchaID)
 	err := captcha.WriteImage(w, captchaID, 150, 70)
@@ -187,8 +187,8 @@ func CaptchaByDchestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleMathCode 数学运算验证码
-func handleMathCode(w http.ResponseWriter, _ *http.Request) {
+// handlerMathCode 数学运算验证码
+func handlerMathCode(w http.ResponseWriter, _ *http.Request) {
 	codeId := uuid.NewString()
 	w.Header().Set("Captcha-Id", codeId)
 	log.Println("验证码ID:", codeId)
