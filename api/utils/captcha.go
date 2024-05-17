@@ -26,6 +26,10 @@ import (
 var charset = "0123456789ABCDEFGHJKPLMNPQRSTUVWXYZ"
 
 // GenerateCode 生成指定长度的随机验证码字符串
+//
+// 参数
+//
+//	length (int): 验证码长度
 func GenerateCode(length int) string {
 	rand.NewSource(time.Now().UnixNano())
 	// 生成随机验证码字符串
@@ -40,8 +44,8 @@ func GenerateCode(length int) string {
 //
 // 参数
 //
-//		size 验证码个数
-//	 typeStr 验证码类型(空字符串或者math默认为随机数字，其他为随机字符串)
+//	size (int): 验证码个数
+//	typeStr (string): 验证码类型(空字符串或者math默认为随机数字，其他为随机字符串)
 func RandomCode(size int, typeStr string) string {
 	code := ""
 	rand.NewSource(time.Now().UnixNano())
@@ -67,6 +71,10 @@ func RandomCodeStr(length int, codeStr string) string {
 }
 
 // GenerateImage 生成验证码图片
+//
+// 参数
+//
+//	code (string): 验证码
 func GenerateImage(code string) image.Image {
 	// 图片尺寸
 	width := 120
@@ -300,6 +308,13 @@ func textRandomColor(dc *freetype.Context) {
 }
 
 // AddInterferenceLines 添加干扰线
+//
+// 参数
+//
+//	min (int): 最小条数
+//	max (int): 最大条数
+//	lineWidth (int): 干扰线宽度
+//	img (image.Image): 图片对象
 func AddInterferenceLines(min, max, lineWidth int, img image.Image) {
 	// 在图像上绘制随机直线来添加干扰线
 	count := rand.Intn(max-min) + min
@@ -357,6 +372,12 @@ func drawLine(img image.Image, x1, y1, x2, y2 int, clr color.Color, width int) {
 }
 
 // AddNoise 添加噪点
+//
+// 参数
+//
+//	min (int): 最小数量
+//	max (int): 最大数量
+//	img (image.Image): 图片对象
 func AddNoise(min, max int, img image.Image) {
 	rgba, ok := img.(*image.RGBA)
 	if !ok {
@@ -387,6 +408,12 @@ func getTextWidth(text string, font *truetype.Font, fontSize int) int {
 	return width.Ceil()
 }
 
+// GenerateMathCode 数学运算验证码
+//
+// 参数
+//
+//	width (int): 宽度
+//	height (int): 高度
 func GenerateMathCode(width, height int) (string, string, image.Image) {
 	rand.NewSource(time.Now().UnixNano())
 
@@ -475,6 +502,15 @@ func GenerateMathCode(width, height int) (string, string, image.Image) {
 }
 
 // GetFontPath 获取字体文件绝对路径
+//
+// 参数
+//
+//	currentRelativePath (string): 当前路径
+//	fontPath (string): 字体路径
+//
+// 返回
+//
+//	string: 绝对路径
 func GetFontPath(currentRelativePath, fontPath string) (string, error) {
 	path, err := os.Getwd()
 	if err != nil {
