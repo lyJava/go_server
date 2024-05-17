@@ -33,6 +33,7 @@ func (td *TestExpressController) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/testExpress/export/excel", td.handleTestExpressExport).Methods("GET")
 }
 
+// handleTestExpressSave 新增
 func (td *TestExpressController) handleTestExpressSave(w http.ResponseWriter, r *http.Request) {
 	var testExpress *domain.TestExpress
 	err := json.NewDecoder(r.Body).Decode(&testExpress)
@@ -55,6 +56,7 @@ func (td *TestExpressController) handleTestExpressSave(w http.ResponseWriter, r 
 	response.WriteJson(w, response.OkCodeMessageData("新增成功", result))
 }
 
+// handleTestExpressBatchSave 批量新增
 func (td *TestExpressController) handleTestExpressBatchSave(w http.ResponseWriter, r *http.Request) {
 	var testExpressList []*domain.TestExpress
 	err := json.NewDecoder(r.Body).Decode(&testExpressList)
@@ -80,6 +82,7 @@ func (td *TestExpressController) handleTestExpressBatchSave(w http.ResponseWrite
 	response.WriteJson(w, response.OkCodeMessageData("测试快递批量新增成功", result))
 }
 
+// handleTestExpressBatchDelete 批量删除
 func (td *TestExpressController) handleTestExpressBatchDelete(w http.ResponseWriter, r *http.Request) {
 	var ids []any
 	err := json.NewDecoder(r.Body).Decode(&ids)
@@ -111,6 +114,7 @@ func (td *TestExpressController) handleTestExpressBatchDelete(w http.ResponseWri
 	response.WriteJson(w, response.OkCodeMessageData("测试快递批量删除成功", result))
 }
 
+// handleTestExpressPage 分页查询
 func (td *TestExpressController) handleTestExpressPage(w http.ResponseWriter, r *http.Request) {
 	var queryMap = make(map[string]interface{})
 	err := json.NewDecoder(r.Body).Decode(&queryMap)
@@ -195,6 +199,7 @@ func (td *TestExpressController) handleTestExpressPage(w http.ResponseWriter, r 
 	response.WriteJson(w, response.OkDataResp(dataMap))
 }
 
+// handleTestExpressGetById 查询
 func (td *TestExpressController) handleTestExpressGetById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var id = vars["id"]
@@ -251,4 +256,3 @@ func (td *TestExpressController) handleTestExpressExport(w http.ResponseWriter, 
 	filePath := filepath.Join(currentPath+"/excel", fileName)
 	utils.DownloadFile(filePath, w, r)
 }
-
