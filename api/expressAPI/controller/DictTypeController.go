@@ -33,15 +33,16 @@ func (d *DictController) RegisterRoutes(router *mux.Router) {
 func (d *DictController) handlePageList(w http.ResponseWriter, r *http.Request) {
 	var searchParam map[string]string
 	if err := json.NewDecoder(r.Body).Decode(&searchParam); err != nil {
-		log.Println(err)
+		log.Printf("字典分页查询参数解析错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp("查询失败"))
 		return
 	}
 
-	utils.CloseBodyError("字典类型查询失败", w, r)
+	defer utils.CloseBodyError("字典类型分页查询请求", w, r)
 
 	list, totalPages, totalRecords, err := d.service.GetDictList(nil, searchParam["page"], searchParam["size"])
 	if err != nil {
+		log.Printf("字典分页查询结果错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp("分页查询失败"))
 		return
 	}
@@ -53,15 +54,16 @@ func (d *DictController) handlePageList(w http.ResponseWriter, r *http.Request) 
 func (d *DictController) handleSave(w http.ResponseWriter, r *http.Request) {
 	var dictType *domain.DictType
 	if err := json.NewDecoder(r.Body).Decode(&dictType); err != nil {
-		log.Printf("字典类型新增参数解析失败===%v", err)
+		log.Printf("字典类型新增参数解析失败===%+v", err)
 		response.WriteJson(w, response.FailMessageResp("新增参数解析失败"))
 		return
 	}
 
-	utils.CloseBodyError("字典类型新增失败", w, r)
+	defer utils.CloseBodyError("字典类型新增请求", w, r)
 
 	saveDictType, err := d.service.SaveDictType(dictType)
 	if err != nil {
+		log.Printf("字典类型新增错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
@@ -80,6 +82,7 @@ func (d *DictController) handleDetail(w http.ResponseWriter, r *http.Request) {
 
 	detail, err := d.service.SelectDictTypeById(utils.ConvertToInt64(idStr))
 	if err != nil {
+		log.Printf("查询字典错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp("查询字典类型失败"))
 		return
 	}
@@ -95,7 +98,7 @@ func (d *DictController) handleUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.CloseBodyError("字典类修改失败", w, r)
+	defer utils.CloseBodyError("字典类修改请求", w, r)
 
 	// 如果ID类型设置为*Int64这种就可以使用nil判断是否为空
 	if dictType.Id == nil {
@@ -117,6 +120,7 @@ func (d *DictController) handleUpdate(w http.ResponseWriter, r *http.Request) {
 
 	result, err := d.service.UpdateDictType(dictType)
 	if err != nil {
+		log.Printf("更新字典错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}

@@ -47,7 +47,7 @@ func init() {
 
 	client, err := initRedisClient(redisConfigItem)
 	if err != nil {
-		fmt.Println("failed to initialize Redis client:", err)
+		log.Printf("failed to initialize Redis client:%+v", err)
 		return
 	}
 	RedisCache = client
@@ -64,6 +64,7 @@ func initRedisClient(config types.RedisConfigItem) (*redis.Client, error) {
 
 	_, err := client.Ping().Result()
 	if err != nil {
+		log.Printf("failed to ping Redis error:%+v", err)
 		return nil, fmt.Errorf("failed to ping Redis server: %w", err)
 	}
 

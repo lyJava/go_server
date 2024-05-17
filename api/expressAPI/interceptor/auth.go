@@ -36,11 +36,13 @@ func WithJWTAuthorization(handlerFunc http.HandlerFunc, u service.UserServiceInt
 	return func(writer http.ResponseWriter, request *http.Request) {
 		tokenStr, err := GetTokenFromRequest(request)
 		if err != nil {
+			log.Printf("获取jwt出现错误===%+v", err)
 			response.WriteJson(writer, response.FailMessageResp(err.Error()))
 			return
 		}
 		token, err := ValidateJWT(tokenStr)
 		if err != nil {
+			log.Printf("验证jwt出现错误===%+v", err)
 			response.WriteJson(writer, response.FailMessageResp(err.Error()))
 			return
 		}
@@ -55,11 +57,12 @@ func WithJWTAuthorization(handlerFunc http.HandlerFunc, u service.UserServiceInt
 
 		user, err := u.GetUserById(utils.ConvertToInt64(userId))
 		if err != nil {
+			log.Printf("查询用户信息出现错误===%+v", err)
 			response.WriteJson(writer, response.FailMessageResp("未查询到用户信息"))
 			return
 		}
 
-		log.Println(user)
+		log.Println("查询的用户信息", user)
 		handlerFunc(writer, request)
 	}
 }

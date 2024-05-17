@@ -35,10 +35,10 @@ func (s *MysqlDB) GetDb() (*sql.DB, error) {
 
 	err := row.Scan(&version)
 	if err != nil {
-		log.Printf("查询Mysql数据库版本失败==%s", err.Error())
+		log.Printf("查询Mysql数据库版本失败==%+v", err)
 		return nil, err
 	}
-	log.Printf("Mysql current version：%s", version)
+	log.Println("Mysql current version:", version)
 	return db, nil
 }
 

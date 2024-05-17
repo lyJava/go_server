@@ -52,7 +52,7 @@ func handlerCaptchaCustomer(w http.ResponseWriter, r *http.Request) {
 	var imgBuffer bytes.Buffer
 	err := png.Encode(&imgBuffer, img)
 	if err != nil {
-		log.Println(err.Error())
+		log.Printf("自定义验证码编码错误===%+v", err)
 		return
 	}
 	// 将字节切片转换为 base64 编码的字符串
@@ -86,6 +86,7 @@ func handlerCaptchaCreate(w http.ResponseWriter, r *http.Request) {
 	var content bytes.Buffer
 	err := captcha.WriteImage(&content, imageId, 120, 60)
 	if err != nil {
+		log.Printf("验证码写入图片错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
@@ -121,7 +122,7 @@ func handlerCaptchaValidate(w http.ResponseWriter, r *http.Request) {
 	//imageData := make(map[string]string)
 	var imageData CaptchaValidate
 	if err := json.NewDecoder(r.Body).Decode(&imageData); err != nil {
-		log.Println(err.Error())
+		log.Printf("验证码参数解析错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp("校验验证码参数解析失败"))
 		return
 	}
@@ -151,7 +152,7 @@ func handlerCaptchaValidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}*/
 
-	utils.CloseBodyError("验证码校验失败", w, r)
+	defer utils.CloseBodyError("验证码校验请求", w, r)
 
 	if imageData.Id == "" || imageData.Code == "" {
 		response.WriteJson(w, response.FailMessageResp("参数不能为空"))
@@ -182,6 +183,7 @@ func handlerCaptchaByDchest(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Captcha-Id", captchaID)
 	err := captcha.WriteImage(w, captchaID, 150, 70)
 	if err != nil {
+		log.Printf("验证码写入错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp("获取验证码失败"))
 		return
 	}
@@ -218,7 +220,7 @@ func handlerMathCode(w http.ResponseWriter, _ *http.Request) {
 	var buf bytes.Buffer
 	err := png.Encode(&buf, img)
 	if err != nil {
-		log.Println("Failed to encode image:", err)
+		log.Printf("Failed to encode image:%+v", err)
 		response.WriteJson(w, response.FailMessageResp("验证码生成失败"))
 		return
 	}
@@ -229,7 +231,7 @@ func handlerMathCode(w http.ResponseWriter, _ *http.Request) {
 	// 发送图像数据给客户端
 	_, err = buf.WriteTo(w)
 	if err != nil {
-		log.Println("Failed to send image data:", err)
+		log.Printf("Failed to send image data:%+v", err)
 		response.WriteJson(w, response.FailMessageResp("验证码生成失败"))
 		return
 	}

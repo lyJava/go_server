@@ -30,7 +30,7 @@ func (pg *DictTypeDb) GetDictList(d *domain.DictType, page, sizeStr string) ([]*
 	log.Println("字典类型分页countSql===", countSql)
 	err = pg.Db.QueryRow(countSql).Scan(&totalRecords)
 	if err != nil {
-		log.Print(err)
+		log.Printf("字典类型查询row出现错误==%+v", err)
 		return nil, 0, 0, err
 	}
 
@@ -67,7 +67,7 @@ func (pg *DictTypeDb) GetDictList(d *domain.DictType, page, sizeStr string) ([]*
 		log.Print(err)
 		return nil, 0, 0, err
 	}
-	defer rows.Close()
+	defer RowsClose(rows, "字典类型分页查询结果")
 
 	for rows.Next() {
 		dictType := domain.DictType{}

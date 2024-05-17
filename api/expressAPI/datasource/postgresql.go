@@ -25,7 +25,7 @@ func InitPostgresql() *PostgresqlDB {
 	// 连接到数据库
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatal("数据库连接失败:", err)
+		log.Printf("Postgresql连接失败:%+v", err)
 	}
 	return &PostgresqlDB{
 		Db: db,
@@ -39,9 +39,9 @@ func (d *PostgresqlDB) GetPostgresqlDB() (*sql.DB, error) {
 
 	err := row.Scan(&version)
 	if err != nil {
-		log.Printf("查询Postgrsql数据库版本失败==%s", err.Error())
+		log.Printf("查询Postgresql数据库版本失败==%+v", err)
 		return nil, err
 	}
-	log.Printf("Postgresql current version：%s", version)
+	log.Println("Postgresql current version:", version)
 	return postgresqlDb, err
 }
