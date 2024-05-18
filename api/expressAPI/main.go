@@ -158,6 +158,23 @@ func main() {
 	//utils.MergeImage()
 	//utils.MergeImages2("./image/图片.png", "./image/图片1.png")
 	//utils.MergeImages2("./image/test15.png", "./image/1714422153891.jpg", 1)
+	//llms.MessageLlama3()
+
+	/*ret1 := utils.TimeForHuman(time.Now().Unix() - 3)
+	fmt.Println(ret1)
+
+	ret2 := utils.TimeForHuman(time.Now().Unix() - 3*60)
+	fmt.Println(ret2)
+
+	ret3 := utils.TimeForHuman(time.Now().Unix() - 3*60*60)
+	fmt.Println(ret3)
+
+	ret4 := utils.TimeForHuman(time.Now().Unix() - 3*3*60*60)
+	fmt.Println(ret4)
+
+	ret5 := utils.TimeForHuman(time.Now().Unix() - 3*3*3*60*60)
+	fmt.Println(ret5)*/
+
 	expressMySQL := datasource.InitMysqlDB(cfg)
 	//expressSQL := mysqlDB.InitMysqlDB(cfg)
 
