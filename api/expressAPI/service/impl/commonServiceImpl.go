@@ -2,8 +2,10 @@ package impl
 
 import (
 	"database/sql"
-	"github.com/spf13/cast"
 	"log"
+
+	"github.com/spf13/cast"
+	"go.uber.org/zap"
 )
 
 // BuildPageOffset 计算总页数，偏移量
@@ -41,8 +43,10 @@ func RowsClose(rows *sql.Rows, message string) error {
 	err := rows.Close()
 	if err != nil {
 		log.Printf(message+"关闭row结果错误===%+v", err)
+		zap.L().Sugar().Errorf(message+"关闭row结果错误===%+v", err)
 		return err
 	}
 	log.Println(message + "结果成功关闭")
+	zap.L().Sugar().Infoln(message+"结果成功关闭")
 	return nil
 }
