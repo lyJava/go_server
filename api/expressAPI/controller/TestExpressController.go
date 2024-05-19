@@ -14,6 +14,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/spf13/cast"
+	"go.uber.org/zap"
 )
 
 type TestExpressController struct {
@@ -98,6 +99,7 @@ func (td *TestExpressController) handlerTestExpressBatchDelete(w http.ResponseWr
 	defer utils.CloseBodyError("测试快递批量删除请求", w, r)
 
 	if len(ids) == 0 {
+		zap.L().Sugar().Errorf("测试快递批量删除参数验证失败===%+v", ids)
 		response.WriteJson(w, response.FailMessageResp("测试快递批量删除参数验证失败"))
 		return
 	}
@@ -126,12 +128,25 @@ func (td *TestExpressController) handlerTestExpressPage(w http.ResponseWriter, r
 		return
 	}
 	utils.CloseBodyError("测试快递分页查询失败", w, r)
+	
 
-	page, _ := queryMap["page"].(string)
-	size, _ := queryMap["size"].(string)
+	page, ok := queryMap["page"].(string)
+	if !ok {
+		zap.L().Sugar().Errorf("测试快递快递分页参数page验证失败===%s", page)
+		response.WriteJson(w, response.FailMessageResp("测试快递快递分页参数page验证失败"))
+		return
+	}
+	size, ok := queryMap["size"].(string)
+	if !ok {
+		zap.L().Sugar().Errorf("测试快递快递分页参数size验证失败===%s", page)
+		response.WriteJson(w, response.FailMessageResp("测试快递快递分页参数size验证失败"))
+		return
+	}
 	log.Printf("测试快递分页查询分页参数===page=%v,size=%v", page, size)
+	zap.L().Sugar().Debugf("测试快递分页查询分页参数===page=%v,size=%v", page, size)
 
 	if utils.ConvertToInt64(size) > 500 {
+		zap.L().Sugar().Errorf("测试快递快递分页单次查询超过500条了,当前条数:%s", size)
 		response.WriteJson(w, response.FailMessageResp("测试快递分页查询单次不能超过500条"))
 		return
 	}

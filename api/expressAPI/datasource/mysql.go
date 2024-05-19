@@ -2,9 +2,11 @@ package datasource
 
 import (
 	"database/sql"
+	"log"
+
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/wire"
-	"log"
+	"go.uber.org/zap"
 )
 
 type MysqlDB struct {
@@ -36,9 +38,11 @@ func (s *MysqlDB) GetDb() (*sql.DB, error) {
 	err := row.Scan(&version)
 	if err != nil {
 		log.Printf("查询Mysql数据库版本失败==%+v", err)
+		zap.L().Sugar().Errorf("查询Mysql数据库版本失败==%+v", err)
 		return nil, err
 	}
-	log.Println("Mysql current version:", version)
+	//zap.L().Info("mysql连接信息", zap.String("Mysql current version:", version))
+	zap.L().Sugar().Infoln("Mysql current version:", version)
 	return db, nil
 }
 
