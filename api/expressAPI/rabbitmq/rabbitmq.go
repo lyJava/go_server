@@ -4,13 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"time"
+
+	amqp "github.com/rabbitmq/amqp091-go"
+	"go.uber.org/zap"
 )
 
 func failOnError(err error, msg string) {
 	if err != nil {
+		zap.L().Sugar().Errorf("%s===%+v", msg, err)
 		log.Panicf("%s: %v", msg, err)
 	}
 }
@@ -19,6 +22,9 @@ func failOnError(err error, msg string) {
 func ConnectRabbitmq(connectUrl string) *amqp.Connection {
 	conn, err := amqp.Dial(connectUrl)
 	failOnError(err, "Failed to connect to RabbitMQ")
+	// 将json格式化输出
+	rabbitmqProperties, _ := json.MarshalIndent(conn.Properties, "", "    ")
+	zap.L().Sugar().Infof("Success to connect to RabbitMQ===%+v", string(rabbitmqProperties))
 	return conn
 }
 
@@ -26,6 +32,7 @@ func ConnectRabbitmq(connectUrl string) *amqp.Connection {
 func OpenChannel(conn *amqp.Connection) *amqp.Channel {
 	ch, err := conn.Channel()
 	failOnError(err, "Failed to open a channel")
+	zap.L().Sugar().Infof("Success to open a channel===%v", ch)
 	return ch
 }
 
@@ -45,6 +52,7 @@ func DeclareQueue(ch *amqp.Channel, queueName string, durable bool) *amqp.Queue 
 		nil,     // 额外参数
 	)
 	failOnError(err, "Failed to declare a queue")
+	zap.L().Sugar().Infof("Success to declare a queue===%v", queue)
 	return &queue
 }
 
@@ -59,6 +67,7 @@ func DeclareExchange(ch *amqp.Channel, exchangeName, typeStr string) {
 		nil,          // arguments
 	)
 	failOnError(err, "Failed to declare an exchange")
+	zap.L().Sugar().Infof("Success to declare an exchange===%s", exchangeName)
 }
 
 func BindQueue(ch *amqp.Channel, queueName, routeKey, exchangeName string) {
@@ -70,6 +79,7 @@ func BindQueue(ch *amqp.Channel, queueName, routeKey, exchangeName string) {
 		nil,
 	)
 	failOnError(err, "Failed to bind a queue")
+	zap.L().Sugar().Infof("Success to bind a queue queueName:%s,routeKey:%s,exchangeName:%s", queueName, routeKey, exchangeName)
 }
 
 // PublishMessage 发布消息
@@ -91,6 +101,8 @@ func PublishMessage(ch *amqp.Channel, exchange, queueName string, message interf
 
 	failOnError(err, "Failed to publish a message: %v")
 	fmt.Println("RabbitMQ Message send successfully ===", string(bytes))
+	zap.L().Sugar().Infof("RabbitMQ Message send successfully:%s", string(bytes))
+
 }
 
 // Consume 消费
