@@ -41,17 +41,19 @@ func (td *TestExpressController) handlerTestExpressSave(w http.ResponseWriter, r
 	var testExpress *domain.TestExpress
 	err := json.NewDecoder(r.Body).Decode(&testExpress)
 	if err != nil {
-		log.Printf("快递新增参数解析失败===%v", err)
+		log.Printf("测试快递新增参数解析错误===%+v", err)
+		zap.L().Sugar().Errorf("测试快递新增参数解析错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp("测试快递新增参数解析失败"))
 		return
 	}
 
-	utils.CloseBodyError("测试快递新增失败", w, r)
+	defer utils.CloseBodyError("测试快递新增请求", w, r)
 
-	marshal, _ := json.MarshalIndent(testExpress, "", "    ")
-	log.Printf("测试快递新增数据===\r\n%s", string(marshal))
+	marshal := utils.ToJsonFormat(testExpress)
+	log.Printf("测试快递新增数据===\r\n%s", marshal)
 	result, err := td.service.Save(testExpress)
 	if err != nil {
+		zap.L().Sugar().Errorf("测试快递新增错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
@@ -64,20 +66,23 @@ func (td *TestExpressController) handlerTestExpressBatchSave(w http.ResponseWrit
 	var testExpressList []*domain.TestExpress
 	err := json.NewDecoder(r.Body).Decode(&testExpressList)
 	if err != nil {
-		log.Printf("快递新增参数解析失败===%v", err)
+		log.Printf("测试快递新增参数解析错误===%v", err)
+		zap.L().Sugar().Errorf("测试快递批量新增参数解析错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp("测试快递新增参数解析失败"))
 		return
 	}
 
-	utils.CloseBodyError("测试快递批量新增失败", w, r)
+	defer utils.CloseBodyError("测试快递批量新增请求", w, r)
 
 	if len(testExpressList) <= 0 {
+		zap.L().Sugar().Infof("测试快递批量新增数量:%d不能低少一条数据", len(testExpressList))
 		response.WriteJson(w, response.FailMessageResp("测试快递批量新增不能低少一条数据"))
 		return
 	}
 
 	result, err := td.service.BatchSave(testExpressList)
 	if err != nil {
+		zap.L().Sugar().Errorf("快递新增错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
@@ -90,7 +95,8 @@ func (td *TestExpressController) handlerTestExpressBatchDelete(w http.ResponseWr
 	var ids []any
 	err := json.NewDecoder(r.Body).Decode(&ids)
 	if err != nil {
-		log.Printf("快递新增参数解析失败===%v", err)
+		log.Printf("测试快递批量删除参数解析失败===%v", err)
+		zap.L().Sugar().Errorf("快递新增参数解析错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp("测试快递批量删除参数解析失败"))
 		return
 	}
@@ -106,6 +112,7 @@ func (td *TestExpressController) handlerTestExpressBatchDelete(w http.ResponseWr
 
 	result, err := td.service.BatchDelete(ids)
 	if err != nil {
+		zap.L().Sugar().Errorf("测试快递批量删除错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
@@ -123,7 +130,8 @@ func (td *TestExpressController) handlerTestExpressPage(w http.ResponseWriter, r
 	var queryMap = make(map[string]interface{})
 	err := json.NewDecoder(r.Body).Decode(&queryMap)
 	if err != nil {
-		log.Printf("测试快递分页查询参数解析失败===%v", err)
+		log.Printf("测试快递分页查询参数解析错误===%+v", err)
+		zap.L().Sugar().Errorf("测试快递分页查询参数解析错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp("测试快递快递分页查询参数解析失败"))
 		return
 	}
@@ -141,8 +149,8 @@ func (td *TestExpressController) handlerTestExpressPage(w http.ResponseWriter, r
 		response.WriteJson(w, response.FailMessageResp("测试快递快递分页参数size不能为空"))
 		return
 	}
-	log.Printf("测试快递分页查询分页参数===page=%v,size=%v", page, size)
-	zap.L().Sugar().Debugf("测试快递分页查询分页参数===page=%v,size=%v", page, size)
+	log.Printf("测试快递分页查询分页参数===page=%s,size=%s", page, size)
+	zap.L().Sugar().Debugf("测试快递分页查询分页参数===page=%s,size=%s", page, size)
 
 	if utils.ConvertToInt64(size) > 500 {
 		zap.L().Sugar().Errorf("测试快递快递分页单次查询超过500条了,当前条数:%s", size)
@@ -178,12 +186,12 @@ func (td *TestExpressController) handlerTestExpressPage(w http.ResponseWriter, r
 		}
 	}
 
-	marshal, _ := json.MarshalIndent(testExpress, "", "    ")
-	log.Printf("测试快递分页查询对象参数===\r\n%s", string(marshal))
+	marshal := utils.ToJsonFormat(testExpress)
+	log.Printf("测试快递分页查询对象参数===\r\n%s", marshal)
 
 	list, totalRecord, totalPage, err := td.service.PageList(testExpress, utils.ConvertToInt64(page), utils.ConvertToInt64(size))
 	if err != nil {
-		log.Printf("快递分页查询失败===%v", err)
+		log.Printf("快递分页查询失败===%+v", err)
 		zap.L().Sugar().Errorf("测试快递分页查询是否导出excel:%+v", err)
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
@@ -237,7 +245,8 @@ func (td *TestExpressController) handlerTestExpressGetById(w http.ResponseWriter
 	detail, err := td.service.SelectById(cast.ToInt64(id))
 	log.Println("测试快递详情", detail)
 	if err != nil {
-		log.Printf("测试快递通过ID查询失败===%v", err)
+		log.Printf("测试快递通过ID查询失败===%+v", err)
+		zap.L().Sugar().Errorf("测试快递通过ID查询错误:%+v", err)
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
