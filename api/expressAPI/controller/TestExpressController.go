@@ -51,6 +51,8 @@ func (td *TestExpressController) handlerTestExpressSave(w http.ResponseWriter, r
 
 	marshal := utils.ToJsonFormat(testExpress)
 	log.Printf("测试快递新增数据===\r\n%s", marshal)
+	zap.L().Sugar().Infof("测试快递新增数据===%s", marshal)
+
 	result, err := td.service.Save(testExpress)
 	if err != nil {
 		zap.L().Sugar().Errorf("测试快递新增错误===%+v", err)
@@ -135,7 +137,7 @@ func (td *TestExpressController) handlerTestExpressPage(w http.ResponseWriter, r
 		response.WriteJson(w, response.FailMessageResp("测试快递快递分页查询参数解析失败"))
 		return
 	}
-	utils.CloseBodyError("测试快递分页查询失败", w, r)
+	defer utils.CloseBodyError("测试快递分页查询请求", w, r)
 
 	page := queryMap["page"].(string)
 	if page == "" {
@@ -150,7 +152,7 @@ func (td *TestExpressController) handlerTestExpressPage(w http.ResponseWriter, r
 		return
 	}
 	log.Printf("测试快递分页查询分页参数===page=%s,size=%s", page, size)
-	zap.L().Sugar().Debugf("测试快递分页查询分页参数===page=%s,size=%s", page, size)
+	zap.L().Sugar().Infof("测试快递分页查询分页参数===page=%s,size=%s", page, size)
 
 	if utils.ConvertToInt64(size) > 500 {
 		zap.L().Sugar().Errorf("测试快递快递分页单次查询超过500条了,当前条数:%s", size)

@@ -12,11 +12,10 @@ import (
 	"crypto/x509"
 	"database/sql/driver"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/golang-jwt/jwt"
-	"golang.org/x/crypto/bcrypt"
 	"io"
 	"log"
 	_ "math/rand"
@@ -28,6 +27,10 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/golang-jwt/jwt"
+	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // ConvertToInt64 字符串转换为int64
@@ -665,7 +668,7 @@ func DownloadFile(fileNamePath string, w http.ResponseWriter, r *http.Request) {
 
 	fileInfo, err := GetFileInfo(file)
 	if err != nil {
-		log.Printf("获取文件信息异常===%+v",err)
+		log.Printf("获取文件信息异常===%+v", err)
 		response.WriteJson(w, response.FailMessageResp("获取文件信息失败"))
 		return
 	}
@@ -848,4 +851,17 @@ func TimeForHuman(timeValue int64) string {
 	} else {
 		return time.Unix(timeValue, 0).Format("2006-01-02")
 	}
+}
+
+// ShowJsonFormat 返回格式化json
+func ToJsonFormat(data any) string {
+	if data == "" {
+		return ""
+	}
+	marshal, err := json.MarshalIndent(data, "", "    ")
+	if err != nil {
+		zap.L().Sugar().Errorf("数据格式化json错误===%+v", err)
+		return ""
+	}
+	return string(marshal)
 }
