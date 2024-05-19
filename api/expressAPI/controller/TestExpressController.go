@@ -128,18 +128,17 @@ func (td *TestExpressController) handlerTestExpressPage(w http.ResponseWriter, r
 		return
 	}
 	utils.CloseBodyError("测试快递分页查询失败", w, r)
-	
 
-	page, ok := queryMap["page"].(string)
-	if !ok {
+	page := queryMap["page"].(string)
+	if page == "" {
 		zap.L().Sugar().Errorf("测试快递快递分页参数page验证失败===%s", page)
-		response.WriteJson(w, response.FailMessageResp("测试快递快递分页参数page验证失败"))
+		response.WriteJson(w, response.FailMessageResp("测试快递快递分页参数page不能为空"))
 		return
 	}
-	size, ok := queryMap["size"].(string)
-	if !ok {
+	size := queryMap["size"].(string)
+	if size == "" {
 		zap.L().Sugar().Errorf("测试快递快递分页参数size验证失败===%s", page)
-		response.WriteJson(w, response.FailMessageResp("测试快递快递分页参数size验证失败"))
+		response.WriteJson(w, response.FailMessageResp("测试快递快递分页参数size不能为空"))
 		return
 	}
 	log.Printf("测试快递分页查询分页参数===page=%v,size=%v", page, size)
@@ -150,6 +149,9 @@ func (td *TestExpressController) handlerTestExpressPage(w http.ResponseWriter, r
 		response.WriteJson(w, response.FailMessageResp("测试快递分页查询单次不能超过500条"))
 		return
 	}
+
+	excel := queryMap["excel"].(bool)
+	zap.L().Sugar().Infof("测试快递分页查询是否导出excel:%t", excel)
 
 	var testExpress = &domain.TestExpress{}
 
@@ -182,6 +184,7 @@ func (td *TestExpressController) handlerTestExpressPage(w http.ResponseWriter, r
 	list, totalRecord, totalPage, err := td.service.PageList(testExpress, utils.ConvertToInt64(page), utils.ConvertToInt64(size))
 	if err != nil {
 		log.Printf("快递分页查询失败===%v", err)
+		zap.L().Sugar().Errorf("测试快递分页查询是否导出excel:%+v", err)
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
@@ -202,12 +205,18 @@ func (td *TestExpressController) handlerTestExpressPage(w http.ResponseWriter, r
 		"备注",
 		"是否删除",
 	}
-	excelName := "data_" + time.Now().Format("20060102150405") + ".xlsx"
-	filePath := utils.WriteTestExpressToExcel("/excel/"+excelName, headers, list)
-	log.Println("生成excel路径===", filePath)
 
-	downloadUrl := "http://localhost:3000/testExpress/export/excel?fileName=" + excelName
-	log.Println("Excel下载链接===", downloadUrl)
+	downloadUrl := ""
+
+	if excel {
+		excelName := "data_" + time.Now().Format("20060102150405") + ".xlsx"
+		filePath := utils.WriteTestExpressToExcel("/excel/"+excelName, headers, list)
+		log.Println("生成excel路径===", filePath)
+
+		downloadUrl = "http://localhost:3000/testExpress/export/excel?fileName=" + excelName
+		log.Println("Excel下载链接===", downloadUrl)
+		zap.L().Sugar().Infof("生成Excel路径:%s,下载链接:%s", filePath, downloadUrl)
+	}
 
 	dataMap := map[string]interface{}{
 		"pageData":    response.NewPageData(totalRecord, totalPage, list),
