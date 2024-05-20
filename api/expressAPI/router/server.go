@@ -1,13 +1,15 @@
 package router
 
 import (
+	"apiProject/api/expressAPI/config"
 	"apiProject/api/expressAPI/controller"
 	"apiProject/api/expressAPI/service"
 	"apiProject/api/utils"
-	"github.com/gorilla/mux"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type APIServer struct {
@@ -39,6 +41,12 @@ var routingKey = "create_order_routing_key"
 // Serve 启动API服务
 func (s *APIServer) Serve() {
 	router := mux.NewRouter()
+
+	requestLog := config.EnvConfig.RequestLog
+	if requestLog {
+		router.Use(RequestLogMiddleware)
+	}
+
 	//childRouter := router.PathPrefix("/dev-api").Subrouter()
 	//childRouter.Handle("/api/v1/", http.StripPrefix("/api/v1", router))
 
@@ -77,6 +85,9 @@ func (s *APIServer) Serve() {
 	// 大模型控制器
 	llmsController := controller.LlmsControllerInit(utils.CreateModel("llama3"))
 	llmsController.RegisterRoutes(router)
+
+	// 测试请求日志
+	router.HandleFunc("/user/test/{id}", UserHandler).Methods("GET")
 
 	log.Println("api server starting at port====", s.addr)
 	log.Fatalln(http.ListenAndServe(s.addr, router))

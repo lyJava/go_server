@@ -26,6 +26,7 @@ func InitConfig() *types.MysqlConfig {
 
 	return &types.MysqlConfig{
 		ServerPort: serverConfig.Port,
+		RequestLog: serverConfig.RequestLog,
 		DbUser:     sqlConfigItem.Username,
 		DbPass:     sqlConfigItem.Password,
 		DbAddress:  sqlConfigItem.Url,
