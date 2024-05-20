@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -38,7 +37,6 @@ func RequestLogMiddleware(next http.Handler) http.Handler {
 		// 计算请求持续时间
 		duration := time.Since(startTime)
 
-		log.Printf("请求响应描述==%s,请求响应码===%d", rec.status, rec.statusCode)
 		zap.L().Sugar().Infof("请求响应描述==%s,请求响应码===%d", rec.status, rec.statusCode)
 		queryParam := r.URL.Query().Encode()
 		queryParam = queryParam + "\njson格式:\n" + utils.QueryParamToJson(queryParam)
