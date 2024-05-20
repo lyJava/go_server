@@ -865,3 +865,41 @@ func ToJsonFormat(data any) string {
 	}
 	return string(marshal)
 }
+
+// ForcedToJsonFormat 强制json格式化输出
+func ForcedToJsonFormat(b []byte) string {
+	var result map[string]interface{}
+	// 将JSON字符串解码到result变量中
+	err := json.Unmarshal(b, &result)
+	if err != nil {
+		log.Printf("Error occurred during unmarshaling. Error: %+v", err)
+	}
+
+	// 格式化输出JSON字符串
+	formattedJson, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		log.Printf("Error occurred during marshaling. Error:%+v", err)
+	}
+	return string(formattedJson)
+}
+
+// QueryParamToJson 将url的query参数转换json
+func QueryParamToJson(queryParam string) string {
+	// 解析查询字符串
+	values, _ := url.ParseQuery(queryParam)
+	if len(values) == 0 {
+		return ""
+	}
+	
+	result := make(map[string]any)
+
+	for key, value := range values {
+		log.Println("key", key)
+		log.Println("value", value)
+		if len(value) > 0 {
+			result[key] = value[0]
+		}
+	}
+
+	return ToJsonFormat(result)
+}
