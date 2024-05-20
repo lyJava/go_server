@@ -50,8 +50,7 @@ func (td *TestExpressController) handlerTestExpressSave(w http.ResponseWriter, r
 	defer utils.CloseBodyError("测试快递新增请求", w, r)
 
 	marshal := utils.ToJsonFormat(testExpress)
-	log.Printf("测试快递新增数据===\r\n%s", marshal)
-	zap.L().Sugar().Infof("测试快递新增数据===%s", marshal)
+	zap.L().Sugar().Infof("测试快递新增数据===\n%s", marshal)
 
 	result, err := td.service.Save(testExpress)
 	if err != nil {
