@@ -1,6 +1,8 @@
 server:
   port: 3000
   version: 0.0.1
+  # 是否开启请求日志
+  request-log: true
 
 mysql:
   url: localhost:3306

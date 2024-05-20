@@ -8,6 +8,7 @@ import (
 // MysqlConfig mysql的结构
 type MysqlConfig struct {
 	ServerPort int                // 服务端口号
+	RequestLog bool               // 是否开启请求日志
 	DbUser     string             // 数据库用户名
 	DbPass     string             // 数据库密码
 	DbAddress  string             // 数据库地址
@@ -46,8 +47,9 @@ type ServerConfig struct {
 
 // ServerConfigItem 服务项配置
 type ServerConfigItem struct {
-	Port    int    `mapstructure:"port"`
-	Version string `mapstructure:"version"`
+	Port       int    `mapstructure:"port"`
+	Version    string `mapstructure:"version"`
+	RequestLog bool   `mapstructure:"request-log"`
 }
 
 // JwtConfig JWT的配置
