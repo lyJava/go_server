@@ -13,7 +13,7 @@ type MysqlDB struct {
 	Db *sql.DB
 }
 
-// InitMysqlDB 初始化数据库
+// InitMysqlDB 初始化mysql
 func InitMysqlDB(cfg mysql.Config) *MysqlDB {
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {

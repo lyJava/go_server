@@ -15,10 +15,18 @@ type PostgresqlDB struct {
 	Db *sql.DB
 }
 
+// InitPostgresql 初始化postgresql
 func InitPostgresql() *PostgresqlDB {
 	viperConfig := config.ReadConfig("api/expressApi/config", "application", "yml")
+	if viperConfig == nil {
+		log.Println("无Postgresql配置信息")
+		return nil
+	}
 	var postgresqlConfig types.PostgresqlConfig
-	viperConfig.Unmarshal(&postgresqlConfig)
+	if err := viperConfig.Unmarshal(&postgresqlConfig); err != nil {
+		log.Printf("获取Postgresql配置错误:%+v", err)
+		return nil
+	}
 
 	postgresqlItem := postgresqlConfig.Postgresql
 	// 构建连接字符串
