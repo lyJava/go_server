@@ -318,11 +318,39 @@ func (pg *TestDictTypeDb) CheckByNumAndPickupCode(expressNumber, pickupCode stri
 //goland:noinspection SqlResolve
 func (pg *TestDictTypeDb) BatchDelete(ids []any) (rows int64, err error) {
 	//deleteSql := fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN (%s)", strings.Join(ids, ", "))
+
+	// 开启事务
+	tx, err := pg.Db.Begin()
+	if err != nil {
+		log.Printf("开启事务失败===%+v", err)
+		zap.L().Sugar().Errorf("开启事务失败===%+v", err)
+		return 0, err
+	}
+
+	// 确保事务的提交或回滚
+	defer func() {
+		if p := recover(); p != nil {
+			zap.L().Sugar().Info("字典类型批量删除事务即将回滚（panic恢复）")
+			tx.Rollback()
+			panic(p) // 重新panic以便外层捕获
+		} else if err != nil {
+			tx.Rollback() // 发生错误则回滚事务
+			zap.L().Sugar().Errorf("字典类型批量删除事务回滚,发生错误===%+v", err)
+		} else {
+			err = tx.Commit() // 正常结束则提交事务
+			if err != nil {
+				log.Printf("字典类型批量删除提交事务失败===%+v", err)
+				zap.L().Sugar().Errorf("字典类型批量删除提交事务失败===%+v", err)
+			}
+		}
+	}()
+
 	delSql := fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN %s", utils.BuildArgsWithBrackets(ids))
 	log.Printf("测试快递批量删除sql===%s", delSql)
 	zap.L().Sugar().Debugf("测试快递批量删除sql===%s", delSql)
-	
-	result, err := pg.Db.Exec(fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN (%s)", utils.GeneratePlaceholders(len(ids))), ids...)
+
+	//esult, err := pg.Db.Exec(fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN (%s)", utils.GeneratePlaceholders(len(ids))), ids...)
+	result, err := tx.Exec(fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN (%s)", utils.GeneratePlaceholders(len(ids))), ids...)
 	if err != nil {
 		log.Printf("测试快递批量删除异常===%+v", err)
 		zap.L().Sugar().Errorf("测试快递批量删除异常===%+v", err)
