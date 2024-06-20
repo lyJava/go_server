@@ -93,11 +93,21 @@ func (cpu *MacCpuController) handlerBatchSave(w http.ResponseWriter, r *http.Req
 	var list []*domain.MacCpu
 	if err := json.NewDecoder(r.Body).Decode(&list); err != nil {
 		zap.L().Sugar().Errorf("苹果处理器批量新增参数解析错误===%+v", err)
-		response.WriteJson(w, response.FailMessageResp("苹果处理器新增参数解析失败"))
+		response.WriteJson(w, response.FailMessageResp("苹果处理器批量新增参数解析失败"))
 		return
 	}
 
 	defer utils.CloseBodyError("苹果处理器批量新增请求", w, r)
+
+	if len(list) == 0 {
+		response.WriteJson(w, response.FailMessageResp("批量新增参数不能为空"))
+		return
+	}
+
+	if len(list) > 10 {
+		response.WriteJson(w, response.FailMessageResp("批量新增单次操作不能超过10条"))
+		return
+	}
 
 	result, err := cpu.service.BatchSave(list)
 	if err != nil {
@@ -136,6 +146,16 @@ func (cpu *MacCpuController) handleBatchDelete(w http.ResponseWriter, r *http.Re
 	}
 
 	defer utils.CloseBodyError("苹果处理器批量删除请求", w, r)
+
+	if len(ids) == 0 {
+		response.WriteJson(w, response.FailMessageResp("批量删除参数不能为空"))
+		return
+	}
+
+	if len(ids) > 100 {
+		response.WriteJson(w, response.FailMessageResp("批量删除单次操作不能超过100条"))
+		return
+	}
 
 	result, err := cpu.service.BatchDeleteByIds(ids)
 	if err != nil {
