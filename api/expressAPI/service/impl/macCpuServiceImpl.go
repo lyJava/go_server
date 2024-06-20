@@ -24,7 +24,7 @@ const (
 
 //goland:noinspection SqlResolve,SqlCaseVsIf,SqlNoDataSourceInspection
 func (pg *MacCpuDb) Save(cpu *domain.MacCpu) (*domain.MacCpu, error) {
-	var err error
+	// var err error
 	// 开启事务
 	tx, err := pg.Db.Begin()
 	if err != nil {
@@ -34,7 +34,7 @@ func (pg *MacCpuDb) Save(cpu *domain.MacCpu) (*domain.MacCpu, error) {
 	}
 
 	// 确保事务的提交或回滚
-	/*defer func() {
+	defer func() {
 		if p := recover(); p != nil {
 			zap.L().Sugar().Info("苹果处理器新增事务即将回滚（panic恢复）")
 			_ = tx.Rollback()
@@ -52,7 +52,7 @@ func (pg *MacCpuDb) Save(cpu *domain.MacCpu) (*domain.MacCpu, error) {
 				zap.L().Sugar().Info("苹果处理器新增事务提交完成")
 			}
 		}
-	}()*/
+	}()
 
 	var lastInsertId int64
 
@@ -71,7 +71,7 @@ func (pg *MacCpuDb) Save(cpu *domain.MacCpu) (*domain.MacCpu, error) {
 	).Scan(&lastInsertId); err != nil {
 		zap.L().Sugar().Errorf("苹果处理器新增执行错误===%+v", err)
 		// 发生错误则回滚
-		_ = tx.Rollback()
+		//_ = tx.Rollback()
 		return nil, err
 	}
 
@@ -97,11 +97,11 @@ func (pg *MacCpuDb) Save(cpu *domain.MacCpu) (*domain.MacCpu, error) {
 	}
 
 	// 显式提交事务
-	if err = tx.Commit(); err != nil {
+	/*if err = tx.Commit(); err != nil {
 		log.Printf("苹果处理器新增提交事务失败===%+v", err)
 		zap.L().Sugar().Errorf("苹果处理器新增提交事务失败===%+v", err)
 		return nil, err
-	}
+	}*/
 
 	return macCpu, nil
 }
