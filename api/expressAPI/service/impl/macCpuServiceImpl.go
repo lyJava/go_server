@@ -77,6 +77,7 @@ func (pg *MacCpuDb) Save(cpu *domain.MacCpu) (*domain.MacCpu, error) {
 
 	zap.L().Sugar().Infof("苹果处理器新增返回自增主键ID: %d", lastInsertId)
 	macCpu := &domain.MacCpu{}
+	// 使用tx的查询，保证与插入操作在同一个事务中
 	if err = tx.QueryRow(fmt.Sprintf(`SELECT id, %s FROM tb_mac_cpu WHERE id = $1`, CommonColumn), lastInsertId).
 		Scan(
 			&macCpu.Id,
