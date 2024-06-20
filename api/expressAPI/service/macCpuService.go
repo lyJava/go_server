@@ -10,7 +10,9 @@ type MacCpuService interface {
 	// SelectById 通过主键ID查询
 	SelectById(id int64) (*domain.MacCpu, error)
 	// Update 修改/更新
-	Update(cpu *domain.MacCpu) (int64, error)
+	Update(cpu *domain.MacCpu) (*domain.MacCpu, error)
 	// DeleteById 通过主键ID删除
 	DeleteById(id int64) (int64, error)
+	// BatchDeleteByIds 通过主键ID切片批量删除
+	BatchDeleteByIds(ids []any) (int64, error)
 }
