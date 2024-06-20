@@ -41,7 +41,7 @@ func RequestLogMiddleware(next http.Handler) http.Handler {
 		queryParam := r.URL.Query().Encode()
 		queryParam = queryParam + "\njson格式:\n" + utils.QueryParamToJson(queryParam)
 
-		go logRequest(r, queryParam, requestBodyBytes, utils.ForcedToJsonFormat(rec.body.Bytes()), time.Duration(duration))
+		go logRequest(r, queryParam, requestBodyBytes, utils.ForcedToJsonFormat(rec.body.Bytes()), duration)
 	})
 }
 
