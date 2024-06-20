@@ -78,7 +78,7 @@ func (rec *responseRecorder) WriteHeader(statusCode int) {
 	rec.status = http.StatusText(statusCode)
 }
 
-// userHandler 是一个处理程序，用于处理 RESTful 路径参数
+// UserHandler 是一个处理程序，用于处理 RESTFUL 路径参数
 func UserHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID := vars["id"]
