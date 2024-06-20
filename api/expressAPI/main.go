@@ -193,9 +193,10 @@ func main() {
 	user := impl.NewUserDB(mySqlDb)
 	dict := impl.NewDictTypeDb(postgresqlDb)
 	testExpressDB := impl.NewTestDictTypeDb(postgresqlDb)
+	macCpuDb := impl.NewMacCpuDb(postgresqlDb)
 
 	serverPort := ":" + utils.ConvertIntToStr(config.EnvConfig.ServerPort)
-	api := router.NewAPIServer(serverPort, express, user, rabbitmq.ConnectRabbitmq(connString), dict, testExpressDB)
+	api := router.NewAPIServer(serverPort, express, user, rabbitmq.ConnectRabbitmq(connString), dict, testExpressDB, macCpuDb)
 	api.Serve()
 
 	//log.Printf("获取数据库信息===%v", dbWire)

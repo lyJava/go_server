@@ -19,11 +19,12 @@ type APIServer struct {
 	rabbitmqConn *amqp.Connection                // rabbitmq连接
 	dict         service.DictTypeService         // 字典服务接口
 	testExpress  service.TestExpressService      // 测试快递服务接口
+	macCpu       service.MacCpuService           // 苹果处理器接口
 }
 
 // NewAPIServer 创建API服务
 func NewAPIServer(add string, express service.ExpressServiceInterface, user service.UserServiceInterface,
-	conn *amqp.Connection, d service.DictTypeService, te service.TestExpressService) *APIServer {
+	conn *amqp.Connection, d service.DictTypeService, te service.TestExpressService, cpu service.MacCpuService) *APIServer {
 	return &APIServer{
 		addr:         add,
 		express:      express,
@@ -31,6 +32,7 @@ func NewAPIServer(add string, express service.ExpressServiceInterface, user serv
 		rabbitmqConn: conn,
 		dict:         d,
 		testExpress:  te,
+		macCpu:       cpu,
 	}
 }
 
@@ -85,6 +87,10 @@ func (s *APIServer) Serve() {
 	// 大模型控制器
 	llmsController := controller.LlmsControllerInit(utils.CreateModel("llama3"))
 	llmsController.RegisterRoutes(router)
+
+	// 苹果处理器新增控制器
+	macCpuController := controller.MacCpuControllerInit(s.macCpu)
+	macCpuController.RegisterRoutes(router)
 
 	// 测试请求日志
 	router.HandleFunc("/user/test/{id}", UserHandler).Methods("GET")
