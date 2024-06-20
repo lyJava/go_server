@@ -349,7 +349,7 @@ func (pg *TestDictTypeDb) BatchDelete(ids []any) (rows int64, err error) {
 	log.Printf("测试快递批量删除sql===%s", delSql)
 	zap.L().Sugar().Debugf("测试快递批量删除sql===%s", delSql)
 
-	//esult, err := pg.Db.Exec(fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN (%s)", utils.GeneratePlaceholders(len(ids))), ids...)
+	//result, err := pg.Db.Exec(fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN (%s)", utils.GeneratePlaceholders(len(ids))), ids...)
 	result, err := tx.Exec(fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN (%s)", utils.GeneratePlaceholders(len(ids))), ids...)
 	if err != nil {
 		log.Printf("测试快递批量删除异常===%+v", err)
