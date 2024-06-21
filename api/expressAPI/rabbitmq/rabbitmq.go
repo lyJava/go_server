@@ -1,6 +1,7 @@
 package rabbitmq
 
 import (
+	"apiProject/api/expressAPI/config"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -20,6 +21,12 @@ func failOnError(err error, msg string) {
 
 // ConnectRabbitmq 连接RabbitMQ
 func ConnectRabbitmq(connectUrl string) *amqp.Connection {
+	// 只有开启的时候才连接
+	rabbitmqCfg := config.EnvConfig.Rabbitmq
+	if !rabbitmqCfg.Enable {
+		return nil
+	}
+
 	conn, err := amqp.Dial(connectUrl)
 	failOnError(err, "Failed to connect to RabbitMQ")
 	// 将json格式化输出

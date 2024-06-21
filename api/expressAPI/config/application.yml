@@ -72,6 +72,7 @@ redis:
   password: 244112311
 
 rabbitmq:
+  enable: false,
   host: localhost
   port: 5672
   # 集群配置
