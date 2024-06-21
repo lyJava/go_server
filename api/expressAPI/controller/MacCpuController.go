@@ -103,7 +103,6 @@ func (cpu *MacCpuController) handlerBatchSave(w http.ResponseWriter, r *http.Req
 		response.WriteJson(w, response.FailMessageResp("批量新增参数不能为空"))
 		return
 	}
-
 	if len(list) > 10 {
 		response.WriteJson(w, response.FailMessageResp("批量新增单次操作不能超过10条"))
 		return
@@ -122,7 +121,7 @@ func (cpu *MacCpuController) handlerBatchSave(w http.ResponseWriter, r *http.Req
 func (cpu *MacCpuController) handlerDelete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var id = vars["id"]
-	if id == "" {
+	if id == "" || cast.ToInt64(id) == 0 {
 		response.WriteJson(w, response.FailMessageResp("ID参数不能为空"))
 		return
 	}
@@ -151,7 +150,6 @@ func (cpu *MacCpuController) handleBatchDelete(w http.ResponseWriter, r *http.Re
 		response.WriteJson(w, response.FailMessageResp("批量删除参数不能为空"))
 		return
 	}
-
 	if len(ids) > 100 {
 		response.WriteJson(w, response.FailMessageResp("批量删除单次操作不能超过100条"))
 		return
