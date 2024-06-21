@@ -85,7 +85,7 @@ func (pg *MacCpuDb) Save(cpu *domain.MacCpu) (*domain.MacCpu, error) {
 	}*/
 
 	//return macCpu, nil
-	return selectDetail(err, tx, lastInsertId)
+	return selectDetail(tx, lastInsertId)
 }
 
 //goland:noinspection SqlResolve,SqlCaseVsIf,SqlNoDataSourceInspection
@@ -132,19 +132,19 @@ func (pg *MacCpuDb) BatchSave(list []*domain.MacCpu) (int64, error) {
 	// 确保事务的提交或回滚
 	defer func() {
 		if p := recover(); p != nil {
-			zap.L().Sugar().Debugf("苹果处理器批量新增事务即将回滚（panic恢复）")
+			zap.L().Sugar().Infof("苹果处理器批量新增事务即将回滚（panic恢复）")
 			_ = tx.Rollback()
 			panic(p) // 重新panic以便外层捕获
 		} else if err != nil {
 			_ = tx.Rollback() // 发生错误则回滚事务
-			zap.L().Sugar().Errorf("苹果处理器批量新增事务回滚,发生错误===%+v", err)
+			zap.L().Sugar().Infof("苹果处理器批量新增事务回滚,发生错误===%+v", err)
 		} else {
-			zap.L().Sugar().Debugf("苹果处理器批量新增事务正在提交")
+			zap.L().Sugar().Infof("苹果处理器批量新增事务正在提交")
 			// 正常结束则提交事务
 			if err = tx.Commit(); err != nil {
 				zap.L().Sugar().Errorf("苹果处理器批量新增提交事务失败===%+v", err)
 			} else {
-				zap.L().Sugar().Debugf("苹果处理器批量新增事务提交完成")
+				zap.L().Sugar().Infof("苹果处理器批量新增事务提交完成")
 			}
 		}
 	}()
@@ -246,13 +246,13 @@ func (pg *MacCpuDb) Update(cpu *domain.MacCpu) (*domain.MacCpu, error) {
 
 	zap.L().Sugar().Infof("部门负责人修改返回ID:%d", cpuId)
 
-	return selectDetail(err, tx, cpuId)
+	return selectDetail(tx, cpuId)
 }
 
-func selectDetail(err error, tx *sql.Tx, cpuId int64) (*domain.MacCpu, error) {
+func selectDetail(tx *sql.Tx, cpuId int64) (*domain.MacCpu, error) {
 	macCpu := &domain.MacCpu{}
 	// 使用tx的查询，保证与插入操作在同一个事务中
-	if err = tx.QueryRow(fmt.Sprintf(`SELECT id, %s FROM tb_mac_cpu WHERE id = $1`, CommonColumn), cpuId).
+	if err := tx.QueryRow(fmt.Sprintf(`SELECT id, %s FROM tb_mac_cpu WHERE id = $1`, CommonColumn), cpuId).
 		Scan(
 			&macCpu.Id,
 			&macCpu.CpuName,
