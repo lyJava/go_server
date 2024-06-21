@@ -58,7 +58,7 @@ func (td *LlmsController) handleOllama(w http.ResponseWriter, r *http.Request) {
 		llms.TextParts(msg[1].GetType(), msg[1].GetContent()),
 	}
 
-	content, err := td.Llm.GenerateContent(context.Background(), messageContent)
+	content, _ := td.Llm.GenerateContent(context.Background(), messageContent)
 	log.Println("返回内容", content.Choices[0].Content)
 
 	response.WriteJson(w, response.OkDataResp(content))
