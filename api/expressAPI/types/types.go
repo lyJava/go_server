@@ -97,6 +97,7 @@ type RabbitmqConfig struct {
 
 // RabbitmqConfigItem rabbitmq配置项结构体
 type RabbitmqConfigItem struct {
+	Enable            bool   `mapstructure:"enable"`             // 是否启用
 	Host              string `mapstructure:"host"`               // 主机
 	Port              int    `mapstructure:"port"`               // 端口
 	Username          string `mapstructure:"username"`           // 用户
