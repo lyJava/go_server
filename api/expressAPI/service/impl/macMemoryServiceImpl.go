@@ -52,7 +52,7 @@ func (pg *MacMemoryDb) Save(memory *domain.MacMemory) (*domain.MacMemory, error)
 	var lastInsertId int64
 
 	// 加上RETURNING id，然后使用Scan可以返回新增数据的主键ID
-	if err = tx.QueryRow(fmt.Sprintf(`INSERT INTO tb_mac_memory(%s) VALUES ($1, $2, $3, $4, $5) RETURNING id`, MacCpuCommonColumn),
+	if err = tx.QueryRow(fmt.Sprintf(`INSERT INTO tb_mac_memory(%s) VALUES ($1, $2, $3, $4, $5) RETURNING id`, MacMemoryCommonColumn),
 		memory.MemorySize,
 		memory.MemorySpeed,
 		memory.IntegrationFlag,
