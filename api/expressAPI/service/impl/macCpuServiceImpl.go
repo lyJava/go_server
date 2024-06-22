@@ -20,7 +20,6 @@ func NewMacCpuDb(pg *sql.DB) *MacCpuDb {
 	}
 }
 
-
 //goland:noinspection SqlResolve,SqlCaseVsIf,SqlNoDataSourceInspection
 func (pg *MacCpuDb) Save(cpu *domain.MacCpu) (*domain.MacCpu, error) {
 	// var err error
@@ -234,14 +233,14 @@ func (pg *MacCpuDb) Update(cpu *domain.MacCpu) (*domain.MacCpu, error) {
 
 	args = append(args, cpu.Id)
 	if err = tx.QueryRow(updateSql, args...).Scan(&cpuId); err != nil {
-		zap.L().Sugar().Errorf("部门负责人修改执行错误===%+v", err)
+		zap.L().Sugar().Errorf("苹果处理器修改执行错误===%+v", err)
 		if strings.Contains(err.Error(), "no rows in result set") {
 			return nil, fmt.Errorf("未查询到数据，请确认参数有效性")
 		}
 		return nil, err
 	}
 
-	zap.L().Sugar().Infof("部门负责人修改返回ID:%d", cpuId)
+	zap.L().Sugar().Infof("苹果处理器修改返回ID:%d", cpuId)
 
 	return selectDetail(tx, cpuId)
 }

@@ -20,7 +20,6 @@ func NewMacMemoryDb(pg *sql.DB) *MacMemoryDb {
 	}
 }
 
-
 //goland:noinspection SqlResolve,SqlCaseVsIf,SqlNoDataSourceInspection
 func (pg *MacMemoryDb) Save(memory *domain.MacMemory) (*domain.MacMemory, error) {
 	// 开启事务
@@ -165,7 +164,7 @@ func (pg *MacMemoryDb) SelectById(id int64) (*domain.MacMemory, error) {
 }
 
 //goland:noinspection SqlResolve,SqlCaseVsIf,SqlNoDataSourceInspection
-func (pg *MacMemoryDb) Update(cpu *domain.MacCpu) (*domain.MacCpu, error) {
+func (pg *MacMemoryDb) Update(memory *domain.MacMemory) (*domain.MacMemory, error) {
 	// 开启事务
 	tx, err := pg.Db.Begin()
 	if err != nil {
@@ -193,36 +192,36 @@ func (pg *MacMemoryDb) Update(cpu *domain.MacCpu) (*domain.MacCpu, error) {
 		}
 	}()
 
-	setClause, args, placeholderIndex, err := cpuDynamicUpdate(cpu)
+	setClause, args, placeholderIndex, err := memoryDynamicUpdate(memory)
 	zap.L().Sugar().Infof("苹果内存修改动态参数:\n%v,\nargsCount:%d", utils.ToJsonFormat(args), placeholderIndex)
 
 	if err != nil {
 		return nil, err
 	}
 
-	updateSql := fmt.Sprintf("UPDATE tb_mac_cpu SET %s WHERE id = $%d RETURNING id", setClause, placeholderIndex)
+	updateSql := fmt.Sprintf("UPDATE tb_mac_memory SET %s WHERE id = $%d RETURNING id", setClause, placeholderIndex)
 	zap.L().Sugar().Infof("苹果内存修改动态sql:%s", updateSql)
 
 	var cpuId int64
 
-	args = append(args, cpu.Id)
+	args = append(args, memory.Id)
 	if err = tx.QueryRow(updateSql, args...).Scan(&cpuId); err != nil {
-		zap.L().Sugar().Errorf("部门负责人修改执行错误===%+v", err)
+		zap.L().Sugar().Errorf("苹果内存修改执行错误===%+v", err)
 		if strings.Contains(err.Error(), "no rows in result set") {
 			return nil, fmt.Errorf("未查询到数据，请确认参数有效性")
 		}
 		return nil, err
 	}
 
-	zap.L().Sugar().Infof("部门负责人修改返回ID:%d", cpuId)
+	zap.L().Sugar().Infof("苹果内存修改返回ID:%d", cpuId)
 
-	return selectDetail(tx, cpuId)
+	return selectMemoryDetail(tx, cpuId)
 }
 
 func selectMemoryDetail(tx *sql.Tx, cpuId int64) (*domain.MacMemory, error) {
 	memory := &domain.MacMemory{}
 	// 使用tx的查询，保证与插入操作在同一个事务中
-	if err := tx.QueryRow(fmt.Sprintf(`SELECT id, %s FROM tb_mac_cpu WHERE id = $1`, MacMemoryCommonColumn), cpuId).
+	if err := tx.QueryRow(fmt.Sprintf(`SELECT id, %s FROM tb_mac_memory WHERE id = $1`, MacMemoryCommonColumn), cpuId).
 		Scan(
 			&memory.Id,
 			&memory.MemorySize,
@@ -264,7 +263,7 @@ func (pg *MacMemoryDb) DeleteById(id int64) (int64, error) {
 		}
 	}()
 
-	result, err := tx.Exec(`DELETE FROM tb_mac_cpu WHERE id = $1`, id)
+	result, err := tx.Exec(`DELETE FROM tb_mac_memory WHERE id = $1`, id)
 	if err != nil {
 		zap.L().Sugar().Errorf("苹果内存删除异常===%+v", err)
 		return 0, err
@@ -307,7 +306,7 @@ func (pg *MacMemoryDb) BatchDeleteByIds(ids []any) (int64, error) {
 		}
 	}()
 
-	deleteSql := fmt.Sprintf("DELETE FROM tb_mac_cpu WHERE id IN (%s)", utils.GeneratePlaceholders(len(ids)))
+	deleteSql := fmt.Sprintf("DELETE FROM tb_mac_memory WHERE id IN (%s)", utils.GeneratePlaceholders(len(ids)))
 	zap.L().Sugar().Infof("苹果内存批量删除执行sql===%s", deleteSql)
 
 	result, err := tx.Exec(deleteSql, ids...)
@@ -343,7 +342,7 @@ func memoryDynamicUpdate(memory *domain.MacMemory) (string, []any, int64, error)
 		addClause(utils.CamelToSnakeCase("MemorySize"), memory.MemorySize)
 	}
 	if memory.MemorySpeed != "" {
-		addClause(utils.CamelToSnakeCase("MemorySpeed"), memory.MemorySpeed )
+		addClause(utils.CamelToSnakeCase("MemorySpeed"), memory.MemorySpeed)
 	}
 	if memory.IntegrationFlag != "" {
 		addClause(utils.CamelToSnakeCase("IntegrationFlag"), memory.IntegrationFlag)
@@ -351,10 +350,10 @@ func memoryDynamicUpdate(memory *domain.MacMemory) (string, []any, int64, error)
 	if memory.MemoryType != "" {
 		addClause(utils.CamelToSnakeCase("MemoryType"), memory.MemoryType)
 	}
-	if memory.EccCheck != 0 {
+	if memory.EccCheck != "" {
 		addClause(utils.CamelToSnakeCase("EccCheck"), memory.EccCheck)
 	}
-	
+
 	if len(setClauses) == 0 {
 		zap.L().Sugar().Info("no fields to update")
 		return "", nil, 0, errors.New("没有需要更新的列信息")

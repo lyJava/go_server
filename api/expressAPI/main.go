@@ -194,9 +194,10 @@ func main() {
 	dict := impl.NewDictTypeDb(postgresqlDb)
 	testExpressDB := impl.NewTestDictTypeDb(postgresqlDb)
 	macCpuDb := impl.NewMacCpuDb(postgresqlDb)
+	macMemoryDb := impl.NewMacMemoryDb(postgresqlDb)
 
 	serverPort := ":" + utils.ConvertIntToStr(config.EnvConfig.ServerPort)
-	api := router.NewAPIServer(serverPort, express, user, rabbitmq.ConnectRabbitmq(connString), dict, testExpressDB, macCpuDb)
+	api := router.NewAPIServer(serverPort, express, user, rabbitmq.ConnectRabbitmq(connString), dict, testExpressDB, macCpuDb, macMemoryDb)
 	api.Serve()
 
 	//log.Printf("获取数据库信息===%v", dbWire)

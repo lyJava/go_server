@@ -25,7 +25,7 @@ type APIServer struct {
 
 // NewAPIServer 创建API服务
 func NewAPIServer(add string, express service.ExpressServiceInterface, user service.UserServiceInterface,
-	conn *amqp.Connection, d service.DictTypeService, te service.TestExpressService, cpu service.MacCpuService) *APIServer {
+	conn *amqp.Connection, d service.DictTypeService, te service.TestExpressService, cpu service.MacCpuService, memory service.MacMemoryService) *APIServer {
 	return &APIServer{
 		addr:         add,
 		express:      express,
@@ -34,6 +34,7 @@ func NewAPIServer(add string, express service.ExpressServiceInterface, user serv
 		dict:         d,
 		testExpress:  te,
 		macCpu:       cpu,
+		macMemory:    memory,
 	}
 }
 
