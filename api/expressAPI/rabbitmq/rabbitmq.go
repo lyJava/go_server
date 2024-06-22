@@ -31,7 +31,7 @@ func ConnectRabbitmq(connectUrl string) *amqp.Connection {
 	failOnError(err, "Failed to connect to RabbitMQ")
 	// 将json格式化输出
 	rabbitmqProperties, _ := json.MarshalIndent(conn.Properties, "", "    ")
-	zap.L().Sugar().Infof("Success to connect to RabbitMQ===%+v\r\n", string(rabbitmqProperties))
+	zap.L().Sugar().Infof("Success to connect to RabbitMQ===\r\n%+v", string(rabbitmqProperties))
 	return conn
 }
 
