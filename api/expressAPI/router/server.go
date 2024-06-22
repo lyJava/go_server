@@ -20,6 +20,7 @@ type APIServer struct {
 	dict         service.DictTypeService         // 字典服务接口
 	testExpress  service.TestExpressService      // 测试快递服务接口
 	macCpu       service.MacCpuService           // 苹果处理器接口
+	macMemory    service.MacMemoryService        // 苹果内存接口
 }
 
 // NewAPIServer 创建API服务
@@ -88,9 +89,13 @@ func (s *APIServer) Serve() {
 	llmsController := controller.LlmsControllerInit(utils.CreateModel("llama3"))
 	llmsController.RegisterRoutes(router)
 
-	// 苹果处理器新增控制器
+	// 苹果处理器控制器
 	macCpuController := controller.MacCpuControllerInit(s.macCpu)
 	macCpuController.RegisterRoutes(router)
+
+	// 苹果内存控制器
+	macMemoryController := controller.MacMemoryControllerInit(s.macMemory)
+	macMemoryController.RegisterRoutes(router)
 
 	// 测试请求日志
 	router.HandleFunc("/user/test/{id}", UserHandler).Methods("GET")
