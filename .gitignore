@@ -17,3 +17,11 @@
 .DS_Store
 /lanch.json
 /image
+/wire
+/upload
+/1714*.jpg
+Dockerfile
+/api/expressAPI/service/test.go
+/api/expressAPI/excel
+/api/expressAPI/log
+myapp
