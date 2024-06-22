@@ -8,6 +8,13 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	// 苹果处理器列
+	MacCpuCommonColumn = "cpu_name, cpu_type, cpu_basic_boost, cpu_trubo_boost, cpu_core_number, cpu_thread_number, cpu_cache, cpu_tdp, memory_width, media_processing_engine"
+	// 苹果内存列
+	MacMemoryCommonColumn = "memory_size, memory_speed, integration_flag, memory_type, ecc_check"
+)
+
 // BuildPageOffset 计算总页数，偏移量
 func BuildPageOffset(pageStr, sizeStr interface{}, totalRecords int64) (int64, int64, int64) {
 	var page, size int64

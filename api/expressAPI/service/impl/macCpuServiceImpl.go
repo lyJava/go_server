@@ -20,9 +20,6 @@ func NewMacCpuDb(pg *sql.DB) *MacCpuDb {
 	}
 }
 
-const (
-	CommonColumn = "cpu_name, cpu_type, cpu_basic_boost, cpu_trubo_boost, cpu_core_number, cpu_thread_number, cpu_cache, cpu_tdp, memory_width, media_processing_engine"
-)
 
 //goland:noinspection SqlResolve,SqlCaseVsIf,SqlNoDataSourceInspection
 func (pg *MacCpuDb) Save(cpu *domain.MacCpu) (*domain.MacCpu, error) {
@@ -57,7 +54,7 @@ func (pg *MacCpuDb) Save(cpu *domain.MacCpu) (*domain.MacCpu, error) {
 	var lastInsertId int64
 
 	// 加上RETURNING id，然后使用Scan可以返回新增数据的主键ID
-	if err = tx.QueryRow(fmt.Sprintf(`INSERT INTO tb_mac_cpu(%s) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`, CommonColumn),
+	if err = tx.QueryRow(fmt.Sprintf(`INSERT INTO tb_mac_cpu(%s) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`, MacCpuCommonColumn),
 		cpu.CpuName,
 		cpu.CpuType,
 		cpu.CpuBasicBoost,
@@ -149,7 +146,7 @@ func (pg *MacCpuDb) BatchSave(list []*domain.MacCpu) (int64, error) {
 		}
 	}()
 
-	batchSql := fmt.Sprintf(`INSERT INTO tb_mac_cpu (%s) VALUES %s`, CommonColumn, strings.Join(placeholderList, ","))
+	batchSql := fmt.Sprintf(`INSERT INTO tb_mac_cpu (%s) VALUES %s`, MacCpuCommonColumn, strings.Join(placeholderList, ","))
 	zap.L().Sugar().Infof("苹果处理器批量新增sql===%s", batchSql)
 	result, err := tx.Exec(batchSql, valueArgList...)
 	if err != nil {
@@ -169,7 +166,7 @@ func (pg *MacCpuDb) BatchSave(list []*domain.MacCpu) (int64, error) {
 //goland:noinspection SqlResolve,SqlCaseVsIf,SqlNoDataSourceInspection
 func (pg *MacCpuDb) SelectById(id int64) (*domain.MacCpu, error) {
 	cpu := &domain.MacCpu{}
-	querySql := fmt.Sprintf(`SELECT id, %s FROM tb_mac_cpu WHERE id = $1`, CommonColumn)
+	querySql := fmt.Sprintf(`SELECT id, %s FROM tb_mac_cpu WHERE id = $1`, MacCpuCommonColumn)
 	if err := pg.Db.QueryRow(querySql, id).
 		Scan(
 			&cpu.Id,
@@ -252,7 +249,7 @@ func (pg *MacCpuDb) Update(cpu *domain.MacCpu) (*domain.MacCpu, error) {
 func selectDetail(tx *sql.Tx, cpuId int64) (*domain.MacCpu, error) {
 	macCpu := &domain.MacCpu{}
 	// 使用tx的查询，保证与插入操作在同一个事务中
-	if err := tx.QueryRow(fmt.Sprintf(`SELECT id, %s FROM tb_mac_cpu WHERE id = $1`, CommonColumn), cpuId).
+	if err := tx.QueryRow(fmt.Sprintf(`SELECT id, %s FROM tb_mac_cpu WHERE id = $1`, MacCpuCommonColumn), cpuId).
 		Scan(
 			&macCpu.Id,
 			&macCpu.CpuName,
