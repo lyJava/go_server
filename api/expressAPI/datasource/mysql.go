@@ -17,10 +17,12 @@ type MysqlDB struct {
 func InitMysqlDB(cfg mysql.Config) *MysqlDB {
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
+		zap.L().Sugar().Errorf("mysql连接错误==%+v", err)
 		log.Fatalln(err)
 	}
 	err = db.Ping()
 	if err != nil {
+		zap.L().Sugar().Errorf("mysql-ping错误==%+v", err)
 		log.Fatal(err)
 	}
 	//db.SetMaxIdleConns(20)
