@@ -39,8 +39,12 @@ func RequestLogMiddleware(next http.Handler) http.Handler {
 
 		zap.L().Sugar().Infof("请求响应描述==%s,请求响应码===%d", rec.status, rec.statusCode)
 		queryParam := r.URL.Query().Encode()
-		queryParam = queryParam + "\njson格式:\n" + utils.QueryParamToJson(queryParam)
-
+		queryJson  := utils.QueryParamToJson(queryParam)
+		if queryJson != "" {
+			queryParam = queryParam + "\njson格式:\n" + utils.QueryParamToJson(queryParam) 
+		} else {
+			queryParam = "无"
+		}
 		go logRequest(r, queryParam, requestBodyBytes, utils.ForcedToJsonFormat(rec.body.Bytes()), duration)
 	})
 }
@@ -88,7 +92,7 @@ func UserHandler(w http.ResponseWriter, r *http.Request) {
 
 func formatMap(m map[string]string) string {
 	if len(m) == 0 {
-		return ""
+		return "无"
 	}
 	var sb strings.Builder
 	sb.WriteString("{")
