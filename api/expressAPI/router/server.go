@@ -21,11 +21,12 @@ type APIServer struct {
 	testExpress  service.TestExpressService      // 测试快递服务接口
 	macCpu       service.MacCpuService           // 苹果处理器接口
 	macMemory    service.MacMemoryService        // 苹果内存接口
+	macBook      service.MacBookService          // 苹果笔记本接口
 }
 
 // NewAPIServer 创建API服务
 func NewAPIServer(add string, express service.ExpressServiceInterface, user service.UserServiceInterface,
-	conn *amqp.Connection, d service.DictTypeService, te service.TestExpressService, cpu service.MacCpuService, memory service.MacMemoryService) *APIServer {
+	conn *amqp.Connection, d service.DictTypeService, te service.TestExpressService, cpu service.MacCpuService, memory service.MacMemoryService, book service.MacBookService) *APIServer {
 	return &APIServer{
 		addr:         add,
 		express:      express,
@@ -35,6 +36,7 @@ func NewAPIServer(add string, express service.ExpressServiceInterface, user serv
 		testExpress:  te,
 		macCpu:       cpu,
 		macMemory:    memory,
+		macBook:      book,
 	}
 }
 
@@ -97,6 +99,10 @@ func (s *APIServer) Serve() {
 	// 苹果内存控制器
 	macMemoryController := controller.MacMemoryControllerInit(s.macMemory)
 	macMemoryController.RegisterRoutes(router)
+
+	// 苹果笔记本控制器
+	macBookController := controller.MacBookControllerInit(s.macBook)
+	macBookController.RegisterRoutes(router)
 
 	// 测试请求日志
 	router.HandleFunc("/user/test/{id}", UserHandler).Methods("GET")
