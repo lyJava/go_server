@@ -192,37 +192,35 @@ func (td *TestExpressController) handlerTestExpressPage(w http.ResponseWriter, r
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
-	// 设置表头
-	headers := []string{
-		"主键ID",
-		"快递名称",
-		"快递单号",
-		"取件码",
-		"发件人姓名",
-		"发件人手机",
-		"发件人地址",
-		"发件人身份证号",
-		"创建人",
-		"创建时间",
-		"修改人",
-		"修改时间",
-		"备注",
-		"是否删除",
+
+	dataMap := map[string]interface{}{
+		"pageData": response.NewPageData(totalRecord, totalPage, list),
 	}
 
-	downloadUrl := ""
-
 	if excel {
+		// 设置表头
+		headers := []string{
+			"主键ID",
+			"快递名称",
+			"快递单号",
+			"取件码",
+			"发件人姓名",
+			"发件人手机",
+			"发件人地址",
+			"发件人身份证号",
+			"创建人",
+			"创建时间",
+			"修改人",
+			"修改时间",
+			"备注",
+			"是否删除",
+		}
 		excelName := "data_" + time.Now().Format("20060102150405") + ".xlsx"
 		filePath := utils.WriteTestExpressToExcel("/excel/"+excelName, headers, list)
 
-		downloadUrl = fmt.Sprintf("http://localhost:%s/testExpress/export/excel?fileName=%s", cast.ToString(config.EnvConfig.ServerConfig.Port),excelName)
+		downloadUrl := fmt.Sprintf("http://localhost:%s/testExpress/export/excel?fileName=%s", cast.ToString(config.EnvConfig.ServerConfig.Port), excelName)
 		zap.L().Sugar().Infof("生成Excel路径:%s,下载链接:%s", filePath, downloadUrl)
-	}
-
-	dataMap := map[string]interface{}{
-		"pageData":    response.NewPageData(totalRecord, totalPage, list),
-		"downloadUrl": downloadUrl,
+		dataMap["downloadUrl"] = downloadUrl
 	}
 	response.WriteJson(w, response.OkDataResp(dataMap))
 }
