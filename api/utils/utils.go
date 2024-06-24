@@ -2,7 +2,7 @@ package utils
 
 import (
 	"apiProject/api/expressAPI/config"
-	"apiProject/api/expressAPI/types"
+	configure "apiProject/api/expressAPI/types/config"
 	"apiProject/api/expressAPI/types/domain"
 	"apiProject/api/response"
 	"archive/zip"
@@ -12,11 +12,10 @@ import (
 	"crypto/x509"
 	"database/sql/driver"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/golang-jwt/jwt"
-	"golang.org/x/crypto/bcrypt"
 	"io"
 	"log"
 	_ "math/rand"
@@ -28,6 +27,10 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/golang-jwt/jwt"
+	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // ConvertToInt64 字符串转换为int64
@@ -180,7 +183,7 @@ func CreateJWT(user *domain.User, days int64, secret []byte) (string, error) {
 	//	"expireTime": time.Now().Add(time.Hour * 24 * time.Duration(days)).Unix(), // 设置有效期为20天
 	//})
 	//tokenStr, err := token.SignedString(secret)
-	claims := types.MyClaims{
+	claims := configure.MyClaims{
 		UserId:   strconv.FormatInt(user.UserId, 10),
 		Username: user.Username,
 		StandardClaims: jwt.StandardClaims{
@@ -665,7 +668,7 @@ func DownloadFile(fileNamePath string, w http.ResponseWriter, r *http.Request) {
 
 	fileInfo, err := GetFileInfo(file)
 	if err != nil {
-		log.Printf("获取文件信息异常===%+v",err)
+		log.Printf("获取文件信息异常===%+v", err)
 		response.WriteJson(w, response.FailMessageResp("获取文件信息失败"))
 		return
 	}
@@ -848,4 +851,61 @@ func TimeForHuman(timeValue int64) string {
 	} else {
 		return time.Unix(timeValue, 0).Format("2006-01-02")
 	}
+}
+
+// ShowJsonFormat 返回格式化json
+func ToJsonFormat(data any) string {
+	if data == "" {
+		return ""
+	}
+	marshal, err := json.MarshalIndent(data, "", "    ")
+	if err != nil {
+		zap.L().Sugar().Errorf("数据格式化json错误===%+v", err)
+		return ""
+	}
+	return string(marshal)
+}
+
+// ForcedToJsonFormat 强制json格式化输出
+func ForcedToJsonFormat(b []byte) string {
+
+	// 检查输入数据是否为空
+	if len(b) == 0 {
+		log.Printf("Error: input is empty")
+		return ""
+	}
+
+	var result map[string]interface{}
+	// 将JSON字符串解码到result变量中
+	err := json.Unmarshal(b, &result)
+	if err != nil {
+		log.Printf("Error occurred during unmarshaling. Error: %+v", err)
+	}
+
+	// 格式化输出JSON字符串
+	formattedJson, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		log.Printf("Error occurred during marshaling. Error:%+v", err)
+	}
+	return string(formattedJson)
+}
+
+// QueryParamToJson 将url的query参数转换json
+func QueryParamToJson(queryParam string) string {
+	// 解析查询字符串
+	values, _ := url.ParseQuery(queryParam)
+	if len(values) == 0 {
+		return ""
+	}
+
+	result := make(map[string]any)
+
+	for key, value := range values {
+		log.Printf("key===%s,value===%v", key, value)
+		if len(value) > 0 {
+			result[key] = value[0]
+		}
+	}
+
+	return ToJsonFormat(result)
 }

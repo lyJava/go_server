@@ -2,21 +2,31 @@ package datasource
 
 import (
 	"apiProject/api/expressAPI/config"
-	"apiProject/api/expressAPI/types"
+	cfg "apiProject/api/expressAPI/types/config"
 	"database/sql"
 	"fmt"
-	_ "github.com/lib/pq"
 	"log"
+
+	_ "github.com/lib/pq"
+	"go.uber.org/zap"
 )
 
 type PostgresqlDB struct {
 	Db *sql.DB
 }
 
+// InitPostgresql 初始化postgresql
 func InitPostgresql() *PostgresqlDB {
 	viperConfig := config.ReadConfig("api/expressApi/config", "application", "yml")
-	var postgresqlConfig types.PostgresqlConfig
-	viperConfig.Unmarshal(&postgresqlConfig)
+	if viperConfig == nil {
+		log.Println("无Postgresql配置信息")
+		return nil
+	}
+	var postgresqlConfig cfg.PostgresqlConfig
+	if err := viperConfig.Unmarshal(&postgresqlConfig); err != nil {
+		log.Printf("获取Postgresql配置错误:%+v", err)
+		return nil
+	}
 
 	postgresqlItem := postgresqlConfig.Postgresql
 	// 构建连接字符串
@@ -40,8 +50,10 @@ func (d *PostgresqlDB) GetPostgresqlDB() (*sql.DB, error) {
 	err := row.Scan(&version)
 	if err != nil {
 		log.Printf("查询Postgresql数据库版本失败==%+v", err)
+		zap.L().Sugar().Errorf("查询Postgresql数据库版本失败==%+v", err)
 		return nil, err
 	}
-	log.Println("Postgresql current version:", version)
+	//zap.L().Info("Postgresql连接信息", zap.String("Postgresql current version:",version))
+	zap.L().Sugar().Infoln("Postgresql current version:", version)
 	return postgresqlDb, err
 }

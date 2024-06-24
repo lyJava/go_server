@@ -2,23 +2,27 @@ package datasource
 
 import (
 	"database/sql"
+	"log"
+
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/wire"
-	"log"
+	"go.uber.org/zap"
 )
 
 type MysqlDB struct {
 	Db *sql.DB
 }
 
-// InitMysqlDB 初始化数据库
+// InitMysqlDB 初始化mysql
 func InitMysqlDB(cfg mysql.Config) *MysqlDB {
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
+		zap.L().Sugar().Errorf("mysql连接错误==%+v", err)
 		log.Fatalln(err)
 	}
 	err = db.Ping()
 	if err != nil {
+		zap.L().Sugar().Errorf("mysql-ping错误==%+v", err)
 		log.Fatal(err)
 	}
 	//db.SetMaxIdleConns(20)
@@ -36,9 +40,11 @@ func (s *MysqlDB) GetDb() (*sql.DB, error) {
 	err := row.Scan(&version)
 	if err != nil {
 		log.Printf("查询Mysql数据库版本失败==%+v", err)
+		zap.L().Sugar().Errorf("查询Mysql数据库版本失败==%+v", err)
 		return nil, err
 	}
-	log.Println("Mysql current version:", version)
+	//zap.L().Info("mysql连接信息", zap.String("Mysql current version:", version))
+	zap.L().Sugar().Infoln("Mysql current version:", version)
 	return db, nil
 }
 

@@ -1,6 +1,8 @@
 server:
   port: 3000
   version: 0.0.1
+  # 是否开启请求日志
+  request-log: true
 
 mysql:
   url: localhost:3306
@@ -70,6 +72,7 @@ redis:
   password: 244112311
 
 rabbitmq:
+  enable: false,
   host: localhost
   port: 5672
   # 集群配置

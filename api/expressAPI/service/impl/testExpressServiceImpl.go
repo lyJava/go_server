@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
 type TestDictTypeDb struct {
@@ -24,8 +26,9 @@ func (pg *TestDictTypeDb) Save(te *domain.TestExpress) (*domain.TestExpress, err
 	// 先检查是否存在
 	isExist := pg.CheckByNumAndPickupCode(te.ExpressNumber, te.PickupCode)
 	if isExist {
-		log.Printf("快递单号：%s与取件码：%s不能重复", te.ExpressNumber, te.PickupCode)
-		return nil, fmt.Errorf("快递单号：%s与取件码：%s不能重复", te.ExpressNumber, te.PickupCode)
+		log.Printf("快递单号:%s与取件码:%s不能重复", te.ExpressNumber, te.PickupCode)
+		zap.L().Sugar().Errorf("快递单号:%s与取件码:%s不能重复", te.ExpressNumber, te.PickupCode)
+		return nil, fmt.Errorf("快递单号:%s与取件码:%s不能重复", te.ExpressNumber, te.PickupCode)
 	}
 
 	result, err := pg.Db.Exec(`INSERT INTO tb_test_express(express_name, express_number, pickup_code, from_username, 
@@ -44,22 +47,27 @@ func (pg *TestDictTypeDb) Save(te *domain.TestExpress) (*domain.TestExpress, err
 	)
 
 	if err != nil {
-		log.Printf("快递新增错误===%+v", err)
+		log.Printf("测试快递新增错误===%+v", err)
+		zap.L().Sugar().Errorf("测试快递新增错误===%+v", err)
 		return nil, err
 	}
 
 	// postgresql不能返回新增的ID，只能通过其他方式查询新增后的那条数据
 	rowCount, err := result.RowsAffected()
 	if err != nil {
-		log.Printf("获取插入行数错误===%+v", err)
+		log.Printf("测试快递新增获取行数错误===%+v", err)
+		zap.L().Sugar().Errorf("测试快递新增获取行数错误===%+v", err)
 		return nil, err
 	}
+
+	zap.L().Sugar().Infof("测试快递新增获取行数===%d", rowCount)
 
 	var data *domain.TestExpress
 	if rowCount == 1 {
 		data, err = pg.SelectByNumAndPickupCode(te.ExpressNumber, te.PickupCode)
 		if err != nil {
-			log.Printf("查询快递信息失败===%+v", err)
+			log.Printf("测试查询快递信息失败===%+v", err)
+			zap.L().Sugar().Errorf("测试查询快递信息失败===%+v", err)
 			return nil, err
 		}
 	}
@@ -105,7 +113,8 @@ func (pg *TestDictTypeDb) SelectByNumAndPickupCode(expressNumber, pickupCode str
 				AND pickup_code = $2`, expressNumber, pickupCode)
 	err := rowScan(row, testExpress)
 	if err != nil {
-		log.Printf("通过快递单号与取件码查询异常===%+v", err)
+		log.Printf("通过快递单号与取件码查询错误===%+v", err)
+		zap.L().Sugar().Errorf("通过快递单号与取件码查询错误===%+v", err)
 		return nil, err
 	}
 
@@ -150,16 +159,19 @@ func (pg *TestDictTypeDb) BatchSave(list []*domain.TestExpress) (int64, error) {
 	batchSql := fmt.Sprintf(`INSERT INTO tb_test_express (express_name, express_number, pickup_code, from_username, 
                              		from_user_phone,from_user_address,from_user_id_number,create_by,remarks, 
                              		del_flag) VALUES %s %s`, strings.Join(placeholderList, ","), "\r\n")
-	log.Println("生成的批量sql===", batchSql)
+	log.Println("测试快递批量新增sql===", batchSql)
+	zap.L().Sugar().Infof("测试快递批量新增sql===%s", batchSql)
 	result, err := pg.Db.Exec(batchSql, valueArgList...)
 	if err != nil {
-		log.Printf("批量新增执行错误===%+v", err)
+		log.Printf("测试快递批量新增执行错误===%+v", err)
+		zap.L().Sugar().Errorf("测试快递批量新增执行错误===%+v", err)
 		return 0, err
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Printf("批量新增执行失败===%+v", err)
+		log.Printf("测试快递批量新增执行失败===%+v", err)
+		zap.L().Sugar().Errorf("测试快递批量新增执行失败===%+v", err)
 		return 0, err
 	}
 
@@ -172,12 +184,16 @@ func (pg *TestDictTypeDb) PageList(te *domain.TestExpress, page, size int64) ([]
 	var totalRecords int64
 	countSql := "SELECT COUNT(*) FROM tb_test_express" + buildCountByEntity(te)
 	log.Println("测试快递分页查询count的sql===", countSql)
+	zap.L().Sugar().Infof("测试快递分页查询count的sql===%s", countSql)
 
 	err := pg.Db.QueryRow(countSql).Scan(&totalRecords)
 	if err != nil {
 		log.Printf("测试快递分页查询总条数错误===%+v", err)
+		zap.L().Sugar().Errorf("测试快递分页查询总条数错误===%+v", err)
 		return nil, 0, 0, err
 	}
+
+	zap.L().Sugar().Infof("测试快递分页查询总条数===%d", totalRecords)
 
 	size, offset, totalPages := BuildPageOffset(page, size, totalRecords)
 
@@ -216,8 +232,11 @@ func (pg *TestDictTypeDb) PageList(te *domain.TestExpress, page, size int64) ([]
 
 	if err != nil {
 		log.Printf("测试快递分页查询行数错误===%+v", err)
+		zap.L().Sugar().Errorf("测试快递分页查询行数错误===%+v", err)
 		return nil, 0, 0, err
 	}
+
+	defer RowsClose(rows, "测试快递分页查询")
 
 	var list []*domain.TestExpress
 
@@ -226,17 +245,12 @@ func (pg *TestDictTypeDb) PageList(te *domain.TestExpress, page, size int64) ([]
 		err := rowsScan(rows, testExpress)
 		if err != nil {
 			log.Printf("测试快递分页返回异常===%+v", err.Error())
+			zap.L().Sugar().Errorf("测试快递分页返回错误===%+v", err)
 			return nil, 0, 0, err
 		}
 
 		list = append(list, testExpress)
 	}
-
-	err = RowsClose(rows, "测试快递分页查询")
-	if err != nil {
-		return nil, 0, 0, err
-	}
-
 	return list, totalRecords, totalPages, nil
 }
 
@@ -281,6 +295,7 @@ func (pg *TestDictTypeDb) SelectById(id int64) (*domain.TestExpress, error) {
 	err := rowScan(row, textExpress)
 	if err != nil {
 		log.Printf("通过ID查询测试快递异常===%+v", err)
+		zap.L().Sugar().Errorf("通过ID查询测试快递错误===%+v", err)
 		return nil, err
 	}
 	return textExpress, nil
@@ -303,18 +318,53 @@ func (pg *TestDictTypeDb) CheckByNumAndPickupCode(expressNumber, pickupCode stri
 //goland:noinspection SqlResolve
 func (pg *TestDictTypeDb) BatchDelete(ids []any) (rows int64, err error) {
 	//deleteSql := fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN (%s)", strings.Join(ids, ", "))
-	log.Printf("测试快递批量删除sql===%s", fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN %s", utils.BuildArgsWithBrackets(ids)))
-	result, err := pg.Db.Exec(fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN (%s)", utils.GeneratePlaceholders(len(ids))), ids...)
+
+	// 开启事务
+	tx, err := pg.Db.Begin()
+	if err != nil {
+		log.Printf("开启事务失败===%+v", err)
+		zap.L().Sugar().Errorf("开启事务失败===%+v", err)
+		return 0, err
+	}
+
+	// 确保事务的提交或回滚
+	defer func() {
+		if p := recover(); p != nil {
+			zap.L().Sugar().Info("字典类型批量删除事务即将回滚（panic恢复）")
+			tx.Rollback()
+			panic(p) // 重新panic以便外层捕获
+		} else if err != nil {
+			tx.Rollback() // 发生错误则回滚事务
+			zap.L().Sugar().Errorf("字典类型批量删除事务回滚,发生错误===%+v", err)
+		} else {
+			err = tx.Commit() // 正常结束则提交事务
+			if err != nil {
+				log.Printf("字典类型批量删除提交事务失败===%+v", err)
+				zap.L().Sugar().Errorf("字典类型批量删除提交事务失败===%+v", err)
+			}
+		}
+	}()
+
+	delSql := fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN %s", utils.BuildArgsWithBrackets(ids))
+	log.Printf("测试快递批量删除sql===%s", delSql)
+	zap.L().Sugar().Debugf("测试快递批量删除sql===%s", delSql)
+
+	//result, err := pg.Db.Exec(fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN (%s)", utils.GeneratePlaceholders(len(ids))), ids...)
+	result, err := tx.Exec(fmt.Sprintf("DELETE FROM tb_test_express WHERE id IN (%s)", utils.GeneratePlaceholders(len(ids))), ids...)
 	if err != nil {
 		log.Printf("测试快递批量删除异常===%+v", err)
+		zap.L().Sugar().Errorf("测试快递批量删除异常===%+v", err)
 		return 0, err
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Printf("测试快递批量删除执行失败===%+v", err)
+		log.Printf("测试快递批量删除执行获取条数===%+v", err)
+		zap.L().Sugar().Errorf("测试快递批量删除执行获取条数===%+v", err)
 		return 0, err
 	}
+
+	zap.L().Sugar().Infof("测试快递批量删除执行获取条数===%d", rowsAffected)
 
 	return rowsAffected, nil
 }
@@ -389,7 +439,8 @@ func rowScan(row *sql.Row, testExpress *domain.TestExpress) error {
 		&testExpress.Remarks,
 		&testExpress.DelFlag)
 	if err != nil {
-		log.Printf("测试快递数据转换错===%+v", err)
+		log.Printf("测试快递数据转换错误===%+v", err)
+		zap.L().Sugar().Errorf("测试快递数据转换错误===%+v", err)
 		return err
 	}
 	return nil
@@ -412,7 +463,8 @@ func rowsScan(rows *sql.Rows, testExpress *domain.TestExpress) error {
 		&testExpress.Remarks,
 		&testExpress.DelFlag)
 	if err != nil {
-		log.Printf("测试快递数据转换错===%+v", err)
+		log.Printf("测试快递数据多条转换错误===%+v", err)
+		zap.L().Sugar().Errorf("测试快递数据多条转换错误===%+v", err)
 		return err
 	}
 	return nil

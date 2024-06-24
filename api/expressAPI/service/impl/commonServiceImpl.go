@@ -2,8 +2,23 @@ package impl
 
 import (
 	"database/sql"
-	"github.com/spf13/cast"
 	"log"
+
+	"github.com/spf13/cast"
+	"go.uber.org/zap"
+)
+
+const (
+	// 苹果笔记本列
+	MacBookCommonColumn = `b.pro_name, b.pro_color, b.pro_year, b.pro_type, b.mold_model, b.monitor_id, b.cpu_id, b.memory_id, b.storage_info, b.size_info, b.weight_info, b.gpu_id, b.chip_type, b.memory_max, 
+							CASE WHEN b.create_time IS NOT NULL THEN to_char(create_time, 'YYYY-MM-DD HH24:MI:SS') ELSE '' END AS create_time, 
+							CASE WHEN b.update_time IS NOT NULL THEN to_char(update_time, 'YYYY-MM-DD HH24:MI:SS') ELSE '' END AS update_time, 
+							c.id, c.cpu_name, c.cpu_type, c.cpu_basic_boost, c.cpu_trubo_boost, c.cpu_core_number, c.cpu_thread_number, c.cpu_cache, c.cpu_tdp, c.memory_width, c.media_processing_engine,
+							m.id, m.memory_size, m.memory_speed, m.integration_flag, m.memory_type, m.ecc_check`
+	// 苹果处理器列
+	MacCpuCommonColumn = "cpu_name, cpu_type, cpu_basic_boost, cpu_trubo_boost, cpu_core_number, cpu_thread_number, cpu_cache, cpu_tdp, memory_width, media_processing_engine"
+	// 苹果内存列
+	MacMemoryCommonColumn = "memory_size, memory_speed, integration_flag, memory_type, ecc_check"
 )
 
 // BuildPageOffset 计算总页数，偏移量
@@ -41,8 +56,10 @@ func RowsClose(rows *sql.Rows, message string) error {
 	err := rows.Close()
 	if err != nil {
 		log.Printf(message+"关闭row结果错误===%+v", err)
+		zap.L().Sugar().Errorf(message+"关闭row结果错误===%+v", err)
 		return err
 	}
 	log.Println(message + "结果成功关闭")
+	zap.L().Sugar().Infoln(message + "结果成功关闭")
 	return nil
 }

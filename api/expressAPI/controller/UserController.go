@@ -9,11 +9,12 @@ import (
 	"apiProject/api/utils"
 	"encoding/base64"
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
+	"github.com/spf13/cast"
+	"go.uber.org/zap"
 )
 
 // UserController 用户控制器
@@ -37,7 +38,7 @@ func (u *UserController) RegisterRoutes(r *mux.Router) {
 func (u *UserController) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var queryId = vars["dataId"]
-	if queryId == "" {
+	if queryId == "" || cast.ToInt64(queryId) == 0 {
 		response.WriteJson(w, response.FailMessageResp("用户ID不能为空"))
 		return
 	}
@@ -49,16 +50,16 @@ func (u *UserController) handlerGetUser(w http.ResponseWriter, r *http.Request) 
 	response.WriteJson(w, response.OkDataResp(t))
 }
 
-// handlerCreateUser 处理创建用户
+// handlerCreateUser 处理用户新增
 func (u *UserController) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	var user *domain.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		log.Println(err.Error())
-		response.WriteJson(w, response.FailMessageResp("解析用户新增参数失败"))
+		zap.L().Sugar().Errorf("用户新增参数解析错误===%+v", err)
+		response.WriteJson(w, response.FailMessageResp("用户新增参数解析失败"))
 		return
 	}
 
-	utils.CloseBodyError("用户新增失败", w, r)
+	defer utils.CloseBodyError("用户新增请求", w, r)
 
 	user.Password = utils.HashPassword(user.Password)
 	createUser, err := u.userService.CreateUser(user)
@@ -69,7 +70,7 @@ func (u *UserController) handlerCreateUser(w http.ResponseWriter, r *http.Reques
 
 	// 将json格式化输出
 	marshal, _ := json.MarshalIndent(createUser, "", "    ")
-	log.Printf("用户新增===\n%s", marshal)
+	zap.L().Sugar().Infof("用户新增===\n%s", marshal)
 
 	token, err := utils.CreateToken(createUser, 7)
 	if err != nil {
@@ -89,11 +90,13 @@ func (u *UserController) handlerCreateUser(w http.ResponseWriter, r *http.Reques
 func (u *UserController) handlerCheckPwd(w http.ResponseWriter, r *http.Request) {
 	tokenStr, err := interceptor.GetTokenFromRequest(r)
 	if err != nil {
+		zap.L().Sugar().Errorf("验证密码获取token错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
 	token, err := interceptor.ValidateJWT(tokenStr)
 	if err != nil {
+		zap.L().Sugar().Errorf("验证密码验证token有效性错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
@@ -108,18 +111,19 @@ func (u *UserController) handlerCheckPwd(w http.ResponseWriter, r *http.Request)
 
 	user, err := u.userService.GetUserById(utils.ConvertToInt64(userId))
 	if err != nil {
+		zap.L().Sugar().Errorf("验证密码验证获取用户信息错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp("未查询到用户信息"))
 		return
 	}
 
 	var pwdMap = make(map[string]string)
 	if err := json.NewDecoder(r.Body).Decode(&pwdMap); err != nil {
-		log.Println(err.Error())
+		zap.L().Sugar().Errorf("验证密码验证获取密码参数错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp("获取密码失败"))
 		return
 	}
 
-	utils.CloseBodyError("验证密码失败", w, r)
+	defer utils.CloseBodyError("验证密码请求", w, r)
 
 	if len(pwdMap) != 2 {
 		response.WriteJson(w, response.FailMessageResp("参数不正确"))
@@ -138,8 +142,8 @@ func (u *UserController) handlerCheckPwd(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	log.Printf("前端原始密码===%s", password)
-	log.Printf("前端加密密码(base64)===%s", encodePwd)
+	zap.L().Sugar().Infof("前端原始密码===%s", password)
+	zap.L().Sugar().Infof("前端加密密码(base64)===%s", encodePwd)
 
 	encodePwdByte, _ := base64.StdEncoding.DecodeString(encodePwd)
 
@@ -150,6 +154,7 @@ func (u *UserController) handlerCheckPwd(w http.ResponseWriter, r *http.Request)
 	}*/
 	privateKey, err := utils.GetKeyByteByPath("private.pem")
 	if err != nil {
+		zap.L().Sugar().Errorf("验证密码验证获取私钥错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
@@ -163,8 +168,9 @@ func (u *UserController) handlerCheckPwd(w http.ResponseWriter, r *http.Request)
 	//log.Printf("RsaDecrypt解密后的1===%s", string(decrypt2))
 
 	decrypt, err := utils.RsaDecrypt(privateKey, encodePwdByte)
-	log.Printf("RsaDecrypt解密后的2===%s", string(decrypt))
+	zap.L().Sugar().Infof("RsaDecrypt解密后的2===%s", string(decrypt))
 	if err != nil {
+		zap.L().Sugar().Errorf("验证密码验证rsa解密错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
@@ -174,13 +180,13 @@ func (u *UserController) handlerCheckPwd(w http.ResponseWriter, r *http.Request)
 
 	// var passwordHash = "$2a$10$3biXyR88nvb/yLtKQ9Ro0OCQJza2prdlGSqduDpBxfikVTNzGJdZ6"
 	isSame := utils.ComparePassword(user.Password, string(decrypt))
-	log.Printf("比较密码hash===%v", isSame)
+	zap.L().Sugar().Infof("比较密码hash===%v", isSame)
 
 	if !isSame {
 		response.WriteJson(w, response.FailMessageResp("密码验证失败"))
 		return
 	}
-	
+
 	response.WriteJson(w, response.OkMessageResp("密码验证成功"))
 }
 
@@ -189,11 +195,11 @@ func (u *UserController) handlerUserLogin(w http.ResponseWriter, r *http.Request
 	var user *domain.User
 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		log.Println(err)
+		zap.L().Sugar().Errorf("解析用户登录参数错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp("解析用户登录参数失败"))
 		return
 	}
-	utils.CloseBodyError("用户登录失败", w, r)
+	defer utils.CloseBodyError("用户登录请求", w, r)
 
 	if user.Username == "" {
 		response.WriteJson(w, response.FailMessageResp("用户名不能为空"))
@@ -217,13 +223,18 @@ func (u *UserController) handlerUserLogin(w http.ResponseWriter, r *http.Request
 	}
 
 	encodePwdByte, _ := base64.StdEncoding.DecodeString(user.Password)
-	decryptPwdByte, _ := utils.RsaDecrypt([]byte(config.EnvConfig.PrivateKey), encodePwdByte)
+	decryptPwdByte, err := utils.RsaDecrypt([]byte(config.EnvConfig.PrivateKey), encodePwdByte)
+	if err != nil {
+		zap.L().Sugar().Errorf("解析用户登录使用rsa解密错误===%+v", err)
+		response.WriteJson(w, response.FailMessageResp("解密失败"))
+		return
+	}
 	decryptPassword := string(decryptPwdByte)
-	log.Printf("用户登录解析的密码===%s", decryptPassword)
+	zap.L().Sugar().Infof("用户登录解析的密码===%s", decryptPassword)
 
 	// 验证密码hash是否通过
 	isSame := utils.ComparePassword(loginUser.Password, decryptPassword)
-	log.Printf("用户登录密码hash===%v", isSame)
+	zap.L().Sugar().Infof("用户登录密码hash===%v", isSame)
 
 	if !isSame {
 		response.WriteJson(w, response.FailMessageResp("密码输入错误"))
@@ -232,6 +243,7 @@ func (u *UserController) handlerUserLogin(w http.ResponseWriter, r *http.Request
 
 	token, err := utils.CreateAndSetAuthCookie(w, loginUser, 10)
 	if err != nil {
+		zap.L().Sugar().Errorf("用户凭证及cookie设置错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp(err.Error()))
 		return
 	}
