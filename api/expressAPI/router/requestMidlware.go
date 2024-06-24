@@ -41,11 +41,16 @@ func RequestLogMiddleware(next http.Handler) http.Handler {
 		queryParam := r.URL.Query().Encode()
 		queryJson  := utils.QueryParamToJson(queryParam)
 		if queryJson != "" {
-			queryParam = queryParam + "\njson格式:\n" + utils.QueryParamToJson(queryParam) 
+			queryParam = queryParam + "\njson格式:\n" + queryJson
 		} else {
 			queryParam = "无"
 		}
-		go logRequest(r, queryParam, requestBodyBytes, utils.ForcedToJsonFormat(rec.body.Bytes()), duration)
+		bodyJsonStr := ""
+		// 只对返回响应为json的才进行处理
+		if strings.Contains(rec.Header().Get("Content-Type"), "application/json") {
+			bodyJsonStr = utils.ForcedToJsonFormat(rec.body.Bytes())
+		}
+		go logRequest(r, queryParam, requestBodyBytes, bodyJsonStr, duration)
 	})
 }
 
