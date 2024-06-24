@@ -2,7 +2,7 @@ package datasource
 
 import (
 	"apiProject/api/expressAPI/config"
-	"apiProject/api/expressAPI/types"
+	cfg "apiProject/api/expressAPI/types/config"
 	"database/sql"
 	"fmt"
 	"log"
@@ -22,7 +22,7 @@ func InitPostgresql() *PostgresqlDB {
 		log.Println("无Postgresql配置信息")
 		return nil
 	}
-	var postgresqlConfig types.PostgresqlConfig
+	var postgresqlConfig cfg.PostgresqlConfig
 	if err := viperConfig.Unmarshal(&postgresqlConfig); err != nil {
 		log.Printf("获取Postgresql配置错误:%+v", err)
 		return nil

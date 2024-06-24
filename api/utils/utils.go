@@ -2,7 +2,7 @@ package utils
 
 import (
 	"apiProject/api/expressAPI/config"
-	"apiProject/api/expressAPI/types"
+	configure "apiProject/api/expressAPI/types/config"
 	"apiProject/api/expressAPI/types/domain"
 	"apiProject/api/response"
 	"archive/zip"
@@ -183,7 +183,7 @@ func CreateJWT(user *domain.User, days int64, secret []byte) (string, error) {
 	//	"expireTime": time.Now().Add(time.Hour * 24 * time.Duration(days)).Unix(), // 设置有效期为20天
 	//})
 	//tokenStr, err := token.SignedString(secret)
-	claims := types.MyClaims{
+	claims := configure.MyClaims{
 		UserId:   strconv.FormatInt(user.UserId, 10),
 		Username: user.Username,
 		StandardClaims: jwt.StandardClaims{
@@ -868,6 +868,13 @@ func ToJsonFormat(data any) string {
 
 // ForcedToJsonFormat 强制json格式化输出
 func ForcedToJsonFormat(b []byte) string {
+
+	// 检查输入数据是否为空
+	if len(b) == 0 {
+		log.Printf("Error: input is empty")
+		return ""
+	}
+
 	var result map[string]interface{}
 	// 将JSON字符串解码到result变量中
 	err := json.Unmarshal(b, &result)
@@ -890,12 +897,11 @@ func QueryParamToJson(queryParam string) string {
 	if len(values) == 0 {
 		return ""
 	}
-	
+
 	result := make(map[string]any)
 
 	for key, value := range values {
-		log.Println("key", key)
-		log.Println("value", value)
+		log.Printf("key===%s,value===%v", key, value)
 		if len(value) > 0 {
 			result[key] = value[0]
 		}

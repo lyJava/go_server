@@ -48,7 +48,7 @@ var routingKey = "create_order_routing_key"
 func (s *APIServer) Serve() {
 	router := mux.NewRouter()
 
-	requestLog := config.EnvConfig.RequestLog
+	requestLog := config.EnvConfig.ServerConfig.RequestLog
 	if requestLog {
 		router.Use(RequestLogMiddleware)
 	}

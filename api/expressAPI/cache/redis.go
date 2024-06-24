@@ -2,7 +2,7 @@ package cache
 
 import (
 	"apiProject/api/expressAPI/config"
-	"apiProject/api/expressAPI/types"
+	cfg "apiProject/api/expressAPI/types/config"
 	"fmt"
 	"github.com/go-redis/redis"
 	"github.com/mitchellh/mapstructure"
@@ -17,7 +17,7 @@ func init() {
 
 	viperConfig := config.ReadConfig("api/expressApi/config", "application", "yml")
 	//redisMap := viperConfig.Get("redis").(map[string]string)
-	var redisConfig types.RedisConfig
+	var redisConfig cfg.RedisConfig
 	/*err := mapstructure.Decode(redisMap, &redisConfig)
 	if err != nil {
 		fmt.Println("failed to decode Redis config:", err)
@@ -25,7 +25,7 @@ func init() {
 	}*/
 	viperConfig.Unmarshal(&redisConfig)
 
-	if (redisConfig == types.RedisConfig{}) {
+	if (redisConfig == cfg.RedisConfig{}) {
 		fmt.Println("no Redis configuration found, skipping initialization")
 		return
 	}
@@ -54,7 +54,7 @@ func init() {
 	log.Println("Redis initialized successfully")
 }
 
-func initRedisClient(config types.RedisConfigItem) (*redis.Client, error) {
+func initRedisClient(config cfg.RedisConfigItem) (*redis.Client, error) {
 	// net.JoinHostPort(config.Host, config.Port),
 	client := redis.NewClient(&redis.Options{
 		Addr:     config.Address,
@@ -84,7 +84,7 @@ func stringFromIntHook(f reflect.Kind, t reflect.Kind, data interface{}) (interf
 }
 
 // DecodeConfig 在DecodeConfig函数中使用 DecodeHook
-func DecodeConfig(redisMap map[string]interface{}, redisConfig *types.RedisConfig) error {
+func DecodeConfig(redisMap map[string]interface{}, redisConfig *cfg.RedisConfig) error {
 	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		DecodeHook:       mapstructure.ComposeDecodeHookFunc(stringFromIntHook),
 		WeaklyTypedInput: true,

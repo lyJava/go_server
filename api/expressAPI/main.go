@@ -8,7 +8,7 @@ import (
 	"apiProject/api/expressAPI/router"
 	"apiProject/api/expressAPI/service"
 	"apiProject/api/expressAPI/service/impl"
-	"apiProject/api/expressAPI/types"
+	configure "apiProject/api/expressAPI/types/config"
 	"apiProject/api/utils"
 	"fmt"
 	"github.com/go-sql-driver/mysql"
@@ -17,7 +17,7 @@ import (
 
 type Application struct {
 	port              string                        //端口号
-	cfg               *types.MysqlConfig            //配置
+	cfg               *configure.MysqlConfig        //配置
 	expressService    *service.UserServiceInterface //快递接口
 	userService       *service.UserServiceInterface //用户接口
 	expressController *controller.ExpressController //快递控制器
@@ -26,7 +26,7 @@ type Application struct {
 
 func NewApplication(
 	port string,
-	cfg *types.MysqlConfig,
+	cfg *configure.MysqlConfig,
 	expressService *service.UserServiceInterface,
 	userService *service.UserServiceInterface,
 	expressController *controller.ExpressController,
@@ -197,7 +197,7 @@ func main() {
 	macMemoryDb := impl.NewMacMemoryDb(postgresqlDb)
 	macBookDb := impl.NewMacBookDb(postgresqlDb)
 
-	serverPort := ":" + utils.ConvertIntToStr(config.EnvConfig.ServerPort)
+	serverPort := ":" + utils.ConvertIntToStr(config.EnvConfig.ServerConfig.Port)
 	api := router.NewAPIServer(serverPort, express, user, rabbitmq.ConnectRabbitmq(connString), dict, testExpressDB, macCpuDb, macMemoryDb, macBookDb)
 	api.Serve()
 
