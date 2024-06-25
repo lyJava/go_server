@@ -2,7 +2,6 @@ package impl
 
 import (
 	"database/sql"
-	"log"
 
 	"github.com/spf13/cast"
 	"go.uber.org/zap"
@@ -55,11 +54,29 @@ func BuildPageOffset(pageStr, sizeStr interface{}, totalRecords int64) (int64, i
 func RowsClose(rows *sql.Rows, message string) error {
 	err := rows.Close()
 	if err != nil {
-		log.Printf(message+"关闭row结果错误===%+v", err)
 		zap.L().Sugar().Errorf(message+"关闭row结果错误===%+v", err)
 		return err
 	}
-	log.Println(message + "结果成功关闭")
 	zap.L().Sugar().Infoln(message + "结果成功关闭")
 	return nil
+}
+
+func buildOrderBy(column, order, tableAlias string) string {
+	var orderBy string
+
+	if tableAlias == "" {
+		if column == "" && order == "" {
+			orderBy = " ORDER BY id DESC"
+		} else {
+			orderBy = " ORDER BY " + column + " " + order
+		}
+	} else {
+		if column == "" && order == "" {
+			orderBy = " ORDER BY " + tableAlias + ".id DESC"
+		} else {
+			orderBy = " ORDER BY " + tableAlias + "." + column + " " + order
+		}
+	}
+
+	return orderBy
 }
