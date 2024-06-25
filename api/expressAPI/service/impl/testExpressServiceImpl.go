@@ -183,12 +183,10 @@ func (pg *TestDictTypeDb) PageList(te *domain.TestExpress, page, size int64) ([]
 	// 查询总记录数
 	var totalRecords int64
 	countSql := "SELECT COUNT(*) FROM tb_test_express" + buildCountByEntity(te)
-	log.Println("测试快递分页查询count的sql===", countSql)
 	zap.L().Sugar().Infof("测试快递分页查询count的sql===%s", countSql)
 
 	err := pg.Db.QueryRow(countSql).Scan(&totalRecords)
 	if err != nil {
-		log.Printf("测试快递分页查询总条数错误===%+v", err)
 		zap.L().Sugar().Errorf("测试快递分页查询总条数错误===%+v", err)
 		return nil, 0, 0, err
 	}
