@@ -3,15 +3,16 @@ package controller
 import (
 	"apiProject/api/expressAPI/service"
 	"apiProject/api/expressAPI/types/domain"
+	"apiProject/api/expressAPI/types/param"
 	"apiProject/api/response"
 	"apiProject/api/utils"
 	"encoding/json"
+	"net/http"
+
 	"github.com/gorilla/mux"
 	"github.com/spf13/cast"
 	"go.uber.org/zap"
-	"net/http"
 )
-
 
 type MacBookController struct {
 	service service.MacBookService
@@ -29,7 +30,8 @@ func (macBook *MacBookController) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/mac/book/update", macBook.handlerUpdate).Methods("POST")
 	router.HandleFunc("/mac/book/batch/save", macBook.handlerBatchSave).Methods("POST")
 	router.HandleFunc("/mac/book/delete/{id}", macBook.handlerDelete).Methods("GET")
-	router.HandleFunc("/mac/book/batch/delete", macBook.handleBatchDelete).Methods("POST")
+	router.HandleFunc("/mac/book/batch/delete", macBook.handlerBatchDelete).Methods("POST")
+	router.HandleFunc("/mac/book/page", macBook.handlerPage).Methods("POST")
 }
 
 func (macBook *MacBookController) handlerSave(w http.ResponseWriter, r *http.Request) {
@@ -137,7 +139,7 @@ func (macBook *MacBookController) handlerDelete(w http.ResponseWriter, r *http.R
 	response.WriteJson(w, response.OkCodeMessageData("删除成功", result))
 }
 
-func (macBook *MacBookController) handleBatchDelete(w http.ResponseWriter, r *http.Request) {
+func (macBook *MacBookController) handlerBatchDelete(w http.ResponseWriter, r *http.Request) {
 	ids := []any{nil}
 	if err := json.NewDecoder(r.Body).Decode(&ids); err != nil {
 		zap.L().Sugar().Errorf("苹果笔记本批量删除参数解析错误===%+v", err)
@@ -164,4 +166,29 @@ func (macBook *MacBookController) handleBatchDelete(w http.ResponseWriter, r *ht
 	}
 
 	response.WriteJson(w, response.OkCodeMessageData("删除成功", result))
+}
+
+func (macBook *MacBookController) handlerPage(w http.ResponseWriter, r *http.Request) {
+	var param param.MacBookPageParam
+	if err := json.NewDecoder(r.Body).Decode(&param); err != nil {
+		zap.L().Sugar().Errorf("苹果笔记本分页参数解析错误===%+v", err)
+		response.WriteJson(w, response.FailMessageResp("分页查询参数解析失败"))
+		return
+	}
+
+	defer utils.CloseBodyError("苹果笔记本分页请求", w, r)
+
+	column, order := utils.HandlerColumnOrder(param.Column, param.Order)
+	param.Column = column
+	param.Order = order
+
+	zap.L().Sugar().Errorf("苹果笔记本分页参数:%+v", param)
+
+	list, totalRecord, totalPage, err := macBook.service.SelectPage(&param)
+	if err != nil {
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
+		return
+	}
+
+	response.WriteJson(w, response.OkDataResp(response.NewPageData(totalRecord, totalPage, list)))
 }

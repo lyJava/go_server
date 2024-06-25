@@ -27,3 +27,16 @@ type Order struct {
 	Id    string    `json:"id"`    // 订单ID
 	Items []Payment `json:"items"` // 支付数组
 }
+
+// MacBookPageParam 苹果本分页查询参数
+type MacBookPageParam struct {
+	Page      int64  `json:"page"`      // 当前页码
+	Size      int64  `json:"size"`      // 每页条数
+	Column    string `json:"column"`    // 排序的列
+	Order     string `json:"order"`     // 降序或者升序
+	ProName   string `json:"proName"`   // 名称
+	ProColor  string `json:"proColor"`  // 颜色
+	ProYear   string `json:"proYear"`   // 年份
+	ProType   string `json:"proType"`   // 类型
+	MoldModel string `json:"moldModel"` // 型号
+}

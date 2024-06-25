@@ -2,12 +2,14 @@ package impl
 
 import (
 	"apiProject/api/expressAPI/types/domain"
+	"apiProject/api/expressAPI/types/param"
 	"apiProject/api/utils"
 	"database/sql"
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
 type MacBookDb struct {
@@ -362,6 +364,58 @@ func (pg *MacBookDb) BatchDeleteByIds(ids []any) (int64, error) {
 	return rowsAffected, nil
 }
 
+func (pg *MacBookDb) SelectPage(pageParam *param.MacBookPageParam) ([]*domain.MacBook, int64, int64, error) {
+	whereParam := buildWhereClauseForMacBookPage(pageParam)
+	// 查询总记录数
+	var totalRecords int64
+	countSql := `SELECT COUNT(*) FROM tb_mac_book b` + whereParam
+	zap.L().Sugar().Infof("测试快递分页查询count的sql===%s", countSql)
+
+	err := pg.Db.QueryRow(countSql).Scan(&totalRecords)
+	if err != nil {
+		zap.L().Sugar().Errorf("苹果笔记本分页查询总条数错误===%+v", err)
+		return nil, 0, 0, err
+	}
+
+	zap.L().Sugar().Infof("苹果笔记本分页查询总条数===%d", totalRecords)
+
+	size, offset, totalPages := BuildPageOffset(pageParam.Page, pageParam.Size, totalRecords)
+
+	zap.L().Sugar().Infof("苹果笔记本分页查询offset=%d, size=%d", offset, size)
+
+	pageSql := fmt.Sprintf(`SELECT 
+								b.id, %s 
+							FROM tb_mac_book b 
+							LEFT JOIN tb_mac_cpu c ON c.id = b.cpu_id 
+							LEFT JOIN tb_mac_memory m ON m.id = b.memory_id 
+							%s 
+							%s 
+							OFFSET $1 LIMIT $2`, MacBookCommonColumn, whereParam, buildOrderBy(pageParam.Column, pageParam.Order, "b"))
+	zap.L().Sugar().Infof("苹果笔记本分页查询sql===%s", pageSql)
+	rows, err := pg.Db.Query(pageSql, offset, size)
+	if err != nil {
+		zap.L().Sugar().Errorf("苹果笔记本分页查询行数错误===%+v", err)
+		return nil, 0, 0, err
+	}
+
+	defer RowsClose(rows, "苹果笔记本分页查询")
+
+	var list []*domain.MacBook
+
+	for rows.Next() {
+		macBook := &domain.MacBook{}
+		if err = rows.Scan(&macBook.Id, &macBook.ProName, &macBook.ProColor, &macBook.ProYear, &macBook.ProType, &macBook.MoldModel, &macBook.MonitorId, &macBook.CpuId, &macBook.MemoryId, &macBook.StorageInfo, &macBook.SizeInfo, &macBook.WeightInfo, &macBook.GpuId, &macBook.ChipType, &macBook.MemoryMax, &macBook.CreateTime, &macBook.UpdateTime,
+			&macBook.CpuInfo.Id, &macBook.CpuInfo.CpuName, &macBook.CpuInfo.CpuType, &macBook.CpuInfo.CpuBasicBoost, &macBook.CpuInfo.CpuTruboBoost, &macBook.CpuInfo.CpuCoreNumber, &macBook.CpuInfo.CpuThreadNumber, &macBook.CpuInfo.CpuCache, &macBook.CpuInfo.CpuTdp, &macBook.CpuInfo.MemoryWidth, &macBook.CpuInfo.MediaProcessingEngine,
+			&macBook.MemoryInfo.Id, &macBook.MemoryInfo.MemorySize, &macBook.MemoryInfo.MemorySpeed, &macBook.MemoryInfo.IntegrationFlag, &macBook.MemoryInfo.MemoryType, &macBook.MemoryInfo.EccCheck); err != nil {
+			zap.L().Sugar().Errorf("苹果笔记本分页查询错误===%+v", err)
+			return nil, 0, 0, err
+		}
+		list = append(list, macBook)
+	}
+
+	return list, totalRecords, totalPages, nil
+}
+
 // cpuDynamicUpdate 构建动态更新
 func bookDynamicUpdate(macBook *domain.MacBook) (string, []any, int64, error) {
 	var setClauses []string
@@ -426,4 +480,31 @@ func bookDynamicUpdate(macBook *domain.MacBook) (string, []any, int64, error) {
 
 	setClause := strings.Join(setClauses, ", ")
 	return setClause, args, placeholderIndex, nil
+}
+
+// buildWhereClauseForMacBookPage 构建多条件动态查询
+func buildWhereClauseForMacBookPage(param *param.MacBookPageParam) string {
+	if param != nil {
+		var clauses []string
+		if param.ProName != "" {
+			clauses = append(clauses, "b.pro_name LIKE CONCAT('%', '"+param.ProName+"', '%')")
+		}
+		if param.ProColor != "" {
+			clauses = append(clauses, "b.pro_color = '"+param.ProColor+"'")
+		}
+		if param.ProYear != "" {
+			clauses = append(clauses, "b.pro_year LIKE CONCAT('%', '"+param.ProYear+"', '%')")
+		}
+		if param.ProType != "" {
+			clauses = append(clauses, "b.pro_type  = '"+param.ProType+"'")
+		}
+		if param.MoldModel != "" {
+			clauses = append(clauses, "b.mold_model LIKE CONCAT('%', '"+param.MoldModel+"', '%')")
+		}
+
+		if len(clauses) > 0 {
+			return " WHERE " + strings.Join(clauses, " AND ")
+		}
+	}
+	return ""
 }

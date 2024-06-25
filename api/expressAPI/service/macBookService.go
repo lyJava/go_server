@@ -1,6 +1,9 @@
 package service
 
-import "apiProject/api/expressAPI/types/domain"
+import (
+	"apiProject/api/expressAPI/types/domain"
+	"apiProject/api/expressAPI/types/param"
+)
 
 type MacBookService interface {
 	// Save 保存新增
@@ -15,4 +18,6 @@ type MacBookService interface {
 	DeleteById(id int64) (int64, error)
 	// BatchDeleteByIds 通过主键ID切片批量删除
 	BatchDeleteByIds(ids []any) (int64, error)
+	// SelectPage 分页查询
+	SelectPage(pageParam *param.MacBookPageParam) ([]*domain.MacBook, int64, int64, error)
 }
