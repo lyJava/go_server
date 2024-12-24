@@ -13,20 +13,22 @@ import (
 )
 
 type APIServer struct {
-	addr         string                          // 服务启动端口
-	express      service.ExpressServiceInterface // 快递服务接口
-	user         service.UserServiceInterface    // 用户服务接口
-	rabbitmqConn *amqp.Connection                // rabbitmq连接
-	dict         service.DictTypeService         // 字典服务接口
-	testExpress  service.TestExpressService      // 测试快递服务接口
-	macCpu       service.MacCpuService           // 苹果处理器接口
-	macMemory    service.MacMemoryService        // 苹果内存接口
-	macBook      service.MacBookService          // 苹果笔记本接口
+	addr         string                             // 服务启动端口
+	express      service.ExpressServiceInterface    // 快递服务接口
+	user         service.UserServiceInterface       // 用户服务接口
+	rabbitmqConn *amqp.Connection                   // rabbitmq连接
+	dict         service.DictTypeService            // 字典服务接口
+	testExpress  service.TestExpressService         // 测试快递服务接口
+	macCpu       service.MacCpuService              // 苹果处理器接口
+	macMemory    service.MacMemoryService           // 苹果内存接口
+	macBook      service.MacBookService             // 苹果笔记本接口
+	storeAdmin   service.StoreAdminServiceInterface // 店铺管理员接口
 }
 
 // NewAPIServer 创建API服务
 func NewAPIServer(add string, express service.ExpressServiceInterface, user service.UserServiceInterface,
-	conn *amqp.Connection, d service.DictTypeService, te service.TestExpressService, cpu service.MacCpuService, memory service.MacMemoryService, book service.MacBookService) *APIServer {
+	conn *amqp.Connection, d service.DictTypeService, te service.TestExpressService, cpu service.MacCpuService,
+	memory service.MacMemoryService, book service.MacBookService, storeAdmin service.StoreAdminServiceInterface) *APIServer {
 	return &APIServer{
 		addr:         add,
 		express:      express,
@@ -37,6 +39,7 @@ func NewAPIServer(add string, express service.ExpressServiceInterface, user serv
 		macCpu:       cpu,
 		macMemory:    memory,
 		macBook:      book,
+		storeAdmin:   storeAdmin,
 	}
 }
 
@@ -103,6 +106,10 @@ func (s *APIServer) Serve() {
 	// 苹果笔记本控制器
 	macBookController := controller.MacBookControllerInit(s.macBook)
 	macBookController.RegisterRoutes(router)
+
+	// 店铺管理员控制器
+	storeAdminController := controller.StoreAdminControllerInit(s.storeAdmin)
+	storeAdminController.RegisterRoutes(router)
 
 	// 测试请求日志
 	router.HandleFunc("/user/test/{id}", UserHandler).Methods("GET")

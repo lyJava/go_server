@@ -16,6 +16,21 @@ type ExpressSearchParam struct {
 	Order         string `json:"order"`         // 降序或者升序
 }
 
+// StoreAdminSearchParam 分页查询参数结构
+type StoreAdminSearchParam struct {
+	UserName     string `json:"userName"`
+	Mobile       string `json:"mobile"`
+	StoreName    string `json:"storeName"`
+	StatusValue  string `json:"statusValue"`
+	RealName     string `json:"realName"`
+	MerchantId   int64  `json:"merchantId"`
+	MerchantName string `json:"merchantName"`
+	Page         int64  `json:"page"`   // 当前页码
+	Size         int64  `json:"size"`   // 每页条数
+	Column       string `json:"column"` // 排序的列
+	Order        string `json:"order"`  // 降序或者升序
+}
+
 // Payment 支付结构体
 type Payment struct {
 	Id       string `json:"id"`       // 支付ID
