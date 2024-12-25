@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"strings"
+	"time"
 )
 
 type StoreAdminDb struct {
@@ -299,6 +300,20 @@ func (pg *StoreAdminDb) SelectById(id int64) (*domain.StoreAdmin, error) {
 	return data, nil
 }
 
+//goland:noinspection SqlResolve,SqlCaseVsIf
+func (pg *StoreAdminDb) SelectCountById(id int64) (int64, error) {
+	row := pg.Db.QueryRow(`SELECT COUNT(*) FROM tb_store_admin WHERE id = $1`, id)
+	count := int64(0)
+	// 将查询结果扫描到 count 变量
+	err := row.Scan(&count)
+	if err != nil {
+		log.Printf("通过ID查询商户异常===%+v", err)
+		zap.L().Sugar().Errorf("通过ID查询商户错误===%+v", err)
+		return 0, err
+	}
+	return count, nil
+}
+
 //goland:noinspection SqlResolve
 func (pg *StoreAdminDb) BatchDelete(ids []any) (rows int64, err error) {
 	// 开启事务
@@ -344,6 +359,46 @@ func (pg *StoreAdminDb) BatchDelete(ids []any) (rows int64, err error) {
 	zap.L().Sugar().Infof("商户管理批量删除执行获取条数===%d", rowsAffected)
 
 	return rowsAffected, nil
+}
+
+func (pg *StoreAdminDb) Update(storeAdmin *domain.StoreAdmin) (int64, error) {
+	// 开启事务
+	tx, err := pg.Db.Begin()
+	if err != nil {
+		log.Printf("商户修改开启事务失败===%+v", err)
+		zap.L().Sugar().Errorf("商户修改开启事务失败===%+v", err)
+		return 0, err
+	}
+	// 确保事务的提交或回滚
+	defer func() {
+		if p := recover(); p != nil {
+			zap.L().Sugar().Info("商户修改事务即将回滚（panic恢复）")
+			tx.Rollback()
+			panic(p) // 重新panic以便外层捕获
+		} else if err != nil {
+			tx.Rollback() // 发生错误则回滚事务
+			zap.L().Sugar().Errorf("商户修改事务回滚,发生错误===%+v", err)
+		} else {
+			err = tx.Commit() // 正常结束则提交事务
+			if err != nil {
+				log.Printf("商户修改提交事务失败===%+v", err)
+				zap.L().Sugar().Errorf("商户修改提交事务失败===%+v", err)
+			}
+		}
+	}()
+
+	rows, err := tx.Exec("UPDATE tb_store_admin SET user_name = $1, mobile = $2, real_name = $3, status_value = $4, store_name = $5, merchant_id = $6, merchant_name = $7, update_time= $8  WHERE id = $9",
+		storeAdmin.UserName, storeAdmin.Mobile, storeAdmin.RealName, storeAdmin.StatusValue, storeAdmin.StoreName, storeAdmin.MerchantId, storeAdmin.MerchantName, time.Now(), storeAdmin.Id)
+	if err != nil {
+		log.Printf("商户修改执行错误===%+v", err)
+		return 0, err
+	}
+	count, err := rows.RowsAffected()
+	if err != nil {
+		log.Printf("商户修改获取执行条数错误===%+v", err)
+		return 0, err
+	}
+	return count, nil
 }
 
 // 构建 WHERE 子句

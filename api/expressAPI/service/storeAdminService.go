@@ -24,4 +24,6 @@ type StoreAdminServiceInterface interface {
 	// BatchDelete 批量删除
 	BatchDelete(ids []any) (rows int64, err error)
 	SelectById(id int64) (*domain.StoreAdmin, error)
+	SelectCountById(id int64) (int64, error)
+	Update(storeAdmin *domain.StoreAdmin) (int64, error)
 }

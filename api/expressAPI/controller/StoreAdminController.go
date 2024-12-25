@@ -30,6 +30,8 @@ func StoreAdminControllerInit(s service.StoreAdminServiceInterface) *StoreAdminC
 func (e *StoreAdminController) RegisterRoutes(r *mux.Router) {
 	// 新增
 	r.HandleFunc("/dev-api/storeAdmin", e.handlerCrete).Methods("POST")
+	// 修改
+	r.HandleFunc("/dev-api/storeAdmin", e.handlerUpdate).Methods("PUT")
 	// 查询详情
 	r.HandleFunc("/dev-api/storeAdmin/detail", e.handlerDetail).Methods("GET")
 	// 查询
@@ -69,6 +71,47 @@ func (e *StoreAdminController) handlerCrete(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	response.WriteJson(w, response.OkDataResp(t))
+}
+
+func (e *StoreAdminController) handlerUpdate(w http.ResponseWriter, r *http.Request) {
+	var storeAdmin *domain.StoreAdmin
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("新增参数读取错误===%s+v", err)
+		response.WriteJson(w, response.FailMessageResp("新增失败"))
+		return
+	}
+	defer r.Body.Close()
+
+	err = sonic.Unmarshal(body, &storeAdmin)
+	if err != nil {
+		log.Printf("新增参数解析错误===%s+v", err)
+		response.WriteJson(w, response.FailMessageResp("新增失败"))
+		return
+	}
+
+	count := int64(0)
+
+	if storeAdmin.Id == 0 {
+		response.WriteJson(w, response.FailMessageResp("数据ID不能为空"))
+		return
+	} else {
+		count, err = e.storeAdminService.SelectCountById(storeAdmin.Id)
+		if err != nil {
+			response.WriteJson(w, response.FailMessageResp("新增失败"))
+			return
+		}
+	}
+
+	if count > 0 {
+		t, err := e.storeAdminService.Update(storeAdmin)
+		if err != nil {
+			log.Printf("新增操作错误===%s+v", err)
+			response.WriteJson(w, response.FailMessageResp("新增失败"))
+			return
+		}
+		response.WriteJson(w, response.OkDataResp(t))
+	}
 }
 
 func (e *StoreAdminController) handlerGet(w http.ResponseWriter, r *http.Request) {
