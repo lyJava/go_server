@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"fmt"
 	"go.uber.org/zap"
-	"log"
 	"strings"
 	"time"
 )
@@ -52,6 +51,7 @@ func (pg *StoreAdminDb) Save(te *domain.StoreAdmin) (*domain.StoreAdmin, error) 
 		}
 	}()
 
+	// 新增数据返回的主键ID
 	var lastInsertId int64
 
 	if err = tx.QueryRow(`INSERT INTO tb_store_admin(user_name, mobile, real_name, status_value, store_name, merchant_id, merchant_name)
@@ -69,7 +69,6 @@ func (pg *StoreAdminDb) Save(te *domain.StoreAdmin) (*domain.StoreAdmin, error) 
 	}
 
 	if err != nil {
-		log.Printf("商户管理员新增错误===%+v", err)
 		zap.L().Sugar().Errorf("商户管理员新增错误===%+v", err)
 		return nil, err
 	}
@@ -142,8 +141,7 @@ func (pg *StoreAdminDb) SelectByStoreAdminId(id int64) (*domain.StoreAdmin, erro
 		id)
 	err := rowScanForStoreAdmin(row, storeAdmin)
 	if err != nil {
-		log.Printf("通过快递单号与取件码查询错误===%+v", err)
-		zap.L().Sugar().Errorf("通过快递单号与取件码查询错误===%+v", err)
+		zap.L().Sugar().Errorf("商户管理查询错误===%+v", err)
 		return nil, err
 	}
 
@@ -183,18 +181,15 @@ func (pg *StoreAdminDb) BatchSave(list []*domain.StoreAdmin) (int64, error) {
 	}
 
 	batchSql := fmt.Sprintf(`INSERT INTO tb_store_admin (user_name, mobile, real_name, status_value, store_name, merchant_id, merchant_name) VALUES %s %s`, strings.Join(placeholderList, ","), "\r\n")
-	log.Println("商户管理批量新增sql===", batchSql)
 	zap.L().Sugar().Infof("商户管理批量新增sql===%s", batchSql)
 	result, err := pg.Db.Exec(batchSql, valueArgList...)
 	if err != nil {
-		log.Printf("商户管理批量新增执行错误===%+v", err)
 		zap.L().Sugar().Errorf("商户管理批量新增执行错误===%+v", err)
 		return 0, err
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Printf("商户管理批量新增执行失败===%+v", err)
 		zap.L().Sugar().Errorf("商户管理批量新增执行失败===%+v", err)
 		return 0, err
 	}
@@ -203,10 +198,10 @@ func (pg *StoreAdminDb) BatchSave(list []*domain.StoreAdmin) (int64, error) {
 }
 
 //goland:noinspection SqlResolve,SqlCaseVsIf,SqlCaseVsLimit
-func (pg *StoreAdminDb) PageList(te *param.StoreAdminSearchParam) ([]*domain.StoreAdmin, int64, int64, error) {
+func (pg *StoreAdminDb) PageList(storeAdmin *param.StoreAdminSearchParam) ([]*domain.StoreAdmin, int64, int64, error) {
 	// 查询总记录数
 	var totalRecords int64
-	countSql := "SELECT COUNT(*) FROM tb_store_admin" + buildCountForStoreAdmin(te)
+	countSql := "SELECT COUNT(*) FROM tb_store_admin" + buildCountForStoreAdmin(storeAdmin)
 	zap.L().Sugar().Infof("商户分页查询count的sql===%s", countSql)
 
 	err := pg.Db.QueryRow(countSql).Scan(&totalRecords)
@@ -217,7 +212,7 @@ func (pg *StoreAdminDb) PageList(te *param.StoreAdminSearchParam) ([]*domain.Sto
 
 	zap.L().Sugar().Infof("商户分页查询总条数===%d", totalRecords)
 
-	size, offset, totalPages := BuildPageOffset(te.Page, te.Size, totalRecords)
+	size, offset, totalPages := BuildPageOffset(storeAdmin.Page, storeAdmin.Size, totalRecords)
 
 	rows, err := pg.Db.Query(fmt.Sprintf(
 		`SELECT
@@ -240,10 +235,9 @@ func (pg *StoreAdminDb) PageList(te *param.StoreAdminSearchParam) ([]*domain.Sto
 				FROM
 					tb_store_admin %s
 				ORDER BY id DESC	
-				OFFSET $1 LIMIT $2`, buildCountForStoreAdmin(te)), offset, size)
+				OFFSET $1 LIMIT $2`, buildCountForStoreAdmin(storeAdmin)), offset, size)
 
 	if err != nil {
-		log.Printf("商户分页查询行数错误===%+v", err)
 		zap.L().Sugar().Errorf("商户分页查询行数错误===%+v", err)
 		return nil, 0, 0, err
 	}
@@ -256,7 +250,6 @@ func (pg *StoreAdminDb) PageList(te *param.StoreAdminSearchParam) ([]*domain.Sto
 		storeAdmin := &domain.StoreAdmin{}
 		err := rowsScanForStoreAdminList(rows, storeAdmin)
 		if err != nil {
-			log.Printf("商户分页返回异常===%+v", err.Error())
 			zap.L().Sugar().Errorf("商户分页返回错误===%+v", err)
 			return nil, 0, 0, err
 		}
@@ -293,7 +286,6 @@ func (pg *StoreAdminDb) SelectById(id int64) (*domain.StoreAdmin, error) {
 	data := &domain.StoreAdmin{}
 	err := rowScanForStoreAdmin(row, data)
 	if err != nil {
-		log.Printf("通过ID查询商户异常===%+v", err)
 		zap.L().Sugar().Errorf("通过ID查询商户错误===%+v", err)
 		return nil, err
 	}
@@ -307,7 +299,6 @@ func (pg *StoreAdminDb) SelectCountById(id int64) (int64, error) {
 	// 将查询结果扫描到 count 变量
 	err := row.Scan(&count)
 	if err != nil {
-		log.Printf("通过ID查询商户异常===%+v", err)
 		zap.L().Sugar().Errorf("通过ID查询商户错误===%+v", err)
 		return 0, err
 	}
@@ -319,8 +310,7 @@ func (pg *StoreAdminDb) BatchDelete(ids []any) (rows int64, err error) {
 	// 开启事务
 	tx, err := pg.Db.Begin()
 	if err != nil {
-		log.Printf("开启事务失败===%+v", err)
-		zap.L().Sugar().Errorf("开启事务失败===%+v", err)
+		zap.L().Sugar().Errorf("商户管理批量删除开启事务失败===%+v", err)
 		return 0, err
 	}
 
@@ -336,7 +326,6 @@ func (pg *StoreAdminDb) BatchDelete(ids []any) (rows int64, err error) {
 		} else {
 			err = tx.Commit() // 正常结束则提交事务
 			if err != nil {
-				log.Printf("商户管理批量删除提交事务失败===%+v", err)
 				zap.L().Sugar().Errorf("商户管理批量删除提交事务失败===%+v", err)
 			}
 		}
@@ -344,20 +333,17 @@ func (pg *StoreAdminDb) BatchDelete(ids []any) (rows int64, err error) {
 
 	result, err := tx.Exec(fmt.Sprintf("DELETE FROM tb_store_admin WHERE id IN (%s)", utils.GeneratePlaceholders(len(ids))), ids...)
 	if err != nil {
-		log.Printf("商户管理批量删除异常===%+v", err)
 		zap.L().Sugar().Errorf("商户管理批量删除异常===%+v", err)
 		return 0, err
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Printf("商户管理批量删除执行获取条数===%+v", err)
 		zap.L().Sugar().Errorf("商户管理批量删除执行获取条数===%+v", err)
 		return 0, err
 	}
 
 	zap.L().Sugar().Infof("商户管理批量删除执行获取条数===%d", rowsAffected)
-
 	return rowsAffected, nil
 }
 
@@ -365,7 +351,6 @@ func (pg *StoreAdminDb) Update(storeAdmin *domain.StoreAdmin) (int64, error) {
 	// 开启事务
 	tx, err := pg.Db.Begin()
 	if err != nil {
-		log.Printf("商户修改开启事务失败===%+v", err)
 		zap.L().Sugar().Errorf("商户修改开启事务失败===%+v", err)
 		return 0, err
 	}
@@ -381,7 +366,6 @@ func (pg *StoreAdminDb) Update(storeAdmin *domain.StoreAdmin) (int64, error) {
 		} else {
 			err = tx.Commit() // 正常结束则提交事务
 			if err != nil {
-				log.Printf("商户修改提交事务失败===%+v", err)
 				zap.L().Sugar().Errorf("商户修改提交事务失败===%+v", err)
 			}
 		}
@@ -390,12 +374,12 @@ func (pg *StoreAdminDb) Update(storeAdmin *domain.StoreAdmin) (int64, error) {
 	rows, err := tx.Exec("UPDATE tb_store_admin SET user_name = $1, mobile = $2, real_name = $3, status_value = $4, store_name = $5, merchant_id = $6, merchant_name = $7, update_time= $8  WHERE id = $9",
 		storeAdmin.UserName, storeAdmin.Mobile, storeAdmin.RealName, storeAdmin.StatusValue, storeAdmin.StoreName, storeAdmin.MerchantId, storeAdmin.MerchantName, time.Now(), storeAdmin.Id)
 	if err != nil {
-		log.Printf("商户修改执行错误===%+v", err)
+		zap.L().Sugar().Errorf("商户修改执行错误===%+v", err)
 		return 0, err
 	}
 	count, err := rows.RowsAffected()
 	if err != nil {
-		log.Printf("商户修改获取执行条数错误===%+v", err)
+		zap.L().Sugar().Errorf("商户修改获取执行条数错误===%+v", err)
 		return 0, err
 	}
 	return count, nil
@@ -457,7 +441,6 @@ func rowScanForStoreAdmin(row *sql.Row, storeAdmin *domain.StoreAdmin) error {
 		&storeAdmin.CreateTime,
 		&storeAdmin.UpdateTime)
 	if err != nil {
-		log.Printf("商户数据转换错误===%+v", err)
 		zap.L().Sugar().Errorf("商户数据转换错误===%+v", err)
 		return err
 	}
@@ -477,7 +460,6 @@ func rowsScanForStoreAdminList(rows *sql.Rows, storeAdmin *domain.StoreAdmin) er
 		&storeAdmin.CreateTime,
 		&storeAdmin.UpdateTime)
 	if err != nil {
-		log.Printf("商户数据多条转换错误===%+v", err)
 		zap.L().Sugar().Errorf("商户数据多条转换错误===%+v", err)
 		return err
 	}
