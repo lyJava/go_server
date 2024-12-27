@@ -138,7 +138,7 @@ func InitGormPostgresSql() *GormPostgresSqlDb {
 			"TO_CHAR(create_time, 'YYYY-MM-DD HH24:MI:SS') AS create_time, " +
 			"TO_CHAR(update_time, 'YYYY-MM-DD HH24:MI:SS') AS update_time").
 		//Where("id = ?", 122).
-		Order("id DESC"). // 按照 id 倒序排序
+		Order("id DESC").
 		Limit(2).
 		Scan(&storeAdminList).Error
 
