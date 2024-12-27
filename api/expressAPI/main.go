@@ -189,6 +189,9 @@ func main() {
 		log.Printf("获取Mysql数据库信息失败===%v", err)
 	}
 
+	gormDB := datasource.InitGormPostgresSql()
+	log.Printf("gorm获取Postgresql数据库信息===%s", gormDB.PsDB.Name())
+
 	express := impl.NewExpressDB(mySqlDb)
 	user := impl.NewUserDB(mySqlDb)
 	dict := impl.NewDictTypeDb(postgresqlDb)
