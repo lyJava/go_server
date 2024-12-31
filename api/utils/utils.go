@@ -33,6 +33,17 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// HTTP 请求方法常量
+const (
+	GET     = "GET"
+	POST    = "POST"
+	PUT     = "PUT"
+	DELETE  = "DELETE"
+	OPTIONS = "OPTIONS"
+	HEAD    = "HEAD"
+	PATCH   = "PATCH"
+)
+
 // ConvertToInt64 字符串转换为int64
 func ConvertToInt64(str string) int64 {
 
