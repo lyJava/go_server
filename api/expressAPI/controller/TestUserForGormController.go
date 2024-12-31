@@ -12,7 +12,7 @@ import (
 	"net/http"
 )
 
-// TestUserForGormController 用户控制器
+// TestUserForGormController 测试用户控制器
 type TestUserForGormController struct {
 	testUserGormService service.TestUserForGormService
 }
@@ -22,7 +22,7 @@ func TestUserForGormControllerInit(u service.TestUserForGormService) *TestUserFo
 	return &TestUserForGormController{testUserGormService: u}
 }
 
-// RegisterRoutes 注册快递服务请求路由
+// RegisterRoutes 注册测试用户控制器请求路由
 func (u *TestUserForGormController) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/userGorm/{id}", u.handlerGetUser).Methods(utils.GET)
 	r.HandleFunc("/userGorm/create", u.handlerCreateUser).Methods(utils.POST)
@@ -36,7 +36,7 @@ func (u *TestUserForGormController) handlerGetUser(w http.ResponseWriter, r *htt
 	vars := mux.Vars(r)
 	var queryId = vars["id"]
 	if queryId == "" || cast.ToInt64(queryId) == 0 {
-		response.WriteJson(w, response.FailMessageResp("用户ID不能为空"))
+		response.WriteJson(w, response.FailMessageResp("测试用户ID不能为空"))
 		return
 	}
 	t, err := u.testUserGormService.GetUserById(utils.ConvertToInt64(queryId))
@@ -51,12 +51,12 @@ func (u *TestUserForGormController) handlerGetUser(w http.ResponseWriter, r *htt
 func (u *TestUserForGormController) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	var user *domain.TestUser
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		zap.L().Sugar().Errorf("用户新增(gorm)参数解析错误===%+v", err)
-		response.WriteJson(w, response.FailMessageResp("用户新增参数解析失败"))
+		zap.L().Sugar().Errorf("测试用户新增(gorm)参数解析错误===%+v", err)
+		response.WriteJson(w, response.FailMessageResp("测试用户新增参数解析失败"))
 		return
 	}
 
-	defer utils.CloseBodyError("用户新增(gorm)请求", w, r)
+	defer utils.CloseBodyError("测试用户新增(gorm)请求", w, r)
 
 	createdUser, err := u.testUserGormService.CreateUser(user)
 	if err != nil {
@@ -66,7 +66,7 @@ func (u *TestUserForGormController) handlerCreateUser(w http.ResponseWriter, r *
 
 	// 将json格式化输出
 	marshal, _ := json.MarshalIndent(createdUser, "", "    ")
-	zap.L().Sugar().Infof("用户新增===\n%s", marshal)
+	zap.L().Sugar().Infof("测试用户新增===\n%s", marshal)
 
 	response.WriteJson(w, response.OkDataResp(createdUser))
 }
@@ -76,11 +76,11 @@ func (u *TestUserForGormController) handlerUserLogin(w http.ResponseWriter, r *h
 	var user *domain.TestUser
 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		zap.L().Sugar().Errorf("解析用户登录参数错误===%+v", err)
-		response.WriteJson(w, response.FailMessageResp("解析用户登录参数失败"))
+		zap.L().Sugar().Errorf("解析测试用户登录参数错误===%+v", err)
+		response.WriteJson(w, response.FailMessageResp("解析测试用户登录参数失败"))
 		return
 	}
-	defer utils.CloseBodyError("用户登录请求", w, r)
+	defer utils.CloseBodyError("测试用户登录请求", w, r)
 
 	if user.Username == "" {
 		response.WriteJson(w, response.FailMessageResp("用户名不能为空"))
@@ -105,12 +105,12 @@ func (u *TestUserForGormController) handlerUserLogin(w http.ResponseWriter, r *h
 func (u *TestUserForGormController) handlerUpdateUser(w http.ResponseWriter, r *http.Request) {
 	var user *domain.TestUser
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		zap.L().Sugar().Errorf("用户修改(gorm)参数解析错误===%+v", err)
-		response.WriteJson(w, response.FailMessageResp("用户修改(gorm)参数解析失败"))
+		zap.L().Sugar().Errorf("测试用户修改(gorm)参数解析错误===%+v", err)
+		response.WriteJson(w, response.FailMessageResp("测试用户修改(gorm)参数解析失败"))
 		return
 	}
 
-	defer utils.CloseBodyError("用户修改(gorm)请求", w, r)
+	defer utils.CloseBodyError("测试用户修改(gorm)请求", w, r)
 
 	count, err := u.testUserGormService.UpdateUser(user)
 	if err != nil {
@@ -130,7 +130,7 @@ func (u *TestUserForGormController) handlerDeleteUser(w http.ResponseWriter, r *
 	vars := mux.Vars(r)
 	var queryId = vars["id"]
 	if queryId == "" || cast.ToInt64(queryId) == 0 {
-		response.WriteJson(w, response.FailMessageResp("用户ID不能为空"))
+		response.WriteJson(w, response.FailMessageResp("测试用户ID不能为空"))
 		return
 	}
 	count, err := u.testUserGormService.DeleteUser(utils.ConvertToInt64(queryId))
@@ -149,12 +149,12 @@ func (u *TestUserForGormController) handlerDeleteUser(w http.ResponseWriter, r *
 func (u *TestUserForGormController) handlerBatchDeleteUser(w http.ResponseWriter, r *http.Request) {
 	var ids []any
 	if err := json.NewDecoder(r.Body).Decode(&ids); err != nil {
-		zap.L().Sugar().Errorf("用户批量删除(gorm)参数解析错误===%+v", err)
-		response.WriteJson(w, response.FailMessageResp("用户批量删除(gorm)参数解析失败"))
+		zap.L().Sugar().Errorf("测试用户批量删除(gorm)参数解析错误===%+v", err)
+		response.WriteJson(w, response.FailMessageResp("测试用户批量删除(gorm)参数解析失败"))
 		return
 	}
 
-	defer utils.CloseBodyError("用户批量删除(gorm)请求", w, r)
+	defer utils.CloseBodyError("测试用户批量删除(gorm)请求", w, r)
 
 	if len(ids) == 0 {
 		response.FailMessageResp("批量删除参数错误")
