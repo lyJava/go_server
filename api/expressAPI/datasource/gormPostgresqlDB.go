@@ -5,6 +5,7 @@ import (
 	cfg "apiProject/api/expressAPI/types/config"
 	"apiProject/api/expressAPI/types/domain"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"gorm.io/driver/postgres"
@@ -117,10 +118,24 @@ func InitGormPostgresSql() *GormPostgresSqlDb {
 		//Logger: logger.Default.LogMode(logger.Info),
 		Logger: customGormLogger, // 使用自定义的日志器
 	})
+
 	if err != nil {
-		fmt.Println("Failed to connect to Postgresql database:", err)
+		log.Printf("Failed to connect to Postgresql database:%v", err)
 	}
-	fmt.Println("Gorm Create Postgresql Database connection successful")
+	log.Printf("Gorm Create Postgresql Database connection successful")
+
+	sqlDb, err := db.DB()
+	if err != nil {
+		log.Printf("Failed to Get the Postgresql Db==%v", err)
+	}
+
+	err = sqlDb.Ping()
+	if err != nil {
+		log.Printf("Failed to Ping the Postgresql Db==%v", err)
+	}
+	log.Printf("Postgresql Database 状态：%v", sqlDb.Stats())
+
+	setConnPoolProps(sqlDb)
 
 	//var storeAdmin domain.StoreAdmin
 	//if err := gormDB.PsDB.First(&storeAdmin, 122).Error; err != nil {
@@ -158,4 +173,11 @@ func logWithTimestamp(format string, v ...interface{}) {
 	// 获取当前时间并格式化为毫秒
 	currentTime := time.Now().Format("2006-01-02 15:04:05.000")
 	log.Printf("[%s] %s", currentTime, fmt.Sprintf(format, v...))
+}
+
+func setConnPoolProps(db *sql.DB) {
+	db.SetMaxIdleConns(10)
+	db.SetMaxOpenConns(100)
+	db.SetConnMaxLifetime(time.Hour)
+	log.Println("Postgresql Database Connection Pool Setting success")
 }
