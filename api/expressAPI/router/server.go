@@ -23,12 +23,14 @@ type APIServer struct {
 	macMemory    service.MacMemoryService           // 苹果内存接口
 	macBook      service.MacBookService             // 苹果笔记本接口
 	storeAdmin   service.StoreAdminServiceInterface // 店铺管理员接口
+	testUserGorm service.TestUserForGormService     // 测试用户管理控制器(gorm方式)
 }
 
 // NewAPIServer 创建API服务
 func NewAPIServer(add string, express service.ExpressServiceInterface, user service.UserServiceInterface,
 	conn *amqp.Connection, d service.DictTypeService, te service.TestExpressService, cpu service.MacCpuService,
-	memory service.MacMemoryService, book service.MacBookService, storeAdmin service.StoreAdminServiceInterface) *APIServer {
+	memory service.MacMemoryService, book service.MacBookService, storeAdmin service.StoreAdminServiceInterface,
+	testUserGorm service.TestUserForGormService) *APIServer {
 	return &APIServer{
 		addr:         add,
 		express:      express,
@@ -40,6 +42,7 @@ func NewAPIServer(add string, express service.ExpressServiceInterface, user serv
 		macMemory:    memory,
 		macBook:      book,
 		storeAdmin:   storeAdmin,
+		testUserGorm: testUserGorm,
 	}
 }
 
@@ -110,6 +113,10 @@ func (s *APIServer) Serve() {
 	// 店铺管理员控制器
 	storeAdminController := controller.StoreAdminControllerInit(s.storeAdmin)
 	storeAdminController.RegisterRoutes(router)
+
+	// 测试用户管理控制器(gorm方式)
+	testUserGormController := controller.TestUserForGormControllerInit(s.testUserGorm)
+	testUserGormController.RegisterRoutes(router)
 
 	// 测试请求日志
 	router.HandleFunc("/user/test/{id}", UserHandler).Methods("GET")
