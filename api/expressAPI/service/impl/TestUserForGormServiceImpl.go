@@ -75,3 +75,21 @@ func (u *TestUserGormDB) UpdateUser(user *domain.TestUser) (int64, error) {
 	}
 	return tx.RowsAffected, nil
 }
+
+func (u *TestUserGormDB) DeleteUser(id int64) (int64, error) {
+	tx := u.Db.Delete(&domain.TestUser{}, id)
+	if tx.Error != nil {
+		zap.L().Sugar().Errorf("用户删除异常: %+v", tx.Error)
+		return 0, errors.New("用户更新异常")
+	}
+	return tx.RowsAffected, nil
+}
+
+func (u *TestUserGormDB) BatchDeleteUser(ids []any) (int64, error) {
+	tx := u.Db.Delete(&domain.TestUser{}, ids)
+	if tx.Error != nil {
+		zap.L().Sugar().Errorf("用户批量删除异常: %+v", tx.Error)
+		return 0, errors.New("用户批量删除失败")
+	}
+	return tx.RowsAffected, nil
+}

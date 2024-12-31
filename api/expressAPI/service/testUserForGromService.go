@@ -13,4 +13,8 @@ type TestUserForGormService interface {
 	UserLogin(user *domain.TestUser) (*domain.TestUser, error)
 	// UpdateUser 用户修改
 	UpdateUser(user *domain.TestUser) (int64, error)
+	// DeleteUser 用户删除
+	DeleteUser(id int64) (int64, error)
+	// BatchDeleteUser 用户批量删除
+	BatchDeleteUser(ids []any) (int64, error)
 }

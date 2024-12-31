@@ -24,15 +24,17 @@ func TestUserForGormControllerInit(u service.TestUserForGormService) *TestUserFo
 
 // RegisterRoutes 注册快递服务请求路由
 func (u *TestUserForGormController) RegisterRoutes(r *mux.Router) {
-	r.HandleFunc("/userGorm/{dataId}", u.handlerGetUser).Methods("GET")
-	r.HandleFunc("/userGorm/create", u.handlerCreateUser).Methods("POST")
-	r.HandleFunc("/userGorm/login", u.handlerUserLogin).Methods("POST")
-	r.HandleFunc("/userGorm/update", u.handlerUpdateUser).Methods("PUT")
+	r.HandleFunc("/userGorm/{id}", u.handlerGetUser).Methods(utils.GET)
+	r.HandleFunc("/userGorm/create", u.handlerCreateUser).Methods(utils.POST)
+	r.HandleFunc("/userGorm/login", u.handlerUserLogin).Methods(utils.POST)
+	r.HandleFunc("/userGorm/update", u.handlerUpdateUser).Methods(utils.PUT)
+	r.HandleFunc("/userGorm/delete/{id}", u.handlerDeleteUser).Methods(utils.DELETE)
+	r.HandleFunc("/userGorm/batchDelete", u.handlerBatchDeleteUser).Methods(utils.POST)
 }
 
 func (u *TestUserForGormController) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	var queryId = vars["dataId"]
+	var queryId = vars["id"]
 	if queryId == "" || cast.ToInt64(queryId) == 0 {
 		response.WriteJson(w, response.FailMessageResp("用户ID不能为空"))
 		return
@@ -122,4 +124,52 @@ func (u *TestUserForGormController) handlerUpdateUser(w http.ResponseWriter, r *
 	}
 
 	response.WriteJson(w, response.OkMessageResp("更新成功"))
+}
+
+func (u *TestUserForGormController) handlerDeleteUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	var queryId = vars["id"]
+	if queryId == "" || cast.ToInt64(queryId) == 0 {
+		response.WriteJson(w, response.FailMessageResp("用户ID不能为空"))
+		return
+	}
+	count, err := u.testUserGormService.DeleteUser(utils.ConvertToInt64(queryId))
+	if err != nil {
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
+		return
+	}
+
+	if count <= 0 {
+		response.FailMessageResp("删除失败")
+		return
+	}
+	response.WriteJson(w, response.OkMessageResp("删除成功"))
+}
+
+func (u *TestUserForGormController) handlerBatchDeleteUser(w http.ResponseWriter, r *http.Request) {
+	var ids []any
+	if err := json.NewDecoder(r.Body).Decode(&ids); err != nil {
+		zap.L().Sugar().Errorf("用户批量删除(gorm)参数解析错误===%+v", err)
+		response.WriteJson(w, response.FailMessageResp("用户批量删除(gorm)参数解析失败"))
+		return
+	}
+
+	defer utils.CloseBodyError("用户批量删除(gorm)请求", w, r)
+
+	if len(ids) == 0 {
+		response.FailMessageResp("批量删除参数错误")
+		return
+	}
+
+	count, err := u.testUserGormService.BatchDeleteUser(ids)
+	if err != nil {
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
+		return
+	}
+
+	if count <= 0 {
+		response.FailMessageResp("批量删除失败")
+		return
+	}
+	response.WriteJson(w, response.OkMessageResp("批量删除成功"))
 }
