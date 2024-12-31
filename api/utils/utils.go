@@ -909,3 +909,16 @@ func QueryParamToJson(queryParam string) string {
 
 	return ToJsonFormat(result)
 }
+
+// DateFormat 格式化日期
+func DateFormat(dateStr string) (string, error) {
+	if dateStr != "" {
+		parseDateStr, err := time.Parse(time.RFC3339, dateStr)
+		if err != nil {
+			zap.L().Sugar().Errorf("Date parsing error: %+v", err)
+			return "", errors.New("日期格式化失败")
+		}
+		return parseDateStr.Format("2006-01-02"), nil
+	}
+	return "", nil
+}
