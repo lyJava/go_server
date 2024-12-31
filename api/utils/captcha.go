@@ -527,11 +527,11 @@ func GetFontPath(currentRelativePath, fontPath string) (string, error) {
 var fontAbsolutePath string
 
 // init 初始化的时候获取字体文件绝对路径
-func init() {
-	fontPath, err := GetFontPath("/api/expressAPI", "/Arial Unicode.ttf")
-	if err != nil {
-		// fmt.Printf("%+v", err)或者log.Printf("%+v", err)记录详细的错误信息，包括堆栈跟踪，非常适合用于生产环境中的错误记录和调试
-		log.Printf("获取字体文件路径异常===%+v", err)
-	}
-	fontAbsolutePath = fontPath
-}
+// func init() {
+// 	fontPath, err := GetFontPath("/api/expressAPI", "/Arial Unicode.ttf")
+// 	if err != nil {
+// 		// fmt.Printf("%+v", err)或者log.Printf("%+v", err)记录详细的错误信息，包括堆栈跟踪，非常适合用于生产环境中的错误记录和调试
+// 		log.Printf("获取字体文件路径异常===%+v", err)
+// 	}
+// 	fontAbsolutePath = fontPath
+// }
