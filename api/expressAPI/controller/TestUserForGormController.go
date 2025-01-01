@@ -26,8 +26,10 @@ func TestUserForGormControllerInit(u service.TestUserForGormService) *TestUserFo
 func (u *TestUserForGormController) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/userGorm/{id}", u.handlerGetUser).Methods(utils.GET)
 	r.HandleFunc("/userGorm/create", u.handlerCreateUser).Methods(utils.POST)
+	r.HandleFunc("/userGorm/batchCreate", u.handlerBatchCreateUser).Methods(utils.POST)
 	r.HandleFunc("/userGorm/login", u.handlerUserLogin).Methods(utils.POST)
 	r.HandleFunc("/userGorm/update", u.handlerUpdateUser).Methods(utils.PUT)
+	r.HandleFunc("/userGorm/batchUpdate", u.handlerBatchUpdateUser).Methods(utils.PUT)
 	r.HandleFunc("/userGorm/delete/{id}", u.handlerDeleteUser).Methods(utils.DELETE)
 	r.HandleFunc("/userGorm/batchDelete", u.handlerBatchDeleteUser).Methods(utils.POST)
 }
@@ -69,6 +71,36 @@ func (u *TestUserForGormController) handlerCreateUser(w http.ResponseWriter, r *
 	zap.L().Sugar().Infof("测试用户新增===\n%s", marshal)
 
 	response.WriteJson(w, response.OkDataResp(createdUser))
+}
+
+// handlerBatchCreateUser 处理测试用户批量新增
+func (u *TestUserForGormController) handlerBatchCreateUser(w http.ResponseWriter, r *http.Request) {
+	var list []*domain.TestUser
+	if err := json.NewDecoder(r.Body).Decode(&list); err != nil {
+		zap.L().Sugar().Errorf("测试用户批量新增(gorm)参数解析错误===%+v", err)
+		response.WriteJson(w, response.FailMessageResp("测试用户批量新增参数解析失败"))
+		return
+	}
+
+	defer utils.CloseBodyError("测试用户批量新增(gorm)请求", w, r)
+
+	if len(list) == 0 {
+		response.FailMessageResp("批量创建参数验证失败")
+		return
+	}
+
+	count, err := u.testUserGormService.BatchCreateUser(list)
+	if err != nil {
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
+		return
+	}
+
+	if count <= 0 {
+		response.FailMessageResp("批量创建失败")
+		return
+	}
+
+	response.WriteJson(w, response.OkMessageResp("批量创建成功"))
 }
 
 // handlerUserLogin 用户登录
@@ -124,6 +156,54 @@ func (u *TestUserForGormController) handlerUpdateUser(w http.ResponseWriter, r *
 	}
 
 	response.WriteJson(w, response.OkMessageResp("更新成功"))
+}
+
+// handlerBatchUpdateUser 处理批量更新
+func (u *TestUserForGormController) handlerBatchUpdateUser(w http.ResponseWriter, r *http.Request) {
+	var list []*domain.TestUser
+	if err := json.NewDecoder(r.Body).Decode(&list); err != nil {
+		zap.L().Sugar().Errorf("测试用户批量修改(gorm)参数解析错误===%+v", err)
+		response.WriteJson(w, response.FailMessageResp("测试用户批量修改(gorm)参数解析失败"))
+		return
+	}
+
+	defer utils.CloseBodyError("测试用户批量修改(gorm)请求", w, r)
+
+	if len(list) == 0 {
+		response.FailMessageResp("批量修改参数验证失败")
+		return
+	}
+
+	// 使用map进行ID去重
+	uniqueMap := make(map[int64]*domain.TestUser)
+
+	for _, user := range list {
+		// 如果ID已经存在，则跳过
+		if _, exists := uniqueMap[user.Id]; !exists {
+			uniqueMap[user.Id] = user
+		}
+	}
+
+	// 将map中的值转换为切片
+	var uniqueList []*domain.TestUser
+	for _, user := range uniqueMap {
+		uniqueList = append(uniqueList, user)
+	}
+
+	list = uniqueList
+
+	count, err := u.testUserGormService.BatchUpdateUser(list)
+	if err != nil {
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
+		return
+	}
+
+	if count <= 0 {
+		response.FailMessageResp("批量更新失败")
+		return
+	}
+
+	response.WriteJson(w, response.OkMessageResp("批量更新成功"))
 }
 
 func (u *TestUserForGormController) handlerDeleteUser(w http.ResponseWriter, r *http.Request) {

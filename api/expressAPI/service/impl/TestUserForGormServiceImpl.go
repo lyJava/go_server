@@ -4,8 +4,11 @@ import (
 	"apiProject/api/expressAPI/types/domain"
 	"apiProject/api/utils"
 	"errors"
+	"fmt"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
+	"strings"
+	"time"
 )
 
 type TestUserGormDB struct {
@@ -42,6 +45,20 @@ func (u *TestUserGormDB) CreateUser(user *domain.TestUser) (*domain.TestUser, er
 	return u.GetUserById(user.Id)
 }
 
+func (u *TestUserGormDB) BatchCreateUser(list []*domain.TestUser) (int64, error) {
+	tx := u.Db.CreateInBatches(list, 100)
+	if tx.Error != nil {
+		zap.L().Sugar().Errorf("用户批量创建异常: %+v", tx.Error)
+		return 0, errors.New("用户批量创建异常")
+	}
+	var batchIds []int64
+	for i := 0; i < len(list); i++ {
+		batchIds = append(batchIds, list[i].Id)
+	}
+	zap.L().Sugar().Infof("用户批量创建返回的ID切片: %+v", batchIds)
+	return tx.RowsAffected, nil
+}
+
 func (u *TestUserGormDB) UserLogin(user *domain.TestUser) (*domain.TestUser, error) {
 	var loginUser domain.TestUser
 	if err := u.Db.Where("username = ?", user.Username).First(&loginUser).Error; err != nil {
@@ -74,6 +91,137 @@ func (u *TestUserGormDB) UpdateUser(user *domain.TestUser) (int64, error) {
 		return 0, errors.New("用户更新异常")
 	}
 	return tx.RowsAffected, nil
+}
+
+// BatchUpdateUser 批量更新
+//
+//goland:noinspection SqlResolve,SqlCaseVsIf,SqlError
+func (u *TestUserGormDB) BatchUpdateUser(list []*domain.TestUser) (int64, error) {
+	var rowsAffected int64
+	// 用来存储每个字段的更新条件
+	var usernameUpdates, passwordUpdates, emailUpdates, birthdayUpdates, phoneUpdates, addressUpdates []string
+	var args []any
+	var ids []any
+
+	commonSqlFragment := "WHEN id = %d THEN '%s'"
+	// 遍历 list 生成动态 SQL 更新
+	for _, user := range list {
+		userId := user.Id
+		ids = append(ids, userId)
+		// 构造动态更新的字段
+		if user.Username != "" {
+			// 这里直接将 id 和 username 填入 SQL 语句
+			usernameUpdates = append(usernameUpdates, fmt.Sprintf(commonSqlFragment, userId, user.Username))
+		}
+		if user.Password != "" {
+			passwordUpdates = append(passwordUpdates, fmt.Sprintf(commonSqlFragment, userId, user.Password))
+		}
+		if user.Email != "" {
+			emailUpdates = append(emailUpdates, fmt.Sprintf(commonSqlFragment, userId, user.Email))
+		}
+		if user.Birthday != "" {
+			birthdayUpdates = append(birthdayUpdates, fmt.Sprintf(commonSqlFragment, userId, formatDateForSQL(user.Birthday)))
+		}
+		if user.Phone != "" {
+			phoneUpdates = append(phoneUpdates, fmt.Sprintf(commonSqlFragment, userId, user.Phone))
+		}
+		if user.Address != "" {
+			addressUpdates = append(addressUpdates, fmt.Sprintf(commonSqlFragment, userId, user.Address))
+		}
+	}
+
+	// 动态生成 SQL 语句
+	sql := fmt.Sprintf(`
+        UPDATE tb_test_user SET
+            username = CASE %s ELSE username END, 
+            password = CASE %s ELSE password END, 
+            email = CASE %s ELSE email END, 
+            birthday = CASE %s ELSE birthday END, 
+            phone = CASE %s ELSE phone END, 
+            address = CASE %s ELSE address END
+        WHERE id IN (%s)`,
+		// 为每个字段生成相应的条件
+		strings.Join(usernameUpdates, " "),
+		strings.Join(passwordUpdates, " "),
+		strings.Join(emailUpdates, " "),
+		strings.Join(birthdayUpdates, " "),
+		strings.Join(phoneUpdates, " "),
+		strings.Join(addressUpdates, " "),
+		// 将所有的 IDs 作为条件传入
+		strings.Join(generatePlaceholderArray(len(ids)), ","),
+	)
+
+	// 将 ids 作为条件传入
+	args = append(args, ids...)
+
+	// 执行 SQL
+	tx := u.Db.Exec(sql, args...)
+	if tx.Error != nil {
+		zap.L().Sugar().Errorf("批量更新异常: %+v", tx.Error)
+		return rowsAffected, errors.New("批量更新异常")
+	}
+	rowsAffected = tx.RowsAffected
+	/*tx := u.Db.Begin()
+
+	for _, user := range list {
+		result := tx.Model(&domain.TestUser{}).Where("id = ?", user.Id).Updates(&domain.TestUser{
+			Username: user.Username,
+			Password: user.Password,
+			Email:    user.Email,
+			Birthday: user.Birthday,
+			Phone:    user.Phone,
+			Address:  user.Address,
+		})
+		if result.Error != nil {
+			tx.Rollback()
+			zap.L().Sugar().Errorf("用户更批量新异常: %+v", tx.Error)
+			return 0, errors.New("用户批量更新异常")
+		}
+
+		// 检查更新影响的行数
+		if result.RowsAffected > 0 {
+			rowsAffected += result.RowsAffected
+		}
+
+	}
+
+	// 提交事务
+	if err := tx.Commit().Error; err != nil {
+		zap.L().Sugar().Errorf("用户批量更新事务提交失败: %+v", err)
+		return 0, errors.New("用户批量更新失败")
+	}
+	*/
+	zap.L().Sugar().Infof("用户批量更新成功条数: %d", rowsAffected)
+
+	return rowsAffected, nil
+}
+
+// 生成 SQL 占位符 (例如：`?, ?, ?`)
+func generatePlaceholders(n int) string {
+	placeholders := make([]string, n)
+	for i := range placeholders {
+		placeholders[i] = "?"
+	}
+	return strings.Join(placeholders, ",")
+}
+
+// 生成 SQL 占位符 (例如：`?, ?, ?`)
+func generatePlaceholderArray(count int) []string {
+	placeholders := make([]string, count)
+	for i := 0; i < count; i++ {
+		placeholders[i] = "?"
+	}
+	return placeholders
+}
+
+// 格式化日期
+func formatDateForSQL(birthday string) string {
+	parsed, err := time.Parse("2006-01-02", birthday)
+	if err != nil {
+		zap.L().Sugar().Errorf("日期格式化失败: %v", err)
+		return birthday // 如果格式化失败，返回原始日期
+	}
+	return parsed.Format("2006-01-02") // 返回标准的日期格式
 }
 
 func (u *TestUserGormDB) DeleteUser(id int64) (int64, error) {
