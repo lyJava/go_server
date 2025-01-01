@@ -184,7 +184,6 @@ func (u *TestUserGormDB) BatchUpdateUser(list []*domain.TestUser) (int64, error)
 		if result.RowsAffected > 0 {
 			rowsAffected += result.RowsAffected
 		}
-
 	}
 
 	// 提交事务
@@ -196,34 +195,6 @@ func (u *TestUserGormDB) BatchUpdateUser(list []*domain.TestUser) (int64, error)
 	zap.L().Sugar().Infof("用户批量更新成功条数: %d", rowsAffected)
 
 	return rowsAffected, nil
-}
-
-// 生成 SQL 占位符 (例如：`?, ?, ?`)
-func generatePlaceholders(n int) string {
-	placeholders := make([]string, n)
-	for i := range placeholders {
-		placeholders[i] = "?"
-	}
-	return strings.Join(placeholders, ",")
-}
-
-// 生成 SQL 占位符 (例如：`?, ?, ?`)
-func generatePlaceholderArray(count int) []string {
-	placeholders := make([]string, count)
-	for i := 0; i < count; i++ {
-		placeholders[i] = "?"
-	}
-	return placeholders
-}
-
-// 格式化日期
-func formatDateForSQL(birthday string) string {
-	parsed, err := time.Parse("2006-01-02", birthday)
-	if err != nil {
-		zap.L().Sugar().Errorf("日期格式化失败: %v", err)
-		return birthday // 如果格式化失败，返回原始日期
-	}
-	return parsed.Format("2006-01-02") // 返回标准的日期格式
 }
 
 func (u *TestUserGormDB) DeleteUser(id int64) (int64, error) {
@@ -305,7 +276,63 @@ func (u *TestUserGormDB) SelectPage(param *param.TestUserPageParam) ([]*domain.T
 	return testUserList, total, getTotalPage(total, param.Size), nil
 }
 
+// formatDateForSQL 格式化日期
+//
+// 参数:
+//
+//	birthday: 出生日期字符串
+//
+// 返回:
+//
+//	string: 格式化后的日期
+func formatDateForSQL(birthday string) string {
+	parsed, err := time.Parse("2006-01-02", birthday)
+	if err != nil {
+		zap.L().Sugar().Errorf("日期格式化失败: %v", err)
+		return birthday // 如果格式化失败，返回原始日期
+	}
+	return parsed.Format("2006-01-02") // 返回标准的日期格式
+}
+
+// generatePlaceholders 生成SQL占位符(例如：`?, ?, ?`)
+//
+// 参数:
+//   - n: 占位符个数
+//
+// 返回:
+//   - string 占位符字符串
+func generatePlaceholders(n int) string {
+	placeholders := make([]string, n)
+	for i := range placeholders {
+		placeholders[i] = "?"
+	}
+	return strings.Join(placeholders, ",")
+}
+
+// generatePlaceholderArray 生成SQL占位符切片 (例如：{?, ?, ?})
+//
+// 参数:
+//   - n: 占位符个数
+//
+// 返回:
+//   - string 占位符切片
+func generatePlaceholderArray(count int) []string {
+	placeholders := make([]string, count)
+	for i := 0; i < count; i++ {
+		placeholders[i] = "?"
+	}
+	return placeholders
+}
+
 // setPageDefault 分页参数默认设置
+//
+// 参数:
+//
+//	param：分页查询参数结构体
+//
+// 返回：
+//
+//	*：分页查询参数结构体本身
 func setPageDefault(param *param.TestUserPageParam) *param.TestUserPageParam {
 	if param.Page <= 0 {
 		param.Page = 1
