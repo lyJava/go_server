@@ -2,11 +2,13 @@ package impl
 
 import (
 	"apiProject/api/expressAPI/types/domain"
+	"apiProject/api/expressAPI/types/param"
 	"apiProject/api/utils"
 	"errors"
 	"fmt"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
+	"math"
 	"strings"
 	"time"
 )
@@ -240,4 +242,81 @@ func (u *TestUserGormDB) BatchDeleteUser(ids []any) (int64, error) {
 		return 0, errors.New("用户批量删除失败")
 	}
 	return tx.RowsAffected, nil
+}
+
+// SelectPage 查询分页
+func (u *TestUserGormDB) SelectPage(param *param.TestUserPageParam) ([]*domain.TestUser, int64, int64, error) {
+	setPageDefault(param)
+
+	// 计算分页参数
+	offset := (param.Page - 1) * param.Size
+
+	// 构建查询条件
+	db := u.Db.Model(&domain.TestUser{})
+	// 动态构建查询条件
+	if param.Username != "" {
+		db = db.Where(fmt.Sprintf("username LIKE CONCAT('%%', '%s', '%%')", param.Username))
+	}
+	if param.Email != "" {
+		db = db.Where(fmt.Sprintf("email LIKE CONCAT('%%', '%s', '%%')", param.Email))
+	}
+	if param.Birthday != "" {
+		db = db.Where("birthday = ?", param.Birthday)
+	}
+	if param.Phone != "" {
+		db = db.Where("phone LIKE ?", fmt.Sprintf("%%%s%%", param.Phone))
+	}
+	if param.Address != "" {
+		db = db.Where("address LIKE ?", fmt.Sprintf("%%%s%%", param.Address))
+	}
+
+	// 处理排序（如果 param.Column 和 param.Order 为空，则不进行排序）
+	if param.Column != "" && param.Order != "" {
+		db = db.Order(fmt.Sprintf("%s %s", param.Column, param.Order))
+	}
+
+	// 查询总记录数
+	var total int64
+	if err := db.Count(&total).Error; err != nil {
+		zap.L().Sugar().Errorf("获取总记录数异常: %+v", err)
+		return nil, 0, 0, errors.New("获取总记录数失败")
+	}
+
+	// 查询用户列表
+	var testUserList []*domain.TestUser
+	if err := db.Offset(int(offset)).Limit(int(param.Size)).Find(&testUserList).Error; err != nil {
+		zap.L().Sugar().Errorf("获取用户列表异常: %+v", err)
+		return nil, 0, 0, errors.New("获取用户列表失败")
+	}
+
+	if len(testUserList) > 0 {
+		for _, user := range testUserList {
+			birthday := user.Birthday
+			if birthday != "" {
+				dateFormat, err := utils.DateFormat(birthday)
+				if err != nil {
+					return nil, 0, 0, errors.New("获取用户列表失败")
+				}
+				user.Birthday = dateFormat
+			}
+		}
+	}
+
+	return testUserList, total, getTotalPage(total, param.Size), nil
+}
+
+// setPageDefault 分页参数默认设置
+func setPageDefault(param *param.TestUserPageParam) *param.TestUserPageParam {
+	if param.Page <= 0 {
+		param.Page = 1
+	}
+	if param.Size <= 0 {
+		param.Size = 10
+	}
+	return param
+}
+
+// getTotalPage 计算总页数
+func getTotalPage(total, size int64) int64 {
+	return int64(int(math.Ceil(float64(total) / float64(size))))
 }

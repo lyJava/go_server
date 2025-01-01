@@ -55,3 +55,17 @@ type MacBookPageParam struct {
 	ProType   string `json:"proType"`   // 类型
 	MoldModel string `json:"moldModel"` // 型号
 }
+
+// TestUserPageParam 测试用户分页参数
+type TestUserPageParam struct {
+	Page     int64  `json:"page"`               // 当前页码
+	Size     int64  `json:"size"`               // 每页条数
+	Column   string `json:"column"`             // 排序的列
+	Order    string `json:"order"`              // 降序或者升序
+	Username string `json:"username,omitempty"` // 用户名
+	Password string `json:"password,omitempty"` // 密码
+	Email    string `json:"email,omitempty"`    // 邮箱
+	Birthday string `json:"birthday,omitempty"` // 出生日期
+	Phone    string `json:"phone,omitempty"`    // 手机
+	Address  string `json:"address,omitempty"`  //地址
+}

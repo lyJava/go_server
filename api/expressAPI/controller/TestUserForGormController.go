@@ -3,6 +3,7 @@ package controller
 import (
 	"apiProject/api/expressAPI/service"
 	"apiProject/api/expressAPI/types/domain"
+	"apiProject/api/expressAPI/types/param"
 	"apiProject/api/response"
 	"apiProject/api/utils"
 	"encoding/json"
@@ -24,17 +25,18 @@ func TestUserForGormControllerInit(u service.TestUserForGormService) *TestUserFo
 
 // RegisterRoutes 注册测试用户控制器请求路由
 func (u *TestUserForGormController) RegisterRoutes(r *mux.Router) {
-	r.HandleFunc("/userGorm/{id}", u.handlerGetUser).Methods(utils.GET)
-	r.HandleFunc("/userGorm/create", u.handlerCreateUser).Methods(utils.POST)
-	r.HandleFunc("/userGorm/batchCreate", u.handlerBatchCreateUser).Methods(utils.POST)
-	r.HandleFunc("/userGorm/login", u.handlerUserLogin).Methods(utils.POST)
-	r.HandleFunc("/userGorm/update", u.handlerUpdateUser).Methods(utils.PUT)
-	r.HandleFunc("/userGorm/batchUpdate", u.handlerBatchUpdateUser).Methods(utils.PUT)
-	r.HandleFunc("/userGorm/delete/{id}", u.handlerDeleteUser).Methods(utils.DELETE)
-	r.HandleFunc("/userGorm/batchDelete", u.handlerBatchDeleteUser).Methods(utils.POST)
+	r.HandleFunc("/userGorm/{id}", u.handlerGet).Methods(utils.GET)
+	r.HandleFunc("/userGorm/create", u.handlerCreate).Methods(utils.POST)
+	r.HandleFunc("/userGorm/batchCreate", u.handlerBatchCreate).Methods(utils.POST)
+	r.HandleFunc("/userGorm/login", u.handlerLogin).Methods(utils.POST)
+	r.HandleFunc("/userGorm/update", u.handlerUpdate).Methods(utils.PUT)
+	r.HandleFunc("/userGorm/batchUpdate", u.handlerBatchUpdate).Methods(utils.PUT)
+	r.HandleFunc("/userGorm/delete/{id}", u.handlerDelete).Methods(utils.DELETE)
+	r.HandleFunc("/userGorm/batchDelete", u.handlerBatchDelete).Methods(utils.POST)
+	r.HandleFunc("/userGorm/page", u.handlerBatchPage).Methods(utils.POST)
 }
 
-func (u *TestUserForGormController) handlerGetUser(w http.ResponseWriter, r *http.Request) {
+func (u *TestUserForGormController) handlerGet(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var queryId = vars["id"]
 	if queryId == "" || cast.ToInt64(queryId) == 0 {
@@ -49,8 +51,8 @@ func (u *TestUserForGormController) handlerGetUser(w http.ResponseWriter, r *htt
 	response.WriteJson(w, response.OkDataResp(t))
 }
 
-// handlerCreateUser 处理用户新增
-func (u *TestUserForGormController) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
+// handlerCreate 处理用户新增
+func (u *TestUserForGormController) handlerCreate(w http.ResponseWriter, r *http.Request) {
 	var user *domain.TestUser
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		zap.L().Sugar().Errorf("测试用户新增(gorm)参数解析错误===%+v", err)
@@ -73,8 +75,8 @@ func (u *TestUserForGormController) handlerCreateUser(w http.ResponseWriter, r *
 	response.WriteJson(w, response.OkDataResp(createdUser))
 }
 
-// handlerBatchCreateUser 处理测试用户批量新增
-func (u *TestUserForGormController) handlerBatchCreateUser(w http.ResponseWriter, r *http.Request) {
+// handlerBatchCreate 处理测试用户批量新增
+func (u *TestUserForGormController) handlerBatchCreate(w http.ResponseWriter, r *http.Request) {
 	var list []*domain.TestUser
 	if err := json.NewDecoder(r.Body).Decode(&list); err != nil {
 		zap.L().Sugar().Errorf("测试用户批量新增(gorm)参数解析错误===%+v", err)
@@ -103,8 +105,8 @@ func (u *TestUserForGormController) handlerBatchCreateUser(w http.ResponseWriter
 	response.WriteJson(w, response.OkMessageResp("批量创建成功"))
 }
 
-// handlerUserLogin 用户登录
-func (u *TestUserForGormController) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
+// handlerLogin 用户登录
+func (u *TestUserForGormController) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	var user *domain.TestUser
 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
@@ -133,8 +135,8 @@ func (u *TestUserForGormController) handlerUserLogin(w http.ResponseWriter, r *h
 	response.WriteJson(w, response.OkDataResp(loginUser))
 }
 
-// handlerUpdateUser 处理用户修改
-func (u *TestUserForGormController) handlerUpdateUser(w http.ResponseWriter, r *http.Request) {
+// handlerUpdate 处理用户修改
+func (u *TestUserForGormController) handlerUpdate(w http.ResponseWriter, r *http.Request) {
 	var user *domain.TestUser
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		zap.L().Sugar().Errorf("测试用户修改(gorm)参数解析错误===%+v", err)
@@ -158,8 +160,8 @@ func (u *TestUserForGormController) handlerUpdateUser(w http.ResponseWriter, r *
 	response.WriteJson(w, response.OkMessageResp("更新成功"))
 }
 
-// handlerBatchUpdateUser 处理批量更新
-func (u *TestUserForGormController) handlerBatchUpdateUser(w http.ResponseWriter, r *http.Request) {
+// handlerBatchUpdate 处理批量更新
+func (u *TestUserForGormController) handlerBatchUpdate(w http.ResponseWriter, r *http.Request) {
 	var list []*domain.TestUser
 	if err := json.NewDecoder(r.Body).Decode(&list); err != nil {
 		zap.L().Sugar().Errorf("测试用户批量修改(gorm)参数解析错误===%+v", err)
@@ -206,7 +208,8 @@ func (u *TestUserForGormController) handlerBatchUpdateUser(w http.ResponseWriter
 	response.WriteJson(w, response.OkMessageResp("批量更新成功"))
 }
 
-func (u *TestUserForGormController) handlerDeleteUser(w http.ResponseWriter, r *http.Request) {
+// handlerDelete 处理删除
+func (u *TestUserForGormController) handlerDelete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var queryId = vars["id"]
 	if queryId == "" || cast.ToInt64(queryId) == 0 {
@@ -226,7 +229,8 @@ func (u *TestUserForGormController) handlerDeleteUser(w http.ResponseWriter, r *
 	response.WriteJson(w, response.OkMessageResp("删除成功"))
 }
 
-func (u *TestUserForGormController) handlerBatchDeleteUser(w http.ResponseWriter, r *http.Request) {
+// handlerBatchDelete 处理批量删除
+func (u *TestUserForGormController) handlerBatchDelete(w http.ResponseWriter, r *http.Request) {
 	var ids []any
 	if err := json.NewDecoder(r.Body).Decode(&ids); err != nil {
 		zap.L().Sugar().Errorf("测试用户批量删除(gorm)参数解析错误===%+v", err)
@@ -252,4 +256,28 @@ func (u *TestUserForGormController) handlerBatchDeleteUser(w http.ResponseWriter
 		return
 	}
 	response.WriteJson(w, response.OkMessageResp("批量删除成功"))
+}
+
+// handlerBatchPage 处理分页
+func (u *TestUserForGormController) handlerBatchPage(w http.ResponseWriter, r *http.Request) {
+	var pageParam *param.TestUserPageParam
+	if err := json.NewDecoder(r.Body).Decode(&pageParam); err != nil {
+		zap.L().Sugar().Errorf("测试用户分页查询(gorm)参数解析错误===%+v", err)
+		response.WriteJson(w, response.FailMessageResp("测试用户分页查询参数解析失败"))
+		return
+	}
+
+	defer utils.CloseBodyError("测试用户分页查询(gorm)请求", w, r)
+
+	list, totalRecord, totalPage, err := u.testUserGormService.SelectPage(pageParam)
+	if err != nil {
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
+		return
+	}
+
+	dataMap := map[string]interface{}{
+		"pageData": response.NewPageData(totalRecord, totalPage, list),
+	}
+
+	response.WriteJson(w, response.OkDataResp(dataMap))
 }
