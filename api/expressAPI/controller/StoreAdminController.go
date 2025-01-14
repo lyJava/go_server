@@ -7,11 +7,14 @@ import (
 	"apiProject/api/response"
 	"apiProject/api/utils"
 	"encoding/json"
+	"fmt"
 	"github.com/bytedance/sonic"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"io"
 	"log"
 	"net/http"
+	"os"
 )
 
 // StoreAdminController 店铺管理员控制器
@@ -44,6 +47,8 @@ func (e *StoreAdminController) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/dev-api/storeAdmin/batchDelete", e.handlerBatchDelete).Methods("POST")
 	// 批量删除
 	r.HandleFunc("/dev-api/storeAdmin/batchSave", e.handlerBatchSave).Methods("POST")
+	// pdf水印
+	r.HandleFunc("/dev-api/storeAdmin/pdf/water", e.handlerPdfWater).Methods(utils.GET)
 }
 
 func (e *StoreAdminController) handlerCrete(w http.ResponseWriter, r *http.Request) {
@@ -263,4 +268,83 @@ func (e *StoreAdminController) handlerBatchSave(w http.ResponseWriter, r *http.R
 		return
 	}
 	response.WriteJson(w, response.OkDataResp(t))
+}
+
+func (e *StoreAdminController) handlerPdfWater(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("handlerPdfWater")
+	// 读取一个 PDF 文件
+	filePath := "/Users/yangge/GolandProjects/apiProject/upload/example.pdf" // 这里指定你的 PDF 文件路径
+	file, err := os.Open(filePath)
+	if err != nil {
+		fmt.Printf("Failed to open file: %s\n", err)
+		return
+	}
+	defer file.Close()
+
+	// 创建一个 multipart.Reader
+	//body := &bytes.Buffer{}
+	//_, err = io.Copy(body, file)
+	//if err != nil {
+	//	fmt.Printf("Failed to copy file content: %s\n", err)
+	//	return
+	//}
+	//multipartReader := multipart.NewReader(body, "boundary")
+	//
+	//// 获取文件部分 (通常文件位于 "file" 字段)
+	//part, err := multipartReader.NextPart()
+	//if err == io.EOF {
+	//	fmt.Printf("No more parts available===%s\n", err)
+	//	return
+	//} else if err != nil {
+	//	fmt.Printf("Failed to get part from multipart: %s\n", err)
+	//	return
+	//}
+
+	// 传递文件部分到 AddTextWaterForPdf
+	watermarkedPDF, err := utils.AddTextWaterForPdfFile(file, "公开作品，禁止商用")
+	if err != nil {
+		fmt.Printf("Failed to add watermark: %s\n", err)
+		return
+	}
+
+	//texts := []string{"机密文件", "严格保密", "仅限内部使用"}
+	//multipleWatermarkedPDF, err := utils.AddMultipleWatermarksToPdf(filePath, texts)
+	//if err != nil {
+	//	fmt.Printf("Failed to add watermark: %s\n", err)
+	//	return
+	//}
+
+	// 保存带水印的 PDF
+	//outputFile := "output_watermarked.pdf"
+	//err = os.WriteFile(outputFile, watermarkedPDF, 0644)
+	//if err != nil {
+	//	fmt.Printf("Failed to write output file: %s\n", err)
+	//	return
+	//}
+	//
+	//// 保存带水印的 PDF
+	//outputFile2 := "multiple_output_watermarked.pdf"
+	//err = os.WriteFile(outputFile2, multipleWatermarkedPDF, 0644)
+	//if err != nil {
+	//	fmt.Printf("Failed to write output file: %s\n", err)
+	//	return
+	//}
+
+	// 输出文件路径信息
+	//fmt.Printf("PDF with watermark saved to: %s\n", outputFile2)
+
+	// 设置正确的 HTTP 响应头
+	w.Header().Set("Content-Type", "application/pdf")
+	// 这样会直接下载
+	//w.Header().Set("Content-Disposition", "attachment; filename=\"output_watermarked.pdf\"")
+
+	// 不直接下载
+	w.Header().Set("Content-Disposition", "inline; filename=\""+uuid.NewString()+".pdf\"")
+
+	// 将带水印的 PDF 写入响应
+	_, err = w.Write(watermarkedPDF)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to write output file: %s", err), http.StatusInternalServerError)
+		return
+	}
 }
