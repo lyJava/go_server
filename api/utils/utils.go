@@ -864,7 +864,7 @@ func TimeForHuman(timeValue int64) string {
 	}
 }
 
-// ShowJsonFormat 返回格式化json
+// ToJsonFormat 返回格式化json
 func ToJsonFormat(data any) string {
 	if data == "" {
 		return ""
