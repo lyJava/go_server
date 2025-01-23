@@ -3,7 +3,6 @@ package utils
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"log"
@@ -51,7 +50,6 @@ func UploadObj(client *minio.Client, bucketName, objectName, filePath string) (s
 	}
 	// 桶不存在则创建
 	if !exists {
-		// 确保存储桶存在（如果不存在则创建）
 		err = client.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{})
 		if err != nil {
 			log.Printf("创建桶异常: %+v", err)
@@ -60,16 +58,14 @@ func UploadObj(client *minio.Client, bucketName, objectName, filePath string) (s
 	}
 
 	// 获取文件的 MIME 类型
-	fileExt := filepath.Ext(filePath) // 获取文件扩展名
+	fileExt := filepath.Ext(filePath)
 	mimeType := mime.TypeByExtension(fileExt)
 	if mimeType == "" {
-		// 如果无法根据扩展名获取 MIME 类型，默认为 "application/octet-stream"
 		mimeType = "application/octet-stream"
 	}
 
-	log.Printf("文件上传类型为: %s", mimeType)
+	log.Printf("上传文件MIME类型为: %s", mimeType)
 
-	// 上传文件
 	uploadInfo, err := client.FPutObject(context.Background(), bucketName, objectName,
 		filePath, minio.PutObjectOptions{
 			ContentType: mimeType, // 设置文件类型为图片
@@ -79,10 +75,10 @@ func UploadObj(client *minio.Client, bucketName, objectName, filePath string) (s
 		return "", errors.New("文件上传失败")
 	}
 	log.Printf("文件上传成功! ===%v", ToJsonFormat(&uploadInfo))
-	// inline 预览， attachment 下载
+	// inline:预览， attachment:下载
 	previewUrl, err := client.PresignedGetObject(context.Background(), bucketName, objectName, time.Second*300,
 		url.Values{
-			"response-content-type":        []string{mimeType}, // 设置 Content-Type
+			"response-content-type":        []string{mimeType},
 			"response-content-disposition": []string{"inline; filename=" + objectName},
 		},
 	)
@@ -137,7 +133,7 @@ func DownloadObj(client *minio.Client, bucketName, objectName, filePath string) 
 		log.Printf("文件下载失败: %v", err)
 		return "", err
 	}
-	fmt.Printf("文件下载成功!,路径为====%s", filePath)
+	log.Printf("文件下载成功!,路径为====%s", filePath)
 	return filePath, nil
 }
 
