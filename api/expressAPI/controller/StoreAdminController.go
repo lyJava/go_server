@@ -32,23 +32,23 @@ func StoreAdminControllerInit(s service.StoreAdminServiceInterface) *StoreAdminC
 // RegisterRoutes 注册快递服务请求路由
 func (e *StoreAdminController) RegisterRoutes(r *mux.Router) {
 	// 新增
-	r.HandleFunc("/dev-api/storeAdmin", e.handlerCrete).Methods("POST")
+	r.HandleFunc("/storeAdmin", e.handlerCrete).Methods("POST")
 	// 修改
-	r.HandleFunc("/dev-api/storeAdmin", e.handlerUpdate).Methods("PUT")
+	r.HandleFunc("/storeAdmin", e.handlerUpdate).Methods("PUT")
 	// 查询详情
-	r.HandleFunc("/dev-api/storeAdmin/detail", e.handlerDetail).Methods("GET")
+	r.HandleFunc("/storeAdmin/detail", e.handlerDetail).Methods("GET")
 	// 查询
-	r.HandleFunc("/dev-api/storeAdmin/{dataId}", e.handlerGet).Methods("GET")
+	r.HandleFunc("/storeAdmin/{dataId}", e.handlerGet).Methods("GET")
 	// 删除
-	r.HandleFunc("/dev-api/storeAdmin/{dataId}", e.handlerDelete).Methods("DELETE")
+	r.HandleFunc("/storeAdmin/{dataId}", e.handlerDelete).Methods("DELETE")
 	// 多条件查询分页
-	r.HandleFunc("/dev-api/storeAdmin/list", e.handlerSelectPageParam).Methods("POST")
+	r.HandleFunc("/storeAdmin/list", e.handlerSelectPageParam).Methods("POST")
 	// 批量删除
-	r.HandleFunc("/dev-api/storeAdmin/batchDelete", e.handlerBatchDelete).Methods("POST")
+	r.HandleFunc("/storeAdmin/batchDelete", e.handlerBatchDelete).Methods("POST")
 	// 批量删除
-	r.HandleFunc("/dev-api/storeAdmin/batchSave", e.handlerBatchSave).Methods("POST")
+	r.HandleFunc("/storeAdmin/batchSave", e.handlerBatchSave).Methods("POST")
 	// pdf水印
-	r.HandleFunc("/dev-api/storeAdmin/pdf/water", e.handlerPdfWater).Methods(utils.GET)
+	r.HandleFunc("/storeAdmin/pdf/water", e.handlerPdfWater).Methods(utils.GET)
 }
 
 func (e *StoreAdminController) handlerCrete(w http.ResponseWriter, r *http.Request) {
