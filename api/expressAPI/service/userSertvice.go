@@ -11,4 +11,6 @@ type UserServiceInterface interface {
 	CreateUser(user *domain.User) (*domain.User, error)
 	// UserLogin 用户登录
 	UserLogin(user *domain.User) (*domain.User, error)
+	// GetAllUser 查询所有用户
+	GetAllUser() ([]*domain.User, error)
 }

@@ -4,7 +4,6 @@ import (
 	"apiProject/api/expressAPI/types/domain"
 	"database/sql"
 	"errors"
-
 	"go.uber.org/zap"
 )
 
@@ -167,4 +166,36 @@ func (u *UserDB) UserLogin(us *domain.User) (*domain.User, error) {
 		return nil, err
 	}
 	return user, nil
+}
+
+func (u *UserDB) GetAllUser() ([]*domain.User, error) {
+	// 创建 Express 对象
+	var list []*domain.User
+	var rows, err = u.Db.Query(`SELECT
+					user_id,
+					IFNULL(username, ''),
+					IFNULL(nick_name, ''),
+					IFNULL(password, '')
+				FROM
+					sys_user`)
+	if err != nil {
+		zap.L().Sugar().Errorf("用户数据查询错误===%+v", err)
+		return nil, err
+	}
+
+	for rows.Next() {
+		user := &domain.User{}
+		err := rows.Scan(
+			&user.UserId,
+			&user.Username,
+			&user.Nickname,
+			&user.Password)
+		if err != nil {
+			zap.L().Sugar().Errorf("用户数据转换错误===%+v", err)
+			return nil, err
+		}
+		list = append(list, user)
+	}
+
+	return list, nil
 }
