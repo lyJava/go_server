@@ -160,7 +160,7 @@ func ExceptionResp(code int, message string, data interface{}) Response {
 
 // WriteJson 将数据转换json写入到http.ResponseWriter
 func WriteJson(w http.ResponseWriter, data Response) {
-	w.Header().Set("Content-Type", "application/json;charset=utf-8")
+	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.WriteHeader(data.Code)
 	json.NewEncoder(w).Encode(data)
 }
