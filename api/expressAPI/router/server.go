@@ -111,8 +111,11 @@ func (s *APIServer) Serve() {
 	storeAdminController.RegisterRoutes(router)
 
 	// 测试用户管理控制器(gorm方式)
+	// 用户测试gorm控制器路由添加前缀
+	userGormRouter := router.PathPrefix("/userGorm").Subrouter()
 	testUserGormController := controller.TestUserForGormControllerInit(s.testUserGorm)
-	testUserGormController.RegisterRoutes(router)
+	// testUserGormController.RegisterRoutes(router)
+	testUserGormController.RegisterRoutes(userGormRouter)
 
 	sseController := controller.SseControllerInit()
 	sseController.RegisterRoutes(router)

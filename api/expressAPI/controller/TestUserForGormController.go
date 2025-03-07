@@ -25,15 +25,15 @@ func TestUserForGormControllerInit(u service.TestUserForGormService) *TestUserFo
 
 // RegisterRoutes 注册测试用户控制器请求路由
 func (u *TestUserForGormController) RegisterRoutes(r *mux.Router) {
-	r.HandleFunc("/userGorm/{id}", u.handlerGet).Methods(utils.GET)
-	r.HandleFunc("/userGorm/create", u.handlerCreate).Methods(utils.POST)
-	r.HandleFunc("/userGorm/batchCreate", u.handlerBatchCreate).Methods(utils.POST)
-	r.HandleFunc("/userGorm/login", u.handlerLogin).Methods(utils.POST)
-	r.HandleFunc("/userGorm/update", u.handlerUpdate).Methods(utils.PUT)
-	r.HandleFunc("/userGorm/batchUpdate", u.handlerBatchUpdate).Methods(utils.PUT)
-	r.HandleFunc("/userGorm/delete/{id}", u.handlerDelete).Methods(utils.DELETE)
-	r.HandleFunc("/userGorm/batchDelete", u.handlerBatchDelete).Methods(utils.POST)
-	r.HandleFunc("/userGorm/page", u.handlerBatchPage).Methods(utils.POST)
+	r.HandleFunc("/{id}", u.handlerGet).Methods(utils.GET)
+	r.HandleFunc("/create", u.handlerCreate).Methods(utils.POST)
+	r.HandleFunc("/batchCreate", u.handlerBatchCreate).Methods(utils.POST)
+	r.HandleFunc("/login", u.handlerLogin).Methods(utils.POST)
+	r.HandleFunc("/update", u.handlerUpdate).Methods(utils.PUT)
+	r.HandleFunc("/batchUpdate", u.handlerBatchUpdate).Methods(utils.PUT)
+	r.HandleFunc("/delete/{id}", u.handlerDelete).Methods(utils.DELETE)
+	r.HandleFunc("/batchDelete", u.handlerBatchDelete).Methods(utils.POST)
+	r.HandleFunc("/page", u.handlerPage).Methods(utils.POST)
 }
 
 func (u *TestUserForGormController) handlerGet(w http.ResponseWriter, r *http.Request) {
@@ -258,8 +258,8 @@ func (u *TestUserForGormController) handlerBatchDelete(w http.ResponseWriter, r 
 	response.WriteJson(w, response.OkMessageResp("批量删除成功"))
 }
 
-// handlerBatchPage 处理分页
-func (u *TestUserForGormController) handlerBatchPage(w http.ResponseWriter, r *http.Request) {
+// handlerPage 处理分页
+func (u *TestUserForGormController) handlerPage(w http.ResponseWriter, r *http.Request) {
 	var pageParam *param.TestUserPageParam
 	if err := json.NewDecoder(r.Body).Decode(&pageParam); err != nil {
 		zap.L().Sugar().Errorf("测试用户分页查询(gorm)参数解析错误===%+v", err)
