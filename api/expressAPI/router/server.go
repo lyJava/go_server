@@ -46,10 +46,6 @@ func NewAPIServer(add string, express service.ExpressServiceInterface, user serv
 	}
 }
 
-var queueName = "create_order_queue"
-var exchangeName = "create_order_exchange"
-var routingKey = "create_order_routing_key"
-
 // Serve 启动API服务
 func (s *APIServer) Serve() {
 	router := mux.NewRouter()
