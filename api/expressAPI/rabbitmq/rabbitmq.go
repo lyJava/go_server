@@ -20,15 +20,26 @@ func failOnError(err error, msg string) {
 }
 
 // ConnectRabbitmq 连接RabbitMQ
-func ConnectRabbitmq(connectUrl string) *amqp.Connection {
-	// 只有开启的时候才连接
+func ConnectRabbitmq() *amqp.Connection {
 	rabbitmqCfg := config.EnvConfig.Rabbitmq
 	if !rabbitmqCfg.Enable {
 		return nil
 	}
 
+	connectUrl := fmt.Sprintf("amqp://%s:%s@%s:%d%s",
+		rabbitmqCfg.Username,
+		rabbitmqCfg.Password,
+		rabbitmqCfg.Host,
+		rabbitmqCfg.Port,
+		rabbitmqCfg.VirtualHost,
+	)
+
 	conn, err := amqp.Dial(connectUrl)
-	failOnError(err, "Failed to connect to RabbitMQ")
+
+	if err != nil {
+		zap.L().Sugar().Errorf("Failed to connect to RabbitMQ===\n%+v", err)
+	}
+	log.Printf("success to connect to RabbitMQ ===%v", rabbitmqCfg)
 	// 将json格式化输出
 	rabbitmqProperties, _ := json.MarshalIndent(conn.Properties, "", "    ")
 	zap.L().Sugar().Infof("Success to connect to RabbitMQ===\r\n%+v", string(rabbitmqProperties))

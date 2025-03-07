@@ -10,8 +10,6 @@ import (
 	"apiProject/api/expressAPI/service/impl"
 	configure "apiProject/api/expressAPI/types/config"
 	"apiProject/api/utils"
-	"fmt"
-	"github.com/go-sql-driver/mysql"
 	"log"
 )
 
@@ -80,27 +78,15 @@ func main() {
 	}
 	log.Printf("解密后的密码===%s", string(password))*/
 
-	cfg := mysql.Config{
-		User:                 config.EnvConfig.DbUser,
-		Passwd:               config.EnvConfig.DbPass,
-		Addr:                 config.EnvConfig.DbAddress,
-		DBName:               config.EnvConfig.DbName,
-		Net:                  "tcp",
-		AllowNativePasswords: true,
-		ParseTime:            false,
-		Collation:            "utf8mb4_general_ci",
-		Loc:                  config.EnvConfig.Loc,
-	}
-
-	rabbitmqCfg := config.EnvConfig.Rabbitmq
-	connString := fmt.Sprintf("amqp://%s:%s@%s:%d%s",
-		rabbitmqCfg.Username,
-		rabbitmqCfg.Password,
-		rabbitmqCfg.Host,
-		rabbitmqCfg.Port,
-		rabbitmqCfg.VirtualHost,
-	)
-	log.Println(connString)
+	//rabbitmqCfg := config.EnvConfig.Rabbitmq
+	//connString := fmt.Sprintf("amqp://%s:%s@%s:%d%s",
+	//	rabbitmqCfg.Username,
+	//	rabbitmqCfg.Password,
+	//	rabbitmqCfg.Host,
+	//	rabbitmqCfg.Port,
+	//	rabbitmqCfg.VirtualHost,
+	//)
+	//log.Println(connString)
 
 	//rabbitmq.Consume(ch, queue.Name, false)
 	/*expressSQL := datasource.InitMysqlDB(cfg)
@@ -175,7 +161,7 @@ func main() {
 	ret5 := utils.TimeForHuman(time.Now().Unix() - 3*3*3*60*60)
 	fmt.Println(ret5)*/
 
-	expressMySQL := datasource.InitMysqlDB(cfg)
+	expressMySQL := datasource.InitMysqlDB()
 	//expressSQL := mysqlDB.InitMysqlDB(cfg)
 
 	postgresql := datasource.InitPostgresql()
@@ -187,6 +173,15 @@ func main() {
 	mySqlDb, err := expressMySQL.GetDb()
 	if err != nil {
 		log.Printf("获取Mysql数据库信息失败===%v", err)
+	}
+
+	client, err := datasource.InitMinioClient()
+	// minio客户端正常在线才执行操作
+	if client != nil && err == nil {
+		//utils.CheckBuckets(client)
+		utils.UploadObj(client, "test", "1714653214099.jpg", "/Users/yangge/GolandProjects/apiProject/upload/1714653214099.jpg")
+		utils.DownloadObj(client, "test", "1714653214099.jpg", "aaaaa.jpg")
+		utils.RemoveObj(client, "test", "1714653214099.jpg")
 	}
 
 	gormDB := datasource.InitGormPostgresSql()
@@ -203,7 +198,7 @@ func main() {
 	testUserGormDb := impl.NewTestUserGormDB(gormDB.PsDB)
 
 	serverPort := ":" + utils.ConvertIntToStr(config.EnvConfig.ServerConfig.Port)
-	api := router.NewAPIServer(serverPort, express, user, rabbitmq.ConnectRabbitmq(connString), dict,
+	api := router.NewAPIServer(serverPort, express, user, rabbitmq.ConnectRabbitmq(), dict,
 		testExpressDB, macCpuDb, macMemoryDb, macBookDb, storeAdminDb, testUserGormDb)
 	api.Serve()
 
