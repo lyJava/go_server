@@ -32,23 +32,23 @@ func ExpressControllerInit(e service.ExpressServiceInterface, u service.UserServ
 // RegisterRoutes 注册快递服务请求路由
 func (e *ExpressController) RegisterRoutes(r *mux.Router) {
 	// 新增
-	r.HandleFunc("/express", e.handlerCrete).Methods("POST")
+	r.HandleFunc("/express", e.handlerCrete).Methods(utils.POST)
 	// 查询详情
-	r.HandleFunc("/express/detail", e.handlerDetail).Methods("GET")
+	r.HandleFunc("/express/detail", e.handlerDetail).Methods(utils.GET)
 	// 分页查询
-	r.HandleFunc("/expressPage/list", e.handlerSelectPage).Methods("GET")
+	r.HandleFunc("/expressPage/list", e.handlerSelectPage).Methods(utils.GET)
 	// 查询
-	r.HandleFunc("/express/{dataId}", e.handlerGet).Methods("GET")
+	r.HandleFunc("/express/{dataId}", e.handlerGet).Methods(utils.GET)
 	// 删除
-	r.HandleFunc("/express/{dataId}", e.handlerDelete).Methods("DELETE")
+	r.HandleFunc("/express/{dataId}", e.handlerDelete).Methods(utils.DELETE)
 	// 多条件查询分页
-	r.HandleFunc("/expressPage/list", e.handlerSelectPageParam).Methods("POST")
+	r.HandleFunc("/expressPage/list", e.handlerSelectPageParam).Methods(utils.POST)
 	// 修改
-	r.HandleFunc("/express/update", e.handlerUpdate).Methods("PUT")
+	r.HandleFunc("/express/update", e.handlerUpdate).Methods(utils.PUT)
 	// 批量新增
-	r.HandleFunc("/express/batchDelete", e.handlerBatchDelete).Methods("POST")
+	r.HandleFunc("/express/batchDelete", e.handlerBatchDelete).Methods(utils.POST)
 	// 批量新增
-	r.HandleFunc("/express/batchAdd", interceptor.WithJWTAuthorization(e.handlerBatchInsert, e.userService)).Methods("POST")
+	r.HandleFunc("/express/batchAdd", interceptor.WithJWTAuthorization(e.handlerBatchInsert, e.userService)).Methods(utils.POST)
 }
 
 func (e *ExpressController) handlerCrete(w http.ResponseWriter, r *http.Request) {
