@@ -118,6 +118,9 @@ func (s *APIServer) Serve() {
 	testUserGormController := controller.TestUserForGormControllerInit(s.testUserGorm)
 	testUserGormController.RegisterRoutes(router)
 
+	sseController := controller.SseControllerInit()
+	sseController.RegisterRoutes(router)
+
 	// 测试请求日志
 	router.HandleFunc("/user/test/{id}", UserHandler).Methods("GET")
 
