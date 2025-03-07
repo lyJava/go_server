@@ -95,21 +95,21 @@ func buildConfig() (config.ServerConfigItem, config.SqlConfigItem, config.RsaKey
 	return serverConfig.Server, sqlConfig.Mysql, rsaConfig.Rsa.Key, jwtConfig.Jwt, rabbitmqConfig.Rabbitmq
 }
 
-// ReadConfig 读取配置
+// ReadConfig 读取配置文件
 //
 // 参数
 //
-//		path：配置路径
+//		path：配置文件路径
 //		name：配置文件名(不包括后缀)
-//	 configType：配置文件路径
+//	    suffix：配置文件类型(后缀不包括点)
 //
 // 返回
 //
 //	viper：*viper.Viper
-func ReadConfig(path, name, configType string) *viper.Viper {
+func ReadConfig(path, name, suffix string) *viper.Viper {
 	viper.AddConfigPath(path)
 	viper.SetConfigName(name)
-	viper.SetConfigType(configType)
+	viper.SetConfigType(suffix)
 
 	err := viper.ReadInConfig()
 	if err != nil {
