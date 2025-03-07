@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -15,7 +14,6 @@ import (
 func failOnError(err error, msg string) {
 	if err != nil {
 		zap.L().Sugar().Errorf("%s===%+v", msg, err)
-		log.Panicf("%s: %v", msg, err)
 	}
 }
 
@@ -39,7 +37,7 @@ func ConnectRabbitmq() *amqp.Connection {
 	if err != nil {
 		zap.L().Sugar().Errorf("Failed to connect to RabbitMQ===\n%+v", err)
 	}
-	log.Printf("success to connect to RabbitMQ ===%v", rabbitmqCfg)
+	zap.L().Sugar().Infof("success to connect to RabbitMQ ===%v", rabbitmqCfg)
 	// 将json格式化输出
 	rabbitmqProperties, _ := json.MarshalIndent(conn.Properties, "", "    ")
 	zap.L().Sugar().Infof("Success to connect to RabbitMQ===\r\n%+v", string(rabbitmqProperties))
@@ -118,7 +116,6 @@ func PublishMessage(ch *amqp.Channel, exchange, queueName string, message interf
 		})
 
 	failOnError(err, "Failed to publish a message: %v")
-	fmt.Println("RabbitMQ Message send successfully ===", string(bytes))
 	zap.L().Sugar().Infof("RabbitMQ Message send successfully:%s", string(bytes))
 
 }
@@ -146,21 +143,21 @@ func Consume(ch *amqp.Channel, queueName string, autoAsk bool) []string {
 		}*/
 
 		for msg := range delivery {
-			log.Printf(" [x] %s", msg.Body)
+			zap.L().Sugar().Infof(" [x] %s", msg.Body)
 			messages = append(messages, string(msg.Body))
 			// 根据 autoAck 参数决定是否手动确认消息
 			if !autoAsk {
 				// 手动确认消息
 				err := msg.Ack(false)
 				if err != nil {
-					log.Printf("Failed to acknowledge message: %v", err)
+					zap.L().Sugar().Errorf("Failed to acknowledge message: %v", err)
 					// 如果确认消息失败，可以选择进行日志记录或其他错误处理
 				}
 			}
 		}
 	}()
 
-	log.Printf(" [*] Waiting for logs. To exit press CTRL+C")
+	zap.L().Sugar().Infof(" [*] Waiting for logs. To exit press CTRL+C")
 	// 等待通道关闭，以确保消费者协程完成
 	<-forever
 	return messages
