@@ -34,6 +34,7 @@ func (u *TestUserForGormController) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/delete/{id}", u.handlerDelete).Methods(utils.DELETE)
 	r.HandleFunc("/batchDelete", u.handlerBatchDelete).Methods(utils.POST)
 	r.HandleFunc("/page", u.handlerPage).Methods(utils.POST)
+	r.HandleFunc("/query/all", u.handlerAll).Methods(utils.GET, utils.POST, utils.PATCH)
 }
 
 func (u *TestUserForGormController) handlerGet(w http.ResponseWriter, r *http.Request) {
@@ -280,4 +281,14 @@ func (u *TestUserForGormController) handlerPage(w http.ResponseWriter, r *http.R
 	}
 
 	response.WriteJson(w, response.OkDataResp(dataMap))
+}
+
+// handlerAll 查询所有
+func (u *TestUserForGormController) handlerAll(w http.ResponseWriter, _ *http.Request) {
+	allUsers, err := u.testUserGormService.SelectAll()
+	if err != nil {
+		response.WriteJson(w, response.FailMessageResp(err.Error()))
+		return
+	}
+	response.WriteJson(w, response.OkDataResp(allUsers))
 }
