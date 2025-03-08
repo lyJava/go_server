@@ -3,7 +3,6 @@ package impl
 import (
 	"apiProject/api/expressAPI/types/domain"
 	"apiProject/api/expressAPI/types/param"
-	"apiProject/api/utils"
 	"errors"
 	"fmt"
 	"go.uber.org/zap"
@@ -30,11 +29,11 @@ func (u *TestUserGormDB) GetUserById(id int64) (*domain.TestUser, error) {
 		return nil, errors.New("获取用户失败")
 	}
 
-	dateFormat, err := utils.DateFormat(user.Birthday)
+	/*dateFormat, err := utils.DateFormat(user.Birthday)
 	if err != nil {
 		return nil, errors.New("用户出生日期错误")
 	}
-	user.Birthday = dateFormat
+	user.Birthday = dateFormat*/
 	return &user, nil
 }
 
@@ -121,8 +120,11 @@ func (u *TestUserGormDB) BatchUpdateUser(list []*domain.TestUser) (int64, error)
 		if user.Email != "" {
 			emailUpdates = append(emailUpdates, fmt.Sprintf(commonSqlFragment, userId, user.Email))
 		}
-		if user.Birthday != "" {
-			birthdayUpdates = append(birthdayUpdates, fmt.Sprintf(commonSqlFragment, userId, formatDateForSQL(user.Birthday)))
+		//if user.Birthday !=  {
+		//	birthdayUpdates = append(birthdayUpdates, fmt.Sprintf(commonSqlFragment, userId, formatDateForSQL(user.Birthday)))
+		//}
+		if user.Birthday != nil {
+			birthdayUpdates = append(birthdayUpdates, fmt.Sprintf(commonSqlFragment, userId, user.Birthday))
 		}
 		if user.Phone != "" {
 			phoneUpdates = append(phoneUpdates, fmt.Sprintf(commonSqlFragment, userId, user.Phone))
@@ -260,7 +262,7 @@ func (u *TestUserGormDB) SelectPage(param *param.TestUserPageParam) ([]*domain.T
 		return nil, 0, 0, errors.New("获取用户列表失败")
 	}
 
-	if len(testUserList) > 0 {
+	/*if len(testUserList) > 0 {
 		for _, user := range testUserList {
 			birthday := user.Birthday
 			if birthday != "" {
@@ -271,9 +273,23 @@ func (u *TestUserGormDB) SelectPage(param *param.TestUserPageParam) ([]*domain.T
 				user.Birthday = dateFormat
 			}
 		}
-	}
+	}*/
 
 	return testUserList, total, getTotalPage(total, param.Size), nil
+}
+
+func (u *TestUserGormDB) SelectAll() ([]*domain.TestUser, error) {
+	var list []*domain.TestUser
+	if err := u.Db.Find(&list).Error; err != nil {
+		zap.L().Sugar().Errorf("查询所有用户异常: %+v", err)
+		return nil, errors.New("查询所有用户失败")
+	}
+	/*if len(list) > 0 {
+		for _, user := range list {
+			user.Birthday = user.Birthday[:10]
+		}
+	}*/
+	return list, nil
 }
 
 // formatDateForSQL 格式化日期

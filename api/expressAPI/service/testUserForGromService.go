@@ -42,4 +42,5 @@ type TestUserForGormService interface {
 	//     -int64: 总页数，基于查询的总记录数和每页条数计算
 	//     -error: 如果执行过程中出现任何错误，则返回相应的错误信息。如果没有错误，返回nil
 	SelectPage(param *param.TestUserPageParam) ([]*domain.TestUser, int64, int64, error)
+	SelectAll() ([]*domain.TestUser, error)
 }
