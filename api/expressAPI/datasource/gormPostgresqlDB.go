@@ -28,24 +28,24 @@ type customLogger struct {
 }
 
 // LogMode 实现日志输出的 Format 方法
-func (c *customLogger) LogMode(level logger.LogLevel) logger.Interface {
-	newLogger := *c
+func (cusLog *customLogger) LogMode(level logger.LogLevel) logger.Interface {
+	newLogger := *cusLog
 	return &newLogger
 }
 
-func (c *customLogger) Info(ctx context.Context, msg string, data ...interface{}) {
-	c.log("INFO", msg, data...)
+func (cusLog *customLogger) Info(ctx context.Context, msg string, data ...interface{}) {
+	cusLog.log("INFO", msg, data...)
 }
 
-func (c *customLogger) Warn(ctx context.Context, msg string, data ...interface{}) {
-	c.log("WARN", msg, data...)
+func (cusLog *customLogger) Warn(ctx context.Context, msg string, data ...interface{}) {
+	cusLog.log("WARN", msg, data...)
 }
 
-func (c *customLogger) Error(ctx context.Context, msg string, data ...interface{}) {
-	c.log("ERROR", msg, data...)
+func (cusLog *customLogger) Error(ctx context.Context, msg string, data ...interface{}) {
+	cusLog.log("ERROR", msg, data...)
 }
 
-func (c *customLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
+func (cusLog *customLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	// 获取 SQL 查询语句和执行的行数
 	execSql, rows := fc()
 	// 获取文件名和行号
@@ -53,9 +53,9 @@ func (c *customLogger) Trace(ctx context.Context, begin time.Time, fc func() (st
 	if ok {
 		// 计算查询的执行时间
 		duration := time.Since(begin)
-		c.log("TRACE", fmt.Sprintf("%s:%d\n%v\n[rows:%d]\nSQL: %s\r\n[elapsed: %v]", file, line, duration, rows, execSql, duration))
+		cusLog.log("TRACE", fmt.Sprintf("%s:%d\n%v\n[rows:%d]\nSQL: %s\r\n[elapsed: %v]", file, line, duration, rows, execSql, duration))
 	} else {
-		c.log("TRACE", fmt.Sprintf("%s:%d\ngorm获取执行信息失败\n[rows:%d]\nSQL: %s\r\n", file, line, rows, execSql))
+		cusLog.log("TRACE", fmt.Sprintf("%s:%d\ngorm获取执行信息失败\n[rows:%d]\nSQL: %s\r\n", file, line, rows, execSql))
 	}
 }
 
