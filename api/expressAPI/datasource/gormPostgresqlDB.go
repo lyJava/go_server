@@ -3,11 +3,10 @@ package datasource
 import (
 	"apiProject/api/expressAPI/config"
 	cfg "apiProject/api/expressAPI/types/config"
-	"apiProject/api/expressAPI/types/domain"
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
+	"github.com/fatih/color"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -22,7 +21,10 @@ import (
 // customLogger 自定义日志记录器
 type customLogger struct {
 	logger.Interface
-	out io.Writer
+	consoleOut                io.Writer // 控制台输出
+	fileOut                   io.Writer // 文件输出
+	ignoreRecordNotFoundError bool      // 是否忽略记录未找到错误
+	colorful                  bool      // 是否启用彩色输出
 }
 
 // LogMode 实现日志输出的 Format 方法
@@ -45,18 +47,60 @@ func (c *customLogger) Error(ctx context.Context, msg string, data ...interface{
 
 func (c *customLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	// 获取 SQL 查询语句和执行的行数
-	sql, rows := fc()
+	execSql, rows := fc()
 	// 获取文件名和行号
-	_, file, line, _ := runtime.Caller(2)
-	// 计算查询的执行时间
-	duration := time.Since(begin)
-	// 格式化日志
-	c.log("TRACE", fmt.Sprintf("%s:%d\n[%v] [rows:%d]\nSQL: %s\r\n[elapsed: %v]", file, line, duration, rows, sql, duration), nil)
+	_, file, line, ok := runtime.Caller(2)
+	if ok {
+		// 计算查询的执行时间
+		duration := time.Since(begin)
+		// 格式化日志
+		c.log("TRACE", fmt.Sprintf("%s:%d\n%v\n[rows:%d]\nSQL: %s\r\n[elapsed: %v]", file, line, duration, rows, execSql, duration))
+	} else {
+		c.log("TRACE", "gorm执行失败===SQL:%s", execSql)
+	}
 }
 
 // 自定义日志输出格式
-func (c *customLogger) log(level string, msg string, data ...interface{}) {
+/*func (c *customLogger) log(level string, msg string, data ...interface{}) {
 	fmt.Fprintln(c.out, fmt.Sprintf("%s [%s] %s", time.Now().Format("2006-01-02 15:04:05.000"), level, fmt.Sprintf(msg, data...)))
+}*/
+
+func (cusLog *customLogger) log(level string, format string, args ...interface{}) {
+	timestamp := time.Now().Format("2006-01-02 15:04:05.000")
+	message := fmt.Sprintf(format, args...)
+	// 根据日志级别设置颜色
+	var logMessage string
+	// 控制台输出
+	if cusLog.consoleOut != nil {
+		if cusLog.colorful {
+			switch level {
+			case "INFO":
+				logMessage = color.GreenString("[%s] [%s] %s\n", timestamp, level, message)
+			case "WARN":
+				logMessage = color.YellowString("[%s] [%s] %s\n", timestamp, level, message)
+			case "ERROR":
+				logMessage = color.RedString("[%s] [%s] %s\n", timestamp, level, message)
+			case "TRACE":
+				logMessage = color.HiCyanString("[%s] [%s] %s\n", timestamp, level, message)
+			default:
+				logMessage = fmt.Sprintf("[%s] [%s] %s\n", timestamp, level, message)
+			}
+		} else {
+			// 控制台输出，不添加颜色
+			logMessage = fmt.Sprintf("[%s] [%s] %s\n", timestamp, level, message)
+		}
+		cusLog.consoleOut.Write([]byte(logMessage))
+	}
+
+	if cusLog.fileOut != nil {
+		// 输出到文件不添加颜色
+		cusLog.fileOut.Write([]byte(fmt.Sprintf("[%s] [%s] %s\n", timestamp, level, message)))
+	}
+
+	//c.out.Write([]byte(fmt.Sprintf("%s %s %s\n", timestamp, level, message)))
+	/*if f, ok := c.out.(*os.File); ok {
+		f.Sync() // 刷新文件缓冲区
+	}*/
 }
 
 type GormPostgresSqlDb struct {
@@ -82,29 +126,20 @@ func InitGormPostgresSql() *GormPostgresSqlDb {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer file.Close()
+	// TODO 这里的文件关闭会导致每次只能记录最后一条sql
+	//defer file.Close()
 
 	// 创建 MultiWriter，输出到控制台和日志文件
-	multiWriter := io.MultiWriter(os.Stdout, file)
+	// multiWriter := io.MultiWriter(os.Stdout, file)
 
 	// 创建自定义的 logger 实例
-	customGormLogger := &customLogger{out: multiWriter}
-
-	// 自定义日志输出函数
-	//log.SetFlags(0) // 禁用默认的时间格式
-	//log.SetPrefix("") // 去掉日志前缀
-
-	// 自定义日志输出
-	//gormLogger := logger.New(
-	//	// 使用自定义时间格式
-	//	log.New(multiWriter, "", 0), // 设置日志输出
-	//	logger.Config{
-	//		LogLevel:                  logger.Info, // 设置日志级别为 Info
-	//		SlowThreshold:             time.Second, // 慢查询时间阈值
-	//		IgnoreRecordNotFoundError: true,        // 忽略记录未找到错误
-	//		Colorful:                  true,        // 允许控制台输出颜色
-	//	},
-	//)
+	customGormLogger := &customLogger{
+		//out:                       multiWriter,
+		consoleOut:                os.Stdout,
+		fileOut:                   file,
+		ignoreRecordNotFoundError: true,
+		colorful:                  true,
+	}
 
 	// 构建连接字符串
 	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai",
@@ -137,42 +172,9 @@ func InitGormPostgresSql() *GormPostgresSqlDb {
 
 	setConnPoolProps(sqlDb)
 
-	//var storeAdmin domain.StoreAdmin
-	//if err := gormDB.PsDB.First(&storeAdmin, 122).Error; err != nil {
-	//	fmt.Printf("User not found:%v", err)
-	//} else {
-	//	marshal, err := json.Marshal(storeAdmin)
-	//	if err != nil {
-	//		log.Printf("Error marshaling data: %v", err)
-	//	}
-	//	fmt.Printf("User found:%s", marshal)
-	//}
-	var storeAdminList []*domain.StoreAdmin
-	err = db.Table("tb_store_admin").
-		Select("id, user_name, mobile, real_name, status_value, store_name, merchant_id, merchant_name, " +
-			"TO_CHAR(create_time, 'YYYY-MM-DD HH24:MI:SS') AS create_time, " +
-			"TO_CHAR(update_time, 'YYYY-MM-DD HH24:MI:SS') AS update_time").
-		//Where("id = ?", 122).
-		Order("id DESC").
-		Limit(2).
-		Scan(&storeAdminList).Error
-
-	marshal, err := json.MarshalIndent(&storeAdminList, "", "    ")
-	if err != nil {
-		log.Printf("店铺管理员转换json错误: %v", err)
-	}
-	log.Printf("店铺管理员:\r\n%s", marshal)
-
 	return &GormPostgresSqlDb{
 		PsDB: db,
 	}
-}
-
-// 自定义日志输出函数
-func logWithTimestamp(format string, v ...interface{}) {
-	// 获取当前时间并格式化为毫秒
-	currentTime := time.Now().Format("2006-01-02 15:04:05.000")
-	log.Printf("[%s] %s", currentTime, fmt.Sprintf(format, v...))
 }
 
 func setConnPoolProps(db *sql.DB) {
