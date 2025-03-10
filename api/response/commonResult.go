@@ -6,15 +6,15 @@ import (
 )
 
 // PageData 分页数据结构体
-type PageData struct {
-	TotalRecords int64       `json:"totalRecords"` // 总条数
-	TotalPages   int64       `json:"totalPages"`   // 总页数
-	Content      interface{} `json:"content"`      // 数据集合
+type PageData[T any] struct {
+	TotalRecords int64 `json:"totalRecords"` // 总条数
+	TotalPages   int64 `json:"totalPages"`   // 总页数
+	Content      []T   `json:"content"`      // 数据集合
 }
 
 // NewPageData 创建分页数据结构体
-func NewPageData(totalRecords, totalPages int64, data any) PageData {
-	return PageData{
+func NewPageData[T any](totalRecords, totalPages int64, data []T) PageData[T] {
+	return PageData[T]{
 		TotalRecords: totalRecords,
 		TotalPages:   totalPages,
 		Content:      data,
