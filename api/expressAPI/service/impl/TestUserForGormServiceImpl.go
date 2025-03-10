@@ -43,6 +43,7 @@ func (u *TestUserGormDB) CreateUser(user *domain.TestUser) (*domain.TestUser, er
 		zap.L().Sugar().Errorf("CreateUser error: %+v", err)
 		return nil, errors.New("创建用户失败")
 	}
+	zap.L().Sugar().Infof("CreateUser success === username:%s", user.Username)
 	return u.GetUserById(user.Id)
 }
 
