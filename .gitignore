@@ -25,3 +25,4 @@ Dockerfile
 /api/expressAPI/excel
 /api/expressAPI/log
 myapp
+gorm_sql.log
