@@ -53,10 +53,9 @@ func (c *customLogger) Trace(ctx context.Context, begin time.Time, fc func() (st
 	if ok {
 		// 计算查询的执行时间
 		duration := time.Since(begin)
-		// 格式化日志
 		c.log("TRACE", fmt.Sprintf("%s:%d\n%v\n[rows:%d]\nSQL: %s\r\n[elapsed: %v]", file, line, duration, rows, execSql, duration))
 	} else {
-		c.log("TRACE", "gorm执行失败===SQL:%s", execSql)
+		c.log("TRACE", fmt.Sprintf("%s:%d\ngorm获取执行信息失败\n[rows:%d]\nSQL: %s\r\n", file, line, rows, execSql))
 	}
 }
 
