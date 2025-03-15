@@ -230,7 +230,7 @@ func (pg *TestDictTypeDb) PageList(te *domain.TestExpress, page, size int64) ([]
 
 	for rows.Next() {
 		testExpress := &domain.TestExpress{}
-		err := rowsScan(rows, testExpress)
+		err = rowsScan(rows, testExpress)
 		if err != nil {
 			zap.L().Sugar().Errorf("测试快递分页返回错误===%+v", err)
 			return nil, 0, 0, err
