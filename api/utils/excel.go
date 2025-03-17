@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"apiProject/api/expressAPI/types/domain"
 	"fmt"
 	"log"
 	"os"
@@ -52,7 +51,7 @@ func CreateExcel() {
 // WriteTestExpressToExcel 将测试快递数据写入Excel
 //
 //goland:noinspection GoUnhandledErrorResult
-func WriteTestExpressToExcel(fileName string, headers []string, list []*domain.TestExpress) string {
+func WriteTestExpressToExcel[T any](fileName string, headers []string, list []T) string {
 	f := excelize.NewFile()
 
 	// 关闭文件
