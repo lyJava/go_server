@@ -1,11 +1,23 @@
 package main
 
 import (
-	"apiProject/api/expressAPI/datasource"
+	"apiProject/api/expressAPI/config"
+	"apiProject/api/expressAPI/controller"
+	"apiProject/api/expressAPI/router"
 	"github.com/google/wire"
 )
 
-func InitializeWire(db *datasource.MysqlDB) (*datasource.MysqlDB, error) {
-	wire.Build(datasource.ProviderSet)
-	return db, nil
+//	func InitializeConfig() (*types.MysqlConfig, error) {
+//		wire.Build(config.InitConfig)
+//		return &types.MysqlConfig{}, nil
+//	}
+func InitializeApplication() (*Application, error) {
+	wire.Build(
+		router.APIServer{},
+		config.InitConfig(),
+		controller.ExpressController{},
+		controller.UserController{},
+		NewApplication,
+	)
+	return &Application{}, nil
 }

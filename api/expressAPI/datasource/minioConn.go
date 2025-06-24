@@ -17,7 +17,7 @@ import (
 //   - error: 可能存在的错误
 func InitMinioClient() (*minio.Client, error) {
 
-	viperConfig := config.ReadConfig("api/expressApi/config", "application", "yml")
+	viperConfig := config.ReadConfig("api/expressAPI/config", "application", "yml")
 	if viperConfig == nil {
 		log.Println("未读取到viper配置信息")
 		return nil, errors.New("未读取到viper配置信息")
@@ -40,7 +40,12 @@ func InitMinioClient() (*minio.Client, error) {
 		return nil, errors.New("无法连接到minio")
 	}
 
-	log.Printf("minio客户端是否在线====:%v", client.IsOnline())
+	offline := client.IsOffline()
+	log.Printf("minio客户端是否在线====:%v", offline)
+
+	if !offline {
+		return nil, errors.New("minio客户端不在线")
+	}
 
 	return client, nil
 }

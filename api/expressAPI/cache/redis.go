@@ -15,7 +15,7 @@ var RedisCache = &redis.Client{}
 
 func init() {
 
-	viperConfig := config.ReadConfig("api/expressApi/config", "application", "yml")
+	viperConfig := config.ReadConfig("/expressAPI/config", "application", "yml")
 	//redisMap := viperConfig.Get("redis").(map[string]string)
 	var redisConfig cfg.RedisConfig
 	/*err := mapstructure.Decode(redisMap, &redisConfig)

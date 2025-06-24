@@ -117,7 +117,7 @@ func (u *UserController) handlerCheckPwd(w http.ResponseWriter, r *http.Request)
 	}
 
 	var pwdMap = make(map[string]string)
-	if err := json.NewDecoder(r.Body).Decode(&pwdMap); err != nil {
+	if err = json.NewDecoder(r.Body).Decode(&pwdMap); err != nil {
 		zap.L().Sugar().Errorf("验证密码验证获取密码参数错误===%+v", err)
 		response.WriteJson(w, response.FailMessageResp("获取密码失败"))
 		return

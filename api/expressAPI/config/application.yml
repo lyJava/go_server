@@ -1,9 +1,10 @@
 server:
-  port: 3000
+  port: 8088
   version: 0.0.1
   # 是否开启请求日志
   request-log: true
 
+# 如果是docker访问本地mysql需要使用docker.for.mac.localhost
 mysql:
   url: localhost:3306
   username: root
@@ -11,7 +12,9 @@ mysql:
   database: eladmin
 
 postgresql:
+#  host: host.docker.internal.192.168.31.222
   host: localhost
+#  host: docker.for.mac.localhost
   port: 5432
   user: yangge
   password: root244112311
@@ -65,15 +68,19 @@ rsa:
 
 redis:
   # redis服务器地址（默认为localhost,端口默认为6379）
-  address: 
+  address: localhost
+#  address: 192.168.31.254
+#  address: 192.168.31.168
   # redis数据库索引(默认为0)，我们使用索引为3的数据库，避免和其他数据库冲突
   db: 0
   # redis访问密码（默认为空）
   password: 244112311
 
+# 如果是docker内部容器，使用host.docker.internal
 rabbitmq:
-  enable: false,
+  enable: true
   host: localhost
+#  host: 192.168.31.168
   port: 5672
   # 集群配置
   # address: 127.0.0.1:5673,127.0.0.1:5674
@@ -82,3 +89,9 @@ rabbitmq:
   virtual-host: /
   connection-timeout: 20000
   publisher-returns: true
+
+minio:
+  endpoint: 192.168.31.168:9000
+  accessKey: zlQjScjSz0egDD8HLW2i
+  secretKey: o1AsFYuHqlsofyl1qplkYKWNeO5u6uSAZZDQHE3D
+  useSsl: false
