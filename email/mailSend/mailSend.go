@@ -5,8 +5,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/gabriel-vasile/mimetype"
-	"gopkg.in/gomail.v2"
 	"html/template"
 	"io"
 	"log"
@@ -15,12 +13,41 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gabriel-vasile/mimetype"
+	"github.com/jordan-wright/email"
+	"gopkg.in/gomail.v2"
 )
 
-// SendMail 发送邮件
-func SendMail(config common.MailConfig, content common.MailContent) {
+type User struct {
+	Name     string
+	Position string
+	Email    string
+	Status   string // 或者使用一个自定义类型，但在模板中我们使用字符串
+}
+
+type ServiceStatus struct {
+	Name       string
+	Status     string // 可以是“运行中”、“警告”、“停止”等
+	Usage      int    // 使用率百分比
+	LastUpdate string // 最后更新时间
+}
+
+type TemplateData struct {
+	Body        string
+	Timestamp   string
+	ImageMine   string
+	ImageData   string
+	ImageUrl    string
+	ServiceList []ServiceStatus
+	UserList    []User
+}
+
+// SendMailBySmtp 发送邮件
+func SendMailBySmtp(config common.MailConfig, content common.MailContent) error {
 	// 连接到SMTP服务器
 	auth := smtp.PlainAuth("", config.Email, config.Password, config.Host)
 
@@ -52,47 +79,35 @@ func SendMail(config common.MailConfig, content common.MailContent) {
 
 	// 读取HTML模板文件
 
-	tmpl, err := template.ParseFiles("./email/email_template.html")
+	tpl, err := ParseTemplate("./email_template.html")
 	if err != nil {
-		log.Printf("Failed to parse template file: %v", err)
-		return
+		log.Printf("Failed to parse template file: %+v", err)
+		return err
 	}
 
 	imagePath := "/Users/yangge/Pictures/vlcsnap-2024-04-07-20h31m31s596.png"
-	fileContent, err := os.ReadFile(imagePath)
+	imageMine, base64Data, err := GetImgMineAndContent(imagePath)
 	if err != nil {
-		log.Printf("Failed to read image file: %v", err)
-		return
+		log.Printf("Failed to detect MIME type for imagePath %s: %+v", imagePath, err)
+		return err
 	}
-
-	// 检测图片的MIME类型
-	imageMine, err := mimetype.DetectFile(imagePath)
-	if err != nil {
-		log.Printf("Failed to detect MIME type for imagePath %s: %v", imagePath, err)
-		return
-	}
-	// 获取图片base64编码
-	encodedImage := base64.StdEncoding.EncodeToString(fileContent)
 
 	// 创建一个buffer来保存渲染后的HTML内容
 	var bodyBuffer bytes.Buffer
-	data := struct {
-		Body      string
-		Timestamp string
-		ImageMine string
-		ImageData string
-	}{
-		Body:      content.Body,
-		Timestamp: time.Now().Format("2006-01-02 15:04:05"),
-		ImageMine: imageMine.String(),
-		ImageData: encodedImage,
+	data := &TemplateData{
+		Body:        content.Body,
+		Timestamp:   time.Now().Format("2006-01-02 15:04:05"),
+		ImageMine:   imageMine,
+		ImageData:   base64Data, // 获取图片base64编码
+		ImageUrl:    "",
+		UserList:    nil,
+		ServiceList: nil,
 	}
 
 	// 渲染HTML模板
-	err = tmpl.Execute(&bodyBuffer, data)
-	if err != nil {
-		log.Printf("Failed to execute template: %v", err)
-		return
+	if err = tpl.Execute(&bodyBuffer, data); err != nil {
+		log.Printf("Failed to execute bodyBuffer: %+v", err)
+		return err
 	}
 
 	// 添加HTML版本的邮件正文
@@ -139,23 +154,28 @@ func SendMail(config common.MailConfig, content common.MailContent) {
 
 	message.WriteString("--" + writer.Boundary() + "--\r\n")
 
-	err5 := writer.Close()
-	if err5 != nil {
-		log.Printf("Failed to close multipart writer: %v", err5)
-		return
+	if err := writer.Close(); err != nil {
+		log.Printf("Failed to close multipart writer: %v", err)
+		return err
 	}
 
 	startTime := time.Now()
-	err3 := smtp.SendMail(config.Host+":"+string(config.Port), auth, config.Email, append(content.To, content.Cc...), message.Bytes())
-	if err3 != nil {
-		log.Printf("发送邮件失败: %v", err3)
-		//log.Fatal(err) // 发送邮件失败时，整个程序会直接退出
-		//return err
-	}
+	port := strconv.Itoa(config.Port)
 
+	if err := smtp.SendMail(config.Host+":"+port, auth, config.Email, append(content.To, content.Cc...), message.Bytes()); err != nil {
+		if strings.Contains(err.Error(), "short response") {
+			log.Printf("⚠️ 服务器短响应但邮件可能已发送成功: %v", err)
+			// 选择性返回 nil，表示你要“容忍”这类错误
+			elapsedTime := time.Since(startTime).Seconds()
+			log.Printf("smtp邮件发送成功！耗时： %s 秒", fmt.Sprintf("%.2f", elapsedTime))
+			return nil
+		}
+		log.Printf("发送邮件失败: %+v", err)
+		return err
+	}
 	elapsedTime := time.Since(startTime).Seconds()
-	log.Printf("邮件发送耗时： %s 秒", fmt.Sprintf("%.2f", elapsedTime))
-	//return nil
+	log.Printf("smtp邮件发送成功！耗时： %s 秒", fmt.Sprintf("%.2f", elapsedTime))
+	return nil
 }
 
 // AppendAttachToMessage 添加附件到邮箱信息体中
@@ -265,24 +285,14 @@ func SendMailByGmail(config common.MailConfig, content common.MailContent) error
 	// 添加 HTML 内容
 	mail.AddAlternative("text/html;charset=utf-8", content.Body+"<h3>"+time.Now().Format("2006-01-02 15:04:05")+"</h3>")
 
-	imagePath := "/Users/yangge/Pictures/vlcsnap-2024-04-07-20h31m31s596.png"
-	fileContent, err := os.ReadFile(imagePath)
+	imageMime, base64Data, err := GetImgMineAndContent("/Users/yangge/Pictures/vlcsnap-2024-04-07-20h31m31s596.png")
 	if err != nil {
-		log.Printf("Failed to read image file: %v", err)
 		return err
 	}
 
-	// 检测图片的MIME类型
-	imageMime, err := mimetype.DetectFile(imagePath)
-	if err != nil {
-		log.Printf("Failed to detect MIME type for imagePath %s: %v", imagePath, err)
-		return err
-	}
-	// 获取图片base64编码
-	encodedImage := base64.StdEncoding.EncodeToString(fileContent)
 	// 拼接img标签
 	// mail.AddAlternative("text/html;charset=utf-8", "<img src=\"data:"+imageMime.String()+";base64,"+encodedImage+"\" alt=\"img\"/>")
-	imgTag := fmt.Sprintf("<div style=\"margin: 0 auto\"><img src=\"data:%s;base64,%s\" alt=\"img\"/></div>", imageMime, encodedImage)
+	imgTag := fmt.Sprintf("<div style=\"margin: 0 auto\"><img src=\"data:%s;base64,%s\" alt=\"img\"/></div>", imageMime, base64Data)
 	mail.AddAlternative("text/html;charset=utf-8", imgTag)
 	// 附件部分
 	for _, attachmentPath := range content.AttachmentPath {
@@ -319,4 +329,118 @@ func TestSend() {
 	if err := mail.DialAndSend(m); err != nil {
 		panic(err)
 	}
+}
+
+func SendEmailByJordan(config common.MailConfig, content common.MailContent) error {
+	e := email.NewEmail()
+	e.From = "745876299@qq.com"
+	e.To = content.To
+	e.Cc = content.Cc
+	e.Subject = "来自Jordan的邮件"
+	e.Text = []byte(`这是来自的邮件=====你好`)
+	//e.HTML = []byte(`<h1>这是来自 <b>Go-Jordan</b> 的邮件</h1><p>你好！</p>`)
+
+	// 1. 解析HTML模板
+	tpl, err := ParseTemplate("./email_template.html")
+	if err != nil {
+		return err
+	}
+
+	imgMine, base64Data, err := GetImgMineAndContent("/Users/yangge/Downloads/wallpaper-5045169.jpg")
+	if err != nil {
+		log.Printf("解析模板失败: %v", err)
+		return err
+	}
+	// 2. 准备模板数据
+	data := &TemplateData{
+		Body:      "尊贵的用户",
+		Timestamp: time.Now().Format("2006年1月2日 15:04"),
+		ImageMine: imgMine,
+		ImageData: base64Data,
+		ImageUrl:  "https://cdn.pixabay.com/photo/2025/06/09/16/27/animal-9650392_1280.jpg",
+		ServiceList: []ServiceStatus{
+			{Name: "邮件发送服务", Status: "运行中", Usage: 75, LastUpdate: time.Now().Format("2006-01-02 15:04:05")},
+			{Name: "数据库服务", Status: "警告", Usage: 92, LastUpdate: "2025-07-24 14:23:10"},
+			{Name: "文件存储服务", Status: "运行中", Usage: 42, LastUpdate: "2025-07-25 08:45:32"},
+			{Name: "任务调度服务", Status: "停止", Usage: 0, LastUpdate: "2025-07-20 19:12:57"},
+		},
+		UserList: []User{
+			{Name: "张云", Position: "系统架构师", Email: "zhangyun@example.com", Status: "在线"},
+			{Name: "李思雨", Position: "前端工程师", Email: "lisyu@example.com", Status: "在线"},
+			{Name: "王建国", Position: "后端工程师", Email: "wangjg@example.com", Status: "休假"},
+			{Name: "陈婷婷", Position: "产品经理", Email: "chentt@example.com", Status: "在线"},
+		},
+	}
+
+	// 3. 渲染HTML内容
+	var htmlBody bytes.Buffer
+	if err := tpl.Execute(&htmlBody, data); err != nil {
+		log.Printf("渲染模板失败: %v", err)
+		return err
+	}
+
+	// 4. 设置HTML内容
+	e.HTML = htmlBody.Bytes()
+
+	// 5. 纯文本备用内容（可选）
+	e.Text = fmt.Appendf(nil, "你好！%s\n%s\n发送时间：%s",
+		content.Subject,
+		content.Body,
+		data.Timestamp)
+
+	// 添加附件
+	_, err1 := e.AttachFile("/Users/yangge/Downloads/123-small.jpg")
+	_, err2 := e.AttachFile("/Users/yangge/Downloads/c548a7d37d4f27e4d14ca6941d11392c.mp4")
+	if err1 != nil || err2 != nil {
+		log.Printf("附件添加失败: %v %v", err1, err2)
+		return fmt.Errorf("jordan方式添加邮件失败,err1==%+v, err2==%+v", err1, err2)
+	}
+
+	startTime := time.Now()
+	// 发送邮件（使用 StartTLS）
+	if err = e.Send("smtp.qq.com:587", smtp.PlainAuth("", "745876299@qq.com", "mxexfejfdcmhbfbb", "smtp.qq.com")); err != nil {
+		if strings.Contains(err.Error(), "short response") {
+			log.Printf("⚠️ 服务器短响应但邮件可能已发送成功: %v", err)
+			// 选择性返回 nil，表示你要“容忍”这类错误
+			elapsedTime := time.Since(startTime).Seconds()
+			log.Printf("jordan方式发送邮件成功！耗时： %s 秒", fmt.Sprintf("%.2f", elapsedTime))
+			return nil
+		}
+		log.Printf("jordan方式发送邮件失败: %v", err)
+		return err
+	}
+	elapsedTime := time.Since(startTime).Seconds()
+	log.Printf("jordan方式发送邮件成功！耗时： %s 秒", fmt.Sprintf("%.2f", elapsedTime))
+	return nil
+}
+
+func ParseTemplate(tplPath string) (*template.Template, error) {
+	tpl, err := template.ParseFiles(tplPath)
+	if err != nil {
+		log.Printf("解析模板失败: %v", err)
+		return nil, err
+	}
+	return tpl, nil
+}
+
+// GetImgMine 检测图片的MIME类型与内容
+func GetImgMineAndContent(imagePath string) (string, string, error) {
+	if imagePath == "" {
+		return "", "", nil
+	}
+
+	imageMime, err := mimetype.DetectFile(imagePath)
+	if err != nil {
+		log.Printf("Failed to detect MIME type for imagePath %s: %v", imagePath, err)
+		return "", "", err
+	}
+
+	content, err := os.ReadFile(imagePath)
+	if err != nil {
+		log.Printf("Failed to read image file: %+v", err)
+		return "", "", err
+	}
+	base64Data := base64.StdEncoding.EncodeToString(content)
+
+	return imageMime.String(), base64Data, nil
 }
