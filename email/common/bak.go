@@ -3,7 +3,7 @@ package common
 // MailConfig 存储邮件相关的配置信息
 type MailConfig struct {
 	Host     string
-	Port     string
+	Port     int32
 	Email    string
 	Password string
 }

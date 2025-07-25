@@ -15,7 +15,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -147,7 +146,7 @@ func SendMail(config common.MailConfig, content common.MailContent) {
 	}
 
 	startTime := time.Now()
-	err3 := smtp.SendMail(config.Host+":"+config.Port, auth, config.Email, append(content.To, content.Cc...), message.Bytes())
+	err3 := smtp.SendMail(config.Host+":"+string(config.Port), auth, config.Email, append(content.To, content.Cc...), message.Bytes())
 	if err3 != nil {
 		log.Printf("发送邮件失败: %v", err3)
 		//log.Fatal(err) // 发送邮件失败时，整个程序会直接退出
@@ -250,14 +249,9 @@ func BuildHeaders(w *bytes.Buffer, headers map[string]string) {
 	w.WriteString("\r\n")
 }
 
-func SendMail2(config common.MailConfig, content common.MailContent) {
-	port, err := strconv.Atoi(config.Port)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
+func SendMailByGmail(config common.MailConfig, content common.MailContent) error {
 
-	d := gomail.NewDialer(config.Host, port, config.Email, config.Password)
+	d := gomail.NewDialer(config.Host, int(config.Port), config.Email, config.Password)
 
 	// 创建邮件
 	mail := gomail.NewMessage()
@@ -275,14 +269,14 @@ func SendMail2(config common.MailConfig, content common.MailContent) {
 	fileContent, err := os.ReadFile(imagePath)
 	if err != nil {
 		log.Printf("Failed to read image file: %v", err)
-		return
+		return err
 	}
 
 	// 检测图片的MIME类型
 	imageMime, err := mimetype.DetectFile(imagePath)
 	if err != nil {
 		log.Printf("Failed to detect MIME type for imagePath %s: %v", imagePath, err)
-		return
+		return err
 	}
 	// 获取图片base64编码
 	encodedImage := base64.StdEncoding.EncodeToString(fileContent)
@@ -300,9 +294,11 @@ func SendMail2(config common.MailConfig, content common.MailContent) {
 	// 发送邮件
 	if err := d.DialAndSend(mail); err != nil {
 		log.Fatalf("Failed to mailSend email: %v", err)
+		return err
 	}
 	elapsedTime := time.Since(startTime).Seconds()
 	log.Printf("gmail方式发送邮件成功！耗时： %s 秒", fmt.Sprintf("%.2f", elapsedTime))
+	return nil
 }
 
 func TestSend() {
@@ -316,7 +312,8 @@ func TestSend() {
 	m.SetHeader("Subject", "Hello!")
 	//发送html格式邮件。
 	m.SetBody("text/html", "Hello <b>Bob</b> and <i>Cora</i>! <p style='color:red'>red </p>")
-	m.Attach("/Users/yangge/Downloads/测试中文小图.jpg") //添加附件
+	//添加附件
+	m.Attach("/Users/yangge/Downloads/测试中文小图.jpg")
 	mail := gomail.NewDialer("smtp.qq.com", 25, "745876299@qq.com", "mxexfejfdcmhbfbb")
 	// Send the email to Bob, Cora and Dan.
 	if err := mail.DialAndSend(m); err != nil {
