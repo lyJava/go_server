@@ -22,6 +22,16 @@ func CreateExcel() {
 		}
 	}()
 
+	// 创建工作表，刚创建的excel默认是没有工作表的
+	_, err := f.NewSheet("sheet1")
+
+	if err != nil {
+		log.Printf("设置工作表名称错误===%v", err)
+		return
+	}
+	// 继续创建工作表，这里macOS预览的时候才会默认激活了sheet1，不需要的可以删除该代码
+	_, _ = f.NewSheet("sheet2")
+
 	f.SetCellValue("Sheet1", "A1", "快递名称")
 	f.SetCellValue("Sheet1", "B1", "快递单号")
 	f.SetCellValue("Sheet1", "C1", "取件码")
