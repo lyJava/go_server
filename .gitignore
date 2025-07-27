@@ -27,3 +27,4 @@ Dockerfile
 myapp
 gorm_sql.log
 /log
+/api/expressAPI/download/
