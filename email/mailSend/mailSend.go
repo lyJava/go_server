@@ -1,7 +1,6 @@
 package mailSend
 
 import (
-	"apiProject/email/common"
 	"bytes"
 	"encoding/base64"
 	"fmt"
@@ -22,32 +21,8 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-type User struct {
-	Name     string
-	Position string
-	Email    string
-	Status   string // 或者使用一个自定义类型，但在模板中我们使用字符串
-}
-
-type ServiceStatus struct {
-	Name       string
-	Status     string // 可以是“运行中”、“警告”、“停止”等
-	Usage      int    // 使用率百分比
-	LastUpdate string // 最后更新时间
-}
-
-type TemplateData struct {
-	Body        string
-	Timestamp   string
-	ImageMine   string
-	ImageData   string
-	ImageUrl    string
-	ServiceList []ServiceStatus
-	UserList    []User
-}
-
 // SendMailBySmtp 发送邮件
-func SendMailBySmtp(config common.MailConfig, content common.MailContent) error {
+func SendMailBySmtp(config *MailConfig, content *MailContent) error {
 	// 连接到SMTP服务器
 	auth := smtp.PlainAuth("", config.Email, config.Password, config.Host)
 
@@ -56,7 +31,7 @@ func SendMailBySmtp(config common.MailConfig, content common.MailContent) error 
 
 	// 设置邮件头部
 	headers := map[string]string{
-		"From":         config.Email,
+		"From":         config.From,
 		"To":           strings.Join(content.To, ","),
 		"Cc":           strings.Join(content.Cc, ","),
 		"Bcc":          strings.Join(content.Bcc, ","),
@@ -269,14 +244,14 @@ func BuildHeaders(w *bytes.Buffer, headers map[string]string) {
 	w.WriteString("\r\n")
 }
 
-func SendMailByGmail(config common.MailConfig, content common.MailContent) error {
+func SendMailByGmail(config *MailConfig, content *MailContent) error {
 
 	d := gomail.NewDialer(config.Host, int(config.Port), config.Email, config.Password)
 
 	// 创建邮件
 	mail := gomail.NewMessage()
 
-	mail.SetHeader("From", config.Email)
+	mail.SetHeader("From", config.From)
 	mail.SetHeader("To", content.To...)
 	mail.SetHeader("Cc", content.Cc...)
 	mail.SetHeader("Bcc", content.Bcc...)
@@ -331,7 +306,7 @@ func TestSend() {
 	}
 }
 
-func SendEmailByJordan(config common.MailConfig, content common.MailContent) error {
+func SendEmailByJordan(config *MailConfig, content *MailContent) error {
 	e := email.NewEmail()
 	e.From = "745876299@qq.com"
 	e.To = content.To

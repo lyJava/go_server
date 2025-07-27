@@ -1,20 +1,20 @@
 package main
 
 import (
-	"apiProject/email/common"
 	"apiProject/email/mailSend"
 	"log"
 )
 
 func main() {
 
-	config := common.MailConfig{
+	config := &mailSend.MailConfig{
+		From:     "745876299@qq.com",
 		Host:     "smtp.qq.com",
 		Port:     587,
 		Email:    "745876299@qq.com",
 		Password: "mxexfejfdcmhbfbb",
 	}
-	content := common.MailContent{
+	content := &mailSend.MailContent{
 		To:      []string{"745876299@qq.com"},
 		Cc:      []string{"745876299@qq.com"},
 		Bcc:     []string{},
@@ -24,26 +24,27 @@ func main() {
 			"/Users/yangge/Downloads/测试中文小图.jpg",
 			"/Users/yangge/Downloads/c548a7d37d4f27e4d14ca6941d11392c.mp4",
 		},
-	} 
+	}
 	//"/Users/yangge/Downloads/雪落黄山 _ 当霜染一半山头, 风也不再轻柔｜8K超清.mp4",
 	// /Users/yangge/Downloads/20240215005635413-Screenrecorder-2024-02-15-00-54-00-961.mp4
-	
-	if err := mailSend.SendMailBySmtp(config, content); err!= nil {
+
+	if err := mailSend.SendMailBySmtp(config, content); err != nil {
 		log.Fatalf("smtp发送邮件失败===%+v", err)
 	}
 
-	if err := mailSend.SendEmailByJordan(config, content); err!= nil {
+	if err := mailSend.SendEmailByJordan(config, content); err != nil {
 		log.Fatalf("jordan发送邮件失败===%+v", err)
 	}
 
-	config2 := common.MailConfig{
+	configGmail := &mailSend.MailConfig{
+		From:     "745876299@qq.com",
 		Host:     "smtp.qq.com",
 		Port:     25,
 		Email:    "745876299@qq.com",
 		Password: "mxexfejfdcmhbfbb",
 	}
 
-	content2 := common.MailContent{
+	contentGmail := &mailSend.MailContent{
 		To:      []string{"745876299@qq.com"},
 		Cc:      []string{"745876299@qq.com"},
 		Bcc:     []string{},
@@ -56,7 +57,7 @@ func main() {
 		},
 	}
 
-	if err := mailSend.SendMailByGmail(config2, content2); err!= nil {
+	if err := mailSend.SendMailByGmail(configGmail, contentGmail); err != nil {
 		log.Fatalf("gomail发送邮件失败===%+v", err)
-	} 
+	}
 }
